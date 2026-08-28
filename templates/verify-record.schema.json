@@ -1,0 +1,75 @@
+{
+  "$comment": "Agent Core Suite v1.0.0 — verify-record.json 契约（由 gate_verify_rank.py 真实校验）",
+  "type": "object",
+  "required": ["task_id", "tier", "criteria", "weights", "repeats", "candidates", "ranking", "winner", "winner_reason", "builder", "verifier"],
+  "additionalProperties": false,
+  "properties": {
+    "task_id": { "type": "string", "minLength": 1 },
+    "tier": { "type": "string", "enum": ["T0", "T1", "T2", "T3"] },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 2 }
+    },
+    "weights": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "number", "minimum": 0, "maximum": 1 }
+    },
+    "repeats": { "type": "integer", "minimum": 1, "maximum": 9 },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "summary", "scores", "weighted"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "summary": { "type": "string", "minLength": 4, "maxLength": 600 },
+          "scores": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["criterion", "values", "median", "evidence"],
+              "additionalProperties": false,
+              "properties": {
+                "criterion": { "type": "string", "minLength": 2 },
+                "values": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": { "type": "integer", "minimum": 1, "maximum": 20 }
+                },
+                "median": { "type": "number", "minimum": 1, "maximum": 20 },
+                "evidence": { "type": "string", "minLength": 6 }
+              }
+            }
+          },
+          "weighted": { "type": "number", "minimum": 1, "maximum": 20 }
+        }
+      }
+    },
+    "pivots": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "ranking": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "winner": { "type": "string", "minLength": 1 },
+    "winner_reason": { "type": "string", "minLength": 6 },
+    "builder": { "type": "string", "minLength": 1 },
+    "verifier": { "type": "string", "minLength": 1 },
+    "self_consistency": {
+      "$comment": "智能触发的自一致性重采样（拿不到 logits 时的置信度代理），由 gate_verify_rank 按 spec.self_consistency 校验",
+      "type": "object",
+      "required": ["triggered"],
+      "additionalProperties": false,
+      "properties": {
+        "triggered": { "type": "boolean" },
+        "gap": { "type": "number" },
+        "extra_samples": { "type": "integer", "minimum": 0, "maximum": 9 },
+        "resampled": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 2 } },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "progress_trend": { "type": "array", "items": { "type": "number" } }
+  }
+}

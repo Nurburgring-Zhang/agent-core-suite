@@ -1,0 +1,99 @@
+{
+  "spec_version": 1,
+  "_why": [
+    "多终端适配一旦分散在 install.sh / install.ps1 / 文档里各写一份，就一定漂移，且漂移后两边都自活、没人报错。",
+    "故终端 id、探测标记、技能目录、规则落点只存这一份；安装脚本与 acs_doctor 一律只当解释器。",
+    "探测只看文件系统标记（目录/文件是否存在），不联网、不猜测、不读环境变量之外的隐私信息。",
+    "探测不到就落到 generic：显式降到最通用的 AGENTS.md 路径，而不是假装识别成某个终端。"
+  ],
+  "detect_order": ["qoder", "qoderwork", "claude", "cursor", "windsurf", "codex", "generic"],
+  "terminals": {
+    "qoder": {
+      "label": "Qoder",
+      "markers_home": [".qoder"],
+      "markers_workspace": [".qoder"],
+      "skills_dir": "~/.qoder/skills",
+      "rules_source": "rules/agent-core-suite.md",
+      "rules_target": "<workspace>/.qoder/rules/agent-core-suite.md",
+      "post_install_note": "重启 Qoder 或新开会话，技能与规则才会被加载。"
+    },
+    "qoderwork": {
+      "label": "QoderWork",
+      "markers_home": [".qoderwork"],
+      "markers_workspace": [],
+      "skills_dir": "~/.qoderwork/skills",
+      "rules_source": "rules/agent-core-suite.md",
+      "rules_target": "<workspace>/AGENTS.md",
+      "post_install_note": "技能装完新开会话即被 QoderWork 加载；若需机器级常驻规则，请把规则手工合并进 ~/.qoderwork/awareness/main/AGENTS.md（QoderWork 的全局工作手册），安装器不代劳此步。"
+    },
+    "claude": {
+      "label": "Claude Code",
+      "markers_home": [".claude"],
+      "markers_workspace": [".claude", "CLAUDE.md"],
+      "skills_dir": "~/.claude/skills",
+      "rules_source": "AGENTS.md",
+      "rules_target": "<workspace>/CLAUDE.md",
+      "post_install_note": "CLAUDE.md 已存在时不覆盖（需 --force），请手工合并，避免冲掉你原有的项目约定。"
+    },
+    "cursor": {
+      "label": "Cursor",
+      "markers_home": [".cursor"],
+      "markers_workspace": [".cursor"],
+      "skills_dir": "<workspace>/.agent/skills",
+      "rules_source": "rules/agent-core-suite.md",
+      "rules_target": "<workspace>/.cursor/rules/agent-core-suite.mdc",
+      "post_install_note": "Cursor 的 .mdc 规则需自行在文件头补 frontmatter（如 alwaysApply: true）才会常驻；本套件不代写，避免假装已生效。"
+    },
+    "windsurf": {
+      "label": "Windsurf",
+      "markers_home": [".codeium", ".windsurf"],
+      "markers_workspace": [".windsurf"],
+      "skills_dir": "<workspace>/.agent/skills",
+      "rules_source": "rules/agent-core-suite.md",
+      "rules_target": "<workspace>/.windsurf/rules/agent-core-suite.md",
+      "post_install_note": "Windsurf 规则目录下的文件按项目规则加载，若终端版本改了路径请用 --skill-home / 手工放置。"
+    },
+    "codex": {
+      "label": "Codex CLI / 其它读 AGENTS.md 的终端",
+      "markers_home": [".codex"],
+      "markers_workspace": ["AGENTS.md"],
+      "skills_dir": "<workspace>/.agent/skills",
+      "rules_source": "AGENTS.md",
+      "rules_target": "<workspace>/AGENTS.md",
+      "post_install_note": "AGENTS.md 已存在时不覆盖（需 --force），请手工合并。"
+    },
+    "generic": {
+      "label": "通用（未识别到具体终端）",
+      "markers_home": [],
+      "markers_workspace": [],
+      "skills_dir": "<workspace>/.agent/skills",
+      "rules_source": "AGENTS.md",
+      "rules_target": "<workspace>/AGENTS.md",
+      "post_install_note": "未识别到具体终端，按最通用路径安装；请把 AGENTS.md 接入你终端的常驻上下文机制。"
+    }
+  },
+  "enforcement_levels": {
+    "_why": "执行力分三级，写清楚才能避免把「装了」当成「强制住了」。",
+    "full": {
+      "requires": "python3",
+      "gates": 5,
+      "note": "五道门全可机检，退出码可证明。"
+    },
+    "partial": {
+      "requires": "node>=16",
+      "min_node_major": 16,
+      "gates": 4,
+      "note": "reality_scan 需 Python AST，Node 侧显式 USAGE_ERROR；PASS 不等于全门通过。"
+    },
+    "soft_only": {
+      "requires": "none",
+      "gates": 0,
+      "note": "无 Python 也无 Node：只剩 Context 层软约束，强制力归零。这是显式结论，不是静默降级。"
+    }
+  },
+  "external_enforcement": {
+    "_why": "软约束靠自觉、硬门禁靠模型主动调用；只有外部强制点不依赖模型配合。",
+    "pre_commit": "hooks/pre-commit（提交时跑门禁，失败即拒绝提交）",
+    "ci": ".github/workflows/acs-gates.yml（PR 上跑门禁，失败即红）"
+  }
+}

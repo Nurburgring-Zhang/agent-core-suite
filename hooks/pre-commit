@@ -1,0 +1,126 @@
+#!/bin/sh
+# Agent Core Suite —— pre-commit 外部强制点（L3）
+#
+# 为什么需要它：
+#   L1 软约束（skills/ rules/）靠模型自觉，会漂移；
+#   L2 硬门禁（scripts/）有退出码，但要模型主动去调用 —— 它不调，门禁等于不存在。
+#   L3 是唯一不依赖模型配合的一层：提交这个动作由 git 触发，门禁挂在这条路上，
+#   谁提交都得过。这才叫强制。
+#
+# 装法（由 install.sh --with-hook / install.ps1 -WithHook 完成，也可手工）：
+#   cp hooks/pre-commit <repo>/.git/hooks/pre-commit && chmod +x <repo>/.git/hooks/pre-commit
+#
+# 可调环境变量（都有合理默认，不改也能跑）：
+#   ACS_HOME   套件落点目录，默认 <repo>/.acs
+#   ACS_STATE  task-state 路径，默认 $ACS_HOME/task-state.json
+#   ACS_TIER   分级（T0/T1/T2/T3），默认不传由门禁自行按 state 判定
+#   ACS_RECORD verify-record 路径，默认 $ACS_HOME/verify-record.json（存在才传）
+#
+# 逃生口：`git commit --no-verify`。这是 git 原生机制，本套件不接管、不封堵 ——
+#   增强层没有资格把主人锁在门外；但逃生必须是主人显式动手，而不是脚本自己放水。
+#
+# 退出码：0=放行提交；1=拦下（门禁 BLOCK，或环境不足以执行门禁）；2=门禁 USAGE_ERROR。
+# 注意：本脚本纯只读，不改暂存区、不改工作树、不自动 git add。
+
+set -u
+
+say() { echo "[acs-pre-commit] $1"; }
+
+REPO="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -z "${REPO:-}" ]; then
+  # 不是 git 仓库却被当 hook 执行，说明装错了位置。这种情况下放行等于假装有强制力。
+  say "BLOCK 找不到 git 仓库根（git rev-parse --show-toplevel 失败）"
+  say "      hook 装错位置了；正确位置是 <repo>/.git/hooks/pre-commit"
+  exit 1
+fi
+
+ACS="${ACS_HOME:-$REPO/.acs}"
+STATE="${ACS_STATE:-$ACS/task-state.json}"
+RECORD="${ACS_RECORD:-$ACS/verify-record.json}"
+PY_GATE="$ACS/scripts/run_gates.py"
+NODE_GATE="$ACS/scripts/node/acs_gates.mjs"
+
+if [ ! -d "$ACS/scripts" ]; then
+  say "BLOCK 门禁目录不存在：$ACS/scripts"
+  say "      hook 在，门禁却没了 —— 这是套件被删或 ACS_HOME 指错，不是「无事可做」。"
+  say "      重装：./install.sh --target $REPO   或   设 ACS_HOME 指向正确落点"
+  exit 1
+fi
+
+if [ ! -f "$STATE" ]; then
+  say "BLOCK 缺 task-state：$STATE"
+  say "      门禁的判据全在这个文件里，没有它就无从核查 —— 缺字段=无法核查=视同未做。"
+  say "      开工前：cp $ACS/templates/task-state.example.json $STATE 并按真实任务改写。"
+  say "      若本次提交确实与任务无关（如改 README 错别字）：git commit --no-verify"
+  exit 1
+fi
+
+# 运行时探测：Python 优先（5/5 门），Node 兜底（4/5 门）。两者皆无则拦下并说清原因，
+# 不静默放行 —— 「跑不了门禁」和「门禁通过了」是两件事，混为一谈就等于假强制。
+PY=""
+for cand in python3 python py; do
+  if command -v "$cand" >/dev/null 2>&1 &&
+     "$cand" -c "import sys;sys.exit(0 if sys.version_info[0]==3 else 1)" >/dev/null 2>&1; then
+    PY="$cand"
+    break
+  fi
+done
+
+NODE=""
+if [ -z "$PY" ]; then
+  for cand in node nodejs; do
+    if command -v "$cand" >/dev/null 2>&1 && "$cand" -e "process.exit(0)" >/dev/null 2>&1; then
+      NODE="$cand"
+      break
+    fi
+  done
+fi
+
+if [ -z "$PY" ] && [ -z "$NODE" ]; then
+  say "BLOCK 环境里既没有 Python 3 也没有 Node，硬门禁无法执行。"
+  say "      此时套件只剩软约束、强制力归零 —— 这是显式结论，不是放行理由。"
+  say "      装好 Python 3（推荐）或 Node >=16 后重试，或 git commit --no-verify 显式跳过。"
+  exit 1
+fi
+
+TIER_ARGV=""
+if [ -n "${ACS_TIER:-}" ]; then
+  TIER_ARGV="--tier ${ACS_TIER}"
+fi
+RECORD_ARGV=""
+if [ -f "$RECORD" ]; then
+  RECORD_ARGV="--record $RECORD"
+fi
+
+say "state=$STATE"
+if [ -n "$PY" ]; then
+  if [ ! -f "$PY_GATE" ]; then
+    say "BLOCK 缺 $PY_GATE，门禁编排器不在，无法验证"
+    exit 1
+  fi
+  say "runtime=python($PY) 覆盖 5/5 门"
+  # shellcheck disable=SC2086
+  PYTHONUTF8=1 "$PY" -X utf8 "$PY_GATE" --state "$STATE" --root "$REPO" $TIER_ARGV $RECORD_ARGV
+  CODE=$?
+else
+  if [ ! -f "$NODE_GATE" ]; then
+    say "BLOCK 缺 $NODE_GATE，Node 兜底路径不完整，无法验证"
+    exit 1
+  fi
+  say "runtime=node($NODE) 覆盖 4/5 门（reality_scan 需 Python AST，Node 侧不假装能跑）"
+  # shellcheck disable=SC2086
+  "$NODE" "$NODE_GATE" run --state "$STATE" $TIER_ARGV $RECORD_ARGV
+  CODE=$?
+fi
+
+if [ "$CODE" -eq 0 ]; then
+  say "PASS 门禁通过，放行提交"
+  exit 0
+fi
+if [ "$CODE" -eq 2 ]; then
+  say "USAGE_ERROR 门禁未能真实执行（exit=2）——按未验证=未完成处理，拦下提交"
+  exit 2
+fi
+say "BLOCK 门禁判定不通过（exit=$CODE），拦下提交"
+say "      修到门禁 PASS 再提交；确需绕过请显式：git commit --no-verify"
+exit 1

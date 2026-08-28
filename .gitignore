@@ -1,0 +1,17 @@
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local task-state (each workspace builds its own from templates/)
+.acs/
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Pack output
+dist/
+*.zip

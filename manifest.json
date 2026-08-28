@@ -1,0 +1,324 @@
+{
+  "name": "agent-core-suite",
+  "version": "1.1.0",
+  "spec_version": "1.1.0",
+  "description": "Agent 能力增强套件：skill + harness + loop engineering + graph engineering，叠加在 agent 终端原生能力之上，用于强化其底层执行能力并压降 token 与时间成本。",
+  "language": "zh-CN",
+  "positioning": {
+    "kind": "augmentation-layer",
+    "replaces_native_capabilities": false,
+    "disables_native_capabilities": false,
+    "prefer_native_when_equivalent": true,
+    "adds_only": [
+      "分级触发的执行 SOP",
+      "可机检的准出退出码",
+      "成本闸门的量化阈值"
+    ],
+    "conflict_precedence": [
+      "主人显式指令",
+      "终端原生安全/权限/审批约束",
+      "本套件硬门禁",
+      "本套件软约束"
+    ],
+    "note": "本套件只做加法：不禁用、不接管、不改写终端原生的工具、检索、任务清单、记忆与权限机制。终端已有等价原生能力时优先用原生，套件模板仅在原生缺位时兜底。'强制'的对象是标准与证据，不是具体工具路径。"
+  },
+  "runtime": {
+    "python": ">=3.8",
+    "third_party_deps": [],
+    "note": "六个门禁脚本仅用 Python 标准库（json/os/sys/re/ast/argparse/subprocess），无需 pip 安装。Windows 下建议 python -X utf8。"
+  },
+  "runtimes": {
+    "_why": "硬门禁只有一种运行时，就等于把强制力押在单一依赖上；环境缺它，整套件退化成纪律文档。",
+    "python": {
+      "entry": "scripts/run_gates.py",
+      "covers": [
+        "state",
+        "loop",
+        "checklist",
+        "reality",
+        "verify"
+      ],
+      "not_covered": [],
+      "authoritative": true
+    },
+    "node": {
+      "entry": "scripts/node/acs_gates.mjs",
+      "requires": "node >=16（ESM + 零第三方依赖）",
+      "covers": [
+        "state",
+        "loop",
+        "checklist",
+        "verify"
+      ],
+      "not_covered": [
+        "reality_scan"
+      ],
+      "authoritative": false,
+      "note": "reality 门需 Python AST，Node 侧显式返回 USAGE_ERROR(2) 并说明理由；run 子命令强制打印 PARTIAL_COVERAGE 4/5，避免把部分覆盖读成全门通过。有 Python 时以 Python 实现为准。"
+    },
+    "consistency_test": "tests/test_gates.py::test_cross_impl_exit_codes_match（同一批负样本逐个比对两实现退出码）",
+    "doctor": {
+      "python_entry": "scripts/acs_doctor.py",
+      "node_entry": "scripts/node/acs_gates.mjs doctor",
+      "why_dual": "探针要回答的正是「环境里有没有 Python」。若探针本身只能用 Python 跑，最需要它的场景恰好用不上 —— 那是自相矛盾的设计，故 Node 侧必须有等价实现。",
+      "reports": [
+        "python/node/bash/git 可用性",
+        "终端识别（detect_order）",
+        "落点解析（--paths）",
+        "强制力等级（full/partial/soft_only）"
+      ],
+      "exit_codes": {
+        "0": "full 或 partial",
+        "1": "soft_only（强制力归零，显式结论）",
+        "2": "USAGE_ERROR"
+      },
+      "node_check": "scripts/node/acs_gates.mjs check（镜像 install_check.py，供无 Python 环境做装前清单自检）"
+    },
+    "known_impl_differences": [
+      {
+        "key": "decimal_written_integer",
+        "detail": "JSON 中写作 25.0 的整数字段：Python isinstance(25.0, int) 为假故跳检，Node Number.isInteger(25.0) 为真故入检。",
+        "impact": "仅影响把整数写成小数的非规范 state/record；Node 侧更严，不会出现 Node 放行而 Python 拦的方向。",
+        "mitigation": "schema 已将这些字段声明为 integer；一致性语料避开该写法；本差异由 test_manifest_registers_known_impl_diff 断言已登记。"
+      }
+    ]
+  },
+  "layers": {
+    "context_soft": [
+      "skills/",
+      "rules/",
+      "AGENTS.md"
+    ],
+    "harness_hard": [
+      "scripts/"
+    ],
+    "contract": [
+      "templates/"
+    ],
+    "evidence": [
+      "tests/",
+      "DESIGN.md"
+    ]
+  },
+  "entry": {
+    "skill": "skills/universal-task-code/SKILL.md",
+    "portable_rule": "AGENTS.md",
+    "gate_runner": "scripts/run_gates.py"
+  },
+  "skills": [
+    {
+      "name": "universal-task-code",
+      "role": "主入口（瘦）",
+      "path": "skills/universal-task-code/SKILL.md",
+      "always": true
+    },
+    {
+      "name": "loop-engineering",
+      "role": "停止协议与成本闸门",
+      "path": "skills/loop-engineering/SKILL.md",
+      "always": false
+    },
+    {
+      "name": "graph-engineering",
+      "role": "任务图与节点契约",
+      "path": "skills/graph-engineering/SKILL.md",
+      "always": false
+    },
+    {
+      "name": "self-verify-scaling",
+      "role": "自验证与候选排序",
+      "path": "skills/self-verify-scaling/SKILL.md",
+      "always": false
+    },
+    {
+      "name": "token-thrift",
+      "role": "输入 token 节流",
+      "path": "skills/token-thrift/SKILL.md",
+      "always": false
+    }
+  ],
+  "gates": [
+    {
+      "id": "state",
+      "script": "scripts/gate_state_validate.py",
+      "checks": "task-state 契约、任务图 DAG 无环、节点契约完整、回灌写法检测；v1.1：边门 expect_exit、T3 边门覆盖、barriers policy/min_count 语义、T3 工件登记与 supersedes 谱系、contract_version 格式、T3 模型档位、验收命令绑定产出物"
+    },
+    {
+      "id": "loop",
+      "script": "scripts/gate_loop_guard.py",
+      "checks": "计量字段必须存在、窄步闸、回灌禁令、空转 two-strike、思考预算、安全阀上限必填；v1.1：有界重试（retries 上限、retry_reason、delta_from_last）"
+    },
+    {
+      "id": "verify",
+      "script": "scripts/gate_verify_rank.py",
+      "checks": "评分粒度/权重/中位数真实性/排序一致性/门槛线/平局处置"
+    },
+    {
+      "id": "reality",
+      "script": "scripts/gate_reality_scan.py",
+      "checks": "残留待办、降级措辞、替身实现、空壳函数、语法可解析"
+    },
+    {
+      "id": "checklist",
+      "script": "scripts/gate_checklist.py",
+      "checks": "G0-G6 分级必填、证据非空话、对抗审核与上线测试轮次；v1.1：T3 双盲审查（≥2 独立审查者、禁建造者/重复、分歧仲裁留痕）"
+    }
+  ],
+  "exit_codes": {
+    "0": "PASS",
+    "1": "BLOCK",
+    "2": "USAGE_ERROR"
+  },
+  "tiers": {
+    "T0": {
+      "n": 0,
+      "r": 0,
+      "threshold": 0.0,
+      "max_rounds": 1,
+      "max_minutes": 5
+    },
+    "T1": {
+      "n": 1,
+      "r": 1,
+      "threshold": 14.0,
+      "max_rounds": 3,
+      "max_minutes": 15
+    },
+    "T2": {
+      "n": 1,
+      "r": 2,
+      "threshold": 16.0,
+      "max_rounds": 6,
+      "max_minutes": 45
+    },
+    "T3": {
+      "n": 3,
+      "r": 3,
+      "threshold": 17.0,
+      "max_rounds": 10,
+      "max_minutes": 120
+    }
+  },
+  "install_targets": {
+    "_source_of_truth": "spec/terminals.json",
+    "note": "各终端的技能目录与规则落点只存于 spec/terminals.json；install.sh / install.ps1 一律向 acs_doctor 取值，本文件不再抄第二份，避免漂移。当前覆盖：qoder / qoderwork / claude / cursor / windsurf / codex / generic。",
+    "scripts": "<workspace>/.acs/scripts/（含 acs_doctor.py 与 node/acs_gates.mjs）",
+    "spec": "<workspace>/.acs/spec/（thresholds.json + terminals.json）"
+  },
+  "files": [
+    ".github/workflows/acs-gates.yml",
+    "AGENTS.md",
+    "DESIGN.md",
+    "LICENSE",
+    "README.md",
+    "VERSION",
+    "manifest.json",
+    "hooks/pre-commit",
+    "install.ps1",
+    "install.sh",
+    "pack.py",
+    "rules/agent-core-suite.md",
+    "scripts/_acs_common.py",
+    "scripts/acs_doctor.py",
+    "scripts/gate_checklist.py",
+    "scripts/gate_loop_guard.py",
+    "scripts/gate_reality_scan.py",
+    "scripts/gate_state_validate.py",
+    "scripts/gate_verify_rank.py",
+    "scripts/install_check.py",
+    "scripts/node/acs_gates.mjs",
+    "scripts/run_gates.py",
+    "skills/graph-engineering/SKILL.md",
+    "skills/loop-engineering/SKILL.md",
+    "skills/self-verify-scaling/SKILL.md",
+    "skills/self-verify-scaling/reference-rubric.md",
+    "skills/token-thrift/SKILL.md",
+    "skills/universal-task-code/SKILL.md",
+    "skills/universal-task-code/reference-creed.md",
+    "skills/universal-task-code/reference-gates.md",
+    "spec/terminals.json",
+    "spec/thresholds.json",
+    "templates/handoff-summary.md",
+    "templates/task-state.example.json",
+    "templates/task-state.schema.json",
+    "templates/verify-record.example.json",
+    "templates/verify-record.schema.json",
+    "tests/test_gates.py"
+  ],
+  "thresholds_spec": {
+    "path": "spec/thresholds.json",
+    "role": "single-source-of-truth",
+    "consumed_by": [
+      "scripts/_acs_common.py",
+      "各 gate_*.py",
+      "scripts/node/acs_gates.mjs"
+    ],
+    "note": "所有阈值只存于此。实现一律只当解释器；缺文件时门禁直接 USAGE_ERROR(2)，不回退内置默认值。"
+  },
+  "terminals_spec": {
+    "path": "spec/terminals.json",
+    "role": "single-source-of-truth",
+    "consumed_by": [
+      "scripts/acs_doctor.py",
+      "scripts/node/acs_gates.mjs",
+      "install.sh",
+      "install.ps1"
+    ],
+    "note": "终端识别标记、技能目录、规则落点、强制力等级只存于此。缺文件或缺字段一律 USAGE_ERROR(2)，不回退内置默认表；detect_order 末项必须是 generic 兜底。"
+  },
+  "enforcement_layers": {
+    "_why": "不分层就会把「写进文档了」当成「强制住了」。L1 靠自觉，L2 靠模型主动调用，L3 不依赖模型配合。",
+    "L1_soft": {
+      "where": [
+        "skills/",
+        "rules/",
+        "AGENTS.md"
+      ],
+      "binding": "Context 层注入，无退出码，会漂移"
+    },
+    "L2_hard": {
+      "where": [
+        "scripts/run_gates.py",
+        "scripts/node/acs_gates.mjs"
+      ],
+      "binding": "退出码可证，但需模型或人主动调用"
+    },
+    "L3_external": {
+      "pre_commit": "hooks/pre-commit（opt-in：install.sh --with-hook / install.ps1 -WithHook）",
+      "ci": ".github/workflows/acs-gates.yml（4 个作业：gates / node-fallback / installer / pre-commit-hook）",
+      "binding": "由 git 与 CI 触发，不靠模型自觉；hook 逃生口是 git 原生的 --no-verify，本套件不封堵。",
+      "opt_in_reason": "未经主人同意往仓库塞 hook 属于接管，与增强层定位相背，故默认不装。",
+      "ci_also_covers": "installer 作业在 ubuntu / macos 上真跑 install.sh（语法、dry-run、真装、非法 --mode、旧版本不得静默跳过），直接补上本机无原生 Linux/macOS 的证据缺口。"
+    }
+  },
+  "integrity": {
+    "method": "file-inventory + pack-time sha256 roundtrip",
+    "sha256_roundtrip_at_pack": true,
+    "hash_verification_at_install": false,
+    "note": "pack.py 打包后会重新打开 zip，逐项比对源文件与 zip 条目的字节数与 sha256（不一致即失败）；但本文件不存储哈希清单，故 install 阶段只核对 files 清单的存在性与非空，无法检测分发后被篡改。"
+  },
+  "acceptance": {
+    "install_check": "python -X utf8 scripts/install_check.py --root .",
+    "doctor": "python -X utf8 scripts/acs_doctor.py --target .（Node 侧：node scripts/node/acs_gates.mjs doctor --target .）",
+    "self_test": "python -X utf8 -m pytest tests/test_gates.py -q",
+    "self_test_result_at_release": "377 passed",
+    "self_scan": "python -X utf8 scripts/gate_reality_scan.py --root .",
+    "hook_syntax": "bash -n hooks/pre-commit",
+    "positive_sample": "python -X utf8 scripts/run_gates.py --state templates/task-state.example.json --root . --tier T2",
+    "pack": "python -X utf8 pack.py --root ."
+  },
+  "known_limitations": [
+    "[降维实现] 自验证评分不使用模型 logits（agent 侧不可得），改为显式 1-20 分 rubric，不宣称复现论文精度；作为补偿，冠亚加权分差 < spec.self_consistency.trigger_score_gap 时 T3 强制自一致性重采样（重复评分的分歧度是唯一可得的置信度代理），且重采样必须真的多出样本，否则 triggered=true 就只是口号。",
+    "token 与耗时默认为代理指标（*_proxy）；能拿到真账时必须经 cost_metering 回填并交代来源与可复查证据（T2+ 必须显式声明 source，拿不到就写 unavailable，沉默不算声明）。来源不可审计时禁止出现 tokens_actual —— 字段名带后缀就是为了不冒充真实计量；脚本仍无法独立向平台核账，只能校验自洽性、来源声明与分级上限。",
+    "Node 实现覆盖 4/5 道门，reality_scan 需 Python AST 故不覆盖（显式 USAGE_ERROR，非静默降级）；两实现退出码一致性由 test_cross_impl_exit_codes_match 守住。",
+    "[软约束硬化] G0-G6 中原本靠自觉的 7 条已搬成 task-state 结构化字段并双实现机检（阈值见 spec/thresholds.json 的 checklist.hardened）；本层只能拦「整段跳过」与「写空话」，无法评定思考质量（那仍属原生能力）；未列入这 7 项的 [软] 条目依旧靠 Context 层自觉。",
+    "[v1.1 T3 契约项] 边门覆盖/工件登记/模型档位/双盲审查只在 T3 触发（验收绑定是例外，T1 起全级生效）：分级本身就是省 token 设计；代价是 T2 交付物没有工件谱系与双盲保障，需要同等强度时把 tier 定为 T3 再跑门禁即可。",
+    "[v1.1 卫生机检] 墓碑文件/失效本地链接/无消费者 spec 节/内容完全相同的重复文件四项由 pytest 固化，属只读审计：只报不删，删除与否是主人的决定，脚本永远不自动清理。",
+    "gate_reality_scan 为词法 + Python AST 静态扫描，不做跨语言语义分析；非 Python 文件仅做词法与非空检查。",
+    "JSON Schema 校验器为子集实现，不支持标准 $ref，改用 $ref_inline/$defs_inline 约定。",
+    "install.sh 已在 Git Bash（Windows 自带 Git）上完成 bash -n / dry-run / 真装 / A11 双向四轮实测；原生 Linux、macOS 上的实跑由 CI 的 installer 作业负责（ubuntu-latest + macos-latest），本机无这两个环境。",
+    "[外部强制点] pre-commit hook 能被 `git commit --no-verify` 绕过（有意保留的主人逃生口），故 hook 不能当唯一屏障；CI 那一层才是绕不过的。hook 默认不装，不加 --with-hook / -WithHook 就只有 L1+L2。",
+    "[多终端] claude / cursor / windsurf / codex 的落点按各自公开约定写入 spec/terminals.json，已做路径解析与拷贝验证，但未在这些终端内实测「规则确被加载」；Cursor 的 .mdc 规则需自行补 frontmatter，本套件不代写。",
+    "install 阶段不做哈希校验，只核对清单存在性与非空；sha256 逐项校验仅发生在 pack.py 打包时。"
+  ]
+}

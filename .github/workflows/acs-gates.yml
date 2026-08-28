@@ -1,0 +1,183 @@
+# Agent Core Suite —— CI 外部强制点（L3）
+#
+# 为什么需要它：pre-commit 能被 `--no-verify` 绕过（这是有意保留的主人逃生口），
+# 所以还需要一层绕不过的：PR 上跑门禁，不通过就是红的。审查者看到红叉，
+# 才有客观依据说「这次没验证完」，而不是靠互相信任。
+#
+# 同时这个 workflow 顺手消掉了「install.sh 未在真实 Linux/macOS 实跑」这条限制：
+# installer 作业在 ubuntu 与 macos 上真装一遍，装完立刻跑门禁验证生效。
+#
+# 若你把本套件放在仓库子目录（如 vendor/agent-core-suite），把 ACS_SUITE 改成那个相对路径即可。
+name: acs-gates
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  ACS_SUITE: "."
+  PYTHONUTF8: "1"
+
+jobs:
+  # ---- 作业 1：门禁本体 + 自测。跨 Python 版本与 OS，证明不是只在作者机器上绿 ----
+  gates:
+    name: gates (${{ matrix.os }} / py${{ matrix.py }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-22.04, py: "3.8" }
+          - { os: ubuntu-latest, py: "3.12" }
+          - { os: macos-latest, py: "3.12" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.py }}
+      - name: install_check（清单齐全且非空）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: python -X utf8 scripts/install_check.py --root .
+      - name: acs_doctor（运行时能力探针，exit 0 表示硬门禁可用）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: python -X utf8 scripts/acs_doctor.py --target .
+      - name: gate_reality_scan（自扫：套件自己不许有替身与残留）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: python -X utf8 scripts/gate_reality_scan.py --root .
+      - name: 正样本必须 PASS（门禁不能只会拦，还得会放）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: python -X utf8 scripts/run_gates.py --state templates/task-state.example.json --root . --tier T2
+      - name: 自测全量（含跨实现一致性；runner 自带 node）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: python -X utf8 -m pytest tests/test_gates.py -q
+      - name: pack 回读校验（sha256 逐项）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: python -X utf8 pack.py --root .
+
+  # ---- 作业 2：Node 兜底路径。只用 node 跑，证明「无 Python 也有 4/5 门」不是纸面承诺 ----
+  node-fallback:
+    name: node-fallback (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["16", "20"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: 清单自检（等价 install_check.py）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: node scripts/node/acs_gates.mjs check --root .
+      - name: 探针（Node 侧必须能独立回答「有没有 Python」）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: node scripts/node/acs_gates.mjs doctor --target . --paths
+      - name: 正样本 PASS（覆盖 4/5 门，缺口显式打印）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: node scripts/node/acs_gates.mjs run --state templates/task-state.example.json --tier T2
+      - name: reality 门必须显式拒绝而不是假装通过（期望 exit=2）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: |
+          set +e
+          node scripts/node/acs_gates.mjs reality --root .
+          code=$?
+          set -e
+          if [ "$code" -ne 2 ]; then
+            echo "期望 USAGE_ERROR(2)，实际 $code —— Node 侧不允许假装能跑 reality 门"
+            exit 1
+          fi
+
+  # ---- 作业 3：install.sh 真装。这一条直接消掉「未在真实 Linux/macOS 实跑」的限制 ----
+  installer:
+    name: installer (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 语法自检
+        working-directory: ${{ env.ACS_SUITE }}
+        run: bash -n install.sh
+      - name: dry-run（不写盘）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: |
+          chmod +x install.sh
+          ./install.sh --target "$RUNNER_TEMP/ws" --mode generic --dry-run
+      - name: 真装 + 装后门禁必须 PASS
+        working-directory: ${{ env.ACS_SUITE }}
+        run: |
+          ./install.sh --target "$RUNNER_TEMP/ws" --mode generic
+          test -f "$RUNNER_TEMP/ws/.acs/scripts/run_gates.py"
+          test -f "$RUNNER_TEMP/ws/.acs/spec/terminals.json"
+          test -f "$RUNNER_TEMP/ws/AGENTS.md"
+          python -X utf8 "$RUNNER_TEMP/ws/.acs/scripts/run_gates.py" \
+            --state "$RUNNER_TEMP/ws/.acs/templates/task-state.example.json" \
+            --root "$RUNNER_TEMP/ws/.acs/scripts" --tier T2
+      - name: 非法 --mode 必须 exit 2（合法值只由 spec/terminals.json 决定）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: |
+          set +e
+          ./install.sh --target "$RUNNER_TEMP/ws2" --mode nope --dry-run
+          code=$?
+          set -e
+          if [ "$code" -ne 2 ]; then echo "期望 USAGE_ERROR(2)，实际 $code"; exit 1; fi
+      - name: 旧版本不得静默跳过（改脏后无 --force 必须失败，加 --force 必须成功）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: |
+          echo "# drifted" >> "$RUNNER_TEMP/ws/.acs/spec/terminals.json"
+          set +e
+          ./install.sh --target "$RUNNER_TEMP/ws" --mode generic
+          code=$?
+          set -e
+          if [ "$code" -eq 0 ]; then echo "内容不同却放行了，这就是假成功"; exit 1; fi
+          ./install.sh --target "$RUNNER_TEMP/ws" --mode generic --force
+
+  # ---- 作业 4：pre-commit hook 真拦。装进真仓库，用坏 state 提交一次，必须被拒 ----
+  pre-commit-hook:
+    name: pre-commit-hook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 建一个真仓库并装 hook
+        working-directory: ${{ env.ACS_SUITE }}
+        run: |
+          SUITE="$PWD"
+          REPO="$RUNNER_TEMP/hookrepo"
+          mkdir -p "$REPO" && cd "$REPO"
+          git init -q
+          git config user.email ci@example.com
+          git config user.name ci
+          bash "$SUITE/install.sh" --target "$REPO" --mode generic --with-hook
+          test -x "$REPO/.git/hooks/pre-commit"
+      - name: 缺 task-state 必须拦下提交（BLOCK，不是放行）
+        run: |
+          REPO="$RUNNER_TEMP/hookrepo"
+          cd "$REPO"
+          echo hi > a.txt && git add a.txt
+          set +e
+          git commit -q -m "no state"
+          code=$?
+          set -e
+          if [ "$code" -eq 0 ]; then echo "缺 state 却提交成功了，hook 没有强制力"; exit 1; fi
+      - name: --no-verify 必须仍然可用（主人逃生口不得被接管）
+        run: |
+          cd "$RUNNER_TEMP/hookrepo"
+          git commit -q --no-verify -m "escape hatch works"
+      - name: 补齐正样本 state 后必须放行
+        run: |
+          REPO="$RUNNER_TEMP/hookrepo"
+          cd "$REPO"
+          cp .acs/templates/task-state.example.json .acs/task-state.json
+          echo hi2 > b.txt && git add b.txt
+          git commit -q -m "with valid state"

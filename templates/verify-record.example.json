@@ -1,0 +1,52 @@
+{
+  "task_id": "acs-demo-001",
+  "tier": "T3",
+  "criteria": ["correctness", "completeness", "risk", "cost", "maintainability"],
+  "weights": [0.35, 0.25, 0.2, 0.1, 0.1],
+  "repeats": 3,
+  "candidates": [
+    {
+      "id": "c1",
+      "summary": "在写入层加显式契约校验 + 真实文件系统读回比对；失败即 BLOCK，不依赖工具回执",
+      "scores": [
+        { "criterion": "correctness", "values": [18, 19, 18], "median": 18, "evidence": "覆盖写入未落盘与编码异常两类边界，均有断言" },
+        { "criterion": "completeness", "values": [17, 18, 17], "median": 17, "evidence": "需求逐条对应，唯一缺口是并发写未覆盖" },
+        { "criterion": "risk", "values": [18, 17, 18], "median": 18, "evidence": "纯新增校验、可逆、无删除动作" },
+        { "criterion": "cost", "values": [16, 15, 16], "median": 16, "evidence": "每次写入多一次读取，开销可忽略" },
+        { "criterion": "maintainability", "values": [17, 16, 17], "median": 17, "evidence": "契约集中在一处，改动面小" }
+      ],
+      "weighted": 17.45
+    },
+    {
+      "id": "c2",
+      "summary": "只在流程结束时做一次批量抽查；发现不一致再回溯定位",
+      "scores": [
+        { "criterion": "correctness", "values": [16, 15, 16], "median": 16, "evidence": "能发现问题但定位滞后，中间步骤可能已基于错误状态推进" },
+        { "criterion": "completeness", "values": [15, 16, 15], "median": 15, "evidence": "抽查覆盖不全，漏检风险明确存在" },
+        { "criterion": "risk", "values": [14, 15, 14], "median": 14, "evidence": "错误发现晚，返工成本高" },
+        { "criterion": "cost", "values": [18, 17, 18], "median": 18, "evidence": "校验次数最少，额外开销最低" },
+        { "criterion": "maintainability", "values": [15, 14, 15], "median": 15, "evidence": "回溯逻辑分散在多处" }
+      ],
+      "weighted": 15.45
+    },
+    {
+      "id": "c3",
+      "summary": "完全信任工具回执，不做额外校验，出问题再人工排查",
+      "scores": [
+        { "criterion": "correctness", "values": [14, 13, 14], "median": 14, "evidence": "已知存在写入回执成功但实际未落盘的故障态，无法覆盖" },
+        { "criterion": "completeness", "values": [13, 14, 13], "median": 13, "evidence": "无任何自动校验，缺口最大" },
+        { "criterion": "risk", "values": [12, 13, 12], "median": 12, "evidence": "错误可能一路传播到交付物" },
+        { "criterion": "cost", "values": [19, 18, 19], "median": 19, "evidence": "零额外校验开销，成本最低" },
+        { "criterion": "maintainability", "values": [13, 12, 13], "median": 13, "evidence": "没有代码可维护，但也没有保障" }
+      ],
+      "weighted": 13.75
+    }
+  ],
+  "pivots": ["c2", "c3"],
+  "ranking": ["c1", "c2", "c3"],
+  "winner": "c1",
+  "winner_reason": "correctness 18 与 risk 18 双项领先且均过 T3 硬底线，cost 仅比 c3 低 3 分，综合 17.45 为唯一过 17.0 门槛的候选",
+  "builder": "builder-A",
+  "verifier": "verifier-B",
+  "progress_trend": [13.75, 15.45, 17.45]
+}

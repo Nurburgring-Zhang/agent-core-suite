@@ -1,0 +1,192 @@
+{
+  "spec_version": "1.1.0",
+  "_readme": [
+    "阈值单一真相源（single source of truth）。",
+    "Python 门禁、Node 门禁、文档与 CI 一律从本文件取值，任何实现都不得自带同名常量。",
+    "改阈值只改这里；改完必跑 tests/test_gates.py，跨实现一致性测试会拦住漂移。",
+    "缺失本文件 = 拿不到阈值 = 无法计量，门禁一律 USAGE_ERROR(2)，不得用内置默认值静默继续。"
+  ],
+  "exit_codes": {
+    "pass": 0,
+    "block": 1,
+    "usage_error": 2
+  },
+  "tiers": {
+    "T0": { "n": 0, "r": 0, "threshold": 0.0, "max_rounds": 1, "max_minutes": 5 },
+    "T1": { "n": 1, "r": 1, "threshold": 14.0, "max_rounds": 3, "max_minutes": 15 },
+    "T2": { "n": 1, "r": 2, "threshold": 16.0, "max_rounds": 6, "max_minutes": 45 },
+    "T3": { "n": 3, "r": 3, "threshold": 17.0, "max_rounds": 10, "max_minutes": 120 }
+  },
+  "loop": {
+    "max_outputs_per_step": 1,
+    "max_budget_min": 30,
+    "max_context_bytes": 20000,
+    "max_files_read": 5,
+    "max_summary_chars": 400,
+    "max_think_ratio": 0.4,
+    "spin_strikes": 2,
+    "summary_chars_tolerance": 20,
+    "required_step_fields": [
+      "budget_min",
+      "context_bytes_proxy",
+      "refeed_full_history",
+      "summary_chars",
+      "think_ratio",
+      "evidence_delta"
+    ]
+  },
+  "checklist": {
+    "min_adversarial_reviews": 2,
+    "min_release_tests": 2,
+    "required_gates_by_tier": {
+      "T0": [],
+      "T1": ["G0", "G3", "G4"],
+      "T2": ["G0", "G1", "G2", "G3", "G4", "G5", "G6"],
+      "T3": ["G0", "G1", "G2", "G3", "G4", "G5", "G6"]
+    },
+    "hardened": {
+      "_why": [
+        "原先这 7 条只写在 reference-gates.md 里标 [软]，靠模型自觉，会漂移。",
+        "搬成结构化字段后由 gate_checklist 机检：缺字段 = 无法核查 = 视同未做，直接 BLOCK。",
+        "字段只承载可核查的骨架，不规定行文；深度思考仍由原生能力完成，本层只拦「跳过」。"
+      ],
+      "min_steelman_pro": 3,
+      "min_steelman_con": 3,
+      "max_key_questions": 3,
+      "min_claim_chars": 4,
+      "min_basis_chars": 6,
+      "min_reviews": 1,
+      "cognition_fields": ["goal", "boundary", "dependencies", "impact", "acceptance", "risks"],
+      "plan_fields": ["phases", "design_standards", "stage_goals", "boundary"],
+      "report_fields": ["deliverables", "evidence", "risks", "next_steps"],
+      "rsi_fields": ["problem", "root_cause", "action", "verification", "stored_at"],
+      "field_owner_gate": {
+        "steelman": "G0",
+        "key_questions": "G0",
+        "questions_compressed_reason": "G0",
+        "cognition": "G1",
+        "plan": "G2",
+        "reviews": "G3",
+        "report": "G5",
+        "blind_reviews": "G5",
+        "arbitration": "G5",
+        "rsi": "G6"
+      },
+      "required_by_tier": {
+        "T0": [],
+        "T1": ["G4_acceptance_actual"],
+        "T2": ["G0_steelman", "G1_cognition", "G2_plan", "G3_review_closure", "G4_acceptance_actual", "G5_report"],
+        "T3": ["G0_steelman", "G1_cognition", "G2_plan", "G3_review_closure", "G4_acceptance_actual", "G5_report", "G5_blind_reviews", "G6_rsi"]
+      }
+    }
+  },
+  "verify_rank": {
+    "pivot_k": 2,
+    "spread_limit": 5,
+    "weight_tol": 0.001,
+    "weighted_tol": 0.05,
+    "min_criteria": 5,
+    "t3_hard_floor": { "correctness": 17.0, "risk": 16.0 }
+  },
+  "reality_scan": {
+    "allow_marker": "ACS-ALLOW",
+    "default_max_findings": 200
+  },
+  "vague_phrases": {
+    "acceptance": [
+      "功能正常", "已完善", "应该可以", "逻辑无误", "符合预期", "没有问题",
+      "运行良好", "基本完成", "大致", "看起来", "works fine", "looks good", "should work"
+    ],
+    "evidence": [
+      "已完成", "没问题", "已检查", "已确认无误", "应该可以", "符合要求", "都过了",
+      "ok", "done", "fine", "passed all"
+    ]
+  },
+  "self_consistency": {
+    "_why": [
+      "拿不到 logits，但「同一份 rubric 重复评分的分歧度」是 agent 侧唯一可得的置信度代理。",
+      "冠亚分差很小时直接定案，等于把噪声当结论；此时必须重采样再定案。",
+      "重采样是花 token 的，所以只在真可能改判的区间触发，不无脑全量采样。"
+    ],
+    "enabled_tiers": ["T3"],
+    "trigger_score_gap": 1.5,
+    "extra_samples": 2,
+    "max_extra_samples": 4
+  },
+  "cost_metering": {
+    "_why": [
+      "proxy 不是计量，只是可测的替代物；能拿到真账就必须回填真账，否则降维就从「权宜」变成「永久」。",
+      "回填必须交代来源与可复查证据，否则一个数字与一句「我觉得」等价。",
+      "来源不可审计时字段名必须留在 *_proxy，不得改叫 actual 冒充计量。",
+      "tokens_actual 上限取自反面基线：同框架对照模型 9 个任务共 956,630 token（均 ~106k/任务），T3 给到 1.2M 已是 11 倍宽容。"
+    ],
+    "sources": ["unavailable", "self_reported", "terminal_ui", "api_usage", "cli_usage"],
+    "auditable_sources": ["api_usage", "cli_usage"],
+    "declare_required_tiers": ["T2", "T3"],
+    "min_evidence_chars": 6,
+    "max_tokens_actual_by_tier": { "T1": 100000, "T2": 400000, "T3": 1200000 }
+  },
+  "edge_gates": {
+    "_why": [
+      "边是数据契约：上游产出放行下游前必须先过验证，否则一个错沿着拓扑流进所有下游节点。",
+      "schema 只能保证边门形状合法，不能保证图里真的用了门；T3 高风险图若一条边门都没有，验证就形同虚设。",
+      "边门 kind=cmd 与节点/步骤验收同规矩：没有 expect_exit 的命令验证无法判成败，等于没有验证。"
+    ],
+    "required_tiers": ["T3"],
+    "min_edge_gates": 1
+  },
+  "retry": {
+    "_why": [
+      "FinBot 实战教训：生成→报错→原样再生成是永动机，重试必须有硬上限（默认 2 次）。",
+      "重试必须留痕（retry_reason）并声明换打法（delta_from_last）：同一打法重跑两轮即空转，这正是 loop-until-dry 的收敛条件。",
+      "上限放 spec 而非代码：不同团队可按任务分级调整，但任何环境都不允许静默无限重试。"
+    ],
+    "max_retries": 2,
+    "min_reason_chars": 4,
+    "min_delta_chars": 4
+  },
+  "acceptance_binding": {
+    "_why": [
+      "SWE Refactor Bench 教训：行为测试全绿 ≠ 有产出——原系统本来就能过，交白卷也满分；尺子量的是『改没改坏』不是『有没有改』。",
+      "验收命令必须直接打到声明的产出物上（子串可核验），否则它证明的是『没改坏』而不是『真的交付了』。",
+      "只对文件型产出物强制（含路径或扩展名特征）；纯逻辑名产出无法用子串绑定，不误伤。"
+    ],
+    "apply_tiers": ["T1", "T2", "T3"],
+    "min_basename_chars": 3
+  },
+  "double_blind": {
+    "_why": [
+      "Anthropic 图工程第 6 步：两个互相看不见对方推理的独立审查者；同一个人审两轮不是双盲。",
+      "审批者与建造者不得兼任盲审：角色不分离，双盲就退化成自评。",
+      "分歧不是噪音是信号：verdict 冲突 = 验收标准有歧义，必须仲裁留痕（arbitration），否则规则手册的歧义永远不暴露。"
+    ],
+    "required_tiers": ["T3"],
+    "min_reviewers": 2
+  },
+  "artifacts": {
+    "_why": [
+      "Artifact Memory vs Transcript Memory：transcript 不是数据库，产出物必须登记为带溯源的工件（produced_by 指向生产节点）。",
+      "supersedes 链就是最小版本谱系：改了契约/决策系统立刻知道新旧关系（ADR 同构，Tutti 数据契约版本化的落点）。",
+      "回答『这份输出为什么值得相信』：能溯源到节点、能查到前代版本的工件，才叫交付物。"
+    ],
+    "required_tiers": ["T3"],
+    "min_artifacts": 1
+  },
+  "contract": {
+    "_why": [
+      "Tutti 教训：数据契约演进必须可追溯，v2.3.0→v2.4.0 一眼可查，改了规矩系统立刻知道。",
+      "状态文件自带版本，校验器才能识别『来自更新套件的文件』并提示升级，而不是报一堆莫名字段错误。",
+      "旧版本文件照常通过（向后兼容）：只有格式非法才拦，版本高于已知只告警不拦。"
+    ],
+    "known_version": "1.1.0",
+    "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+  },
+  "model_tier": {
+    "_why": [
+      "图让模型分层看得见：无聊节点跑便宜模型、判断节点跑强模型；不上图、不登记，这笔账永远糊涂。",
+      "T3 高风险图里凡调模型的节点必须声明档位，否则『贵模型干杂活』的浪费无人可见。",
+      "档位只登记不评判：这是计量字段（让成本可见），不是性能门（不拦你用强模型）。"
+    ],
+    "required_tiers": ["T3"]
+  }
+}
