@@ -95,7 +95,7 @@ fi
 say "state=$STATE"
 if [ -n "$PY" ]; then
   if [ ! -f "$PY_GATE" ]; then
-    say "BLOCK 缺 $PY_GATE，门禁编排器不在，无法验证"
+    say "BLOCK 缺 ${PY_GATE}，门禁编排器不在，无法验证"
     exit 1
   fi
   say "runtime=python($PY) 覆盖 5/5 门"
@@ -104,7 +104,7 @@ if [ -n "$PY" ]; then
   CODE=$?
 else
   if [ ! -f "$NODE_GATE" ]; then
-    say "BLOCK 缺 $NODE_GATE，Node 兜底路径不完整，无法验证"
+    say "BLOCK 缺 ${NODE_GATE}，Node 兜底路径不完整，无法验证"
     exit 1
   fi
   say "runtime=node($NODE) 覆盖 4/5 门（reality_scan 需 Python AST，Node 侧不假装能跑）"
@@ -121,6 +121,6 @@ if [ "$CODE" -eq 2 ]; then
   say "USAGE_ERROR 门禁未能真实执行（exit=2）——按未验证=未完成处理，拦下提交"
   exit 2
 fi
-say "BLOCK 门禁判定不通过（exit=$CODE），拦下提交"
+say "BLOCK 门禁判定不通过（exit=${CODE}），拦下提交"
 say "      修到门禁 PASS 再提交；确需绕过请显式：git commit --no-verify"
 exit 1

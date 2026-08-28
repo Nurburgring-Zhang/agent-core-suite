@@ -151,7 +151,7 @@ done <<EOF
 $PATHS_OUT
 EOF
 if [ -z "$SKILL_HOME" ] || [ -z "$RULES_SRC" ] || [ -z "$RULES_DST" ]; then
-  fail "acs_doctor 未给出完整落点（mode=$MODE），终止安装以免装到错误位置"
+  fail "acs_doctor 未给出完整落点（mode=${MODE}），终止安装以免装到错误位置"
   exit 1
 fi
 ACS_DIR="$TARGET_FULL/.acs"
@@ -161,9 +161,9 @@ ACS_SPEC="$ACS_DIR/spec"
 
 say ""
 say "[2/4] 安装路径"
-say "  终端   : $MODE（$MODE_LABEL）"
+say "  终端   : ${MODE}（${MODE_LABEL}）"
 say "  技能   -> $SKILL_HOME"
-say "  规则   -> $RULES_DST（源：$RULES_SRC）"
+say "  规则   -> ${RULES_DST}（源：${RULES_SRC}）"
 say "  门禁   -> $ACS_SCRIPTS"
 say "  模板   -> $ACS_TEMPLATES"
 [ -z "$MODE_NOTE" ] || say "  注意   : $MODE_NOTE"
@@ -201,7 +201,7 @@ done
 # 规则落点由 spec/terminals.json 决定。唯一的例外语义：当源是 AGENTS.md 时，目标是一个
 # 各终端共用的约定文件，很可能已被主人写过内容 —— 此时不覆盖，改为提示手工合并。
 if [ "$RULES_SRC" = "AGENTS.md" ] && [ -f "$RULES_DST" ] && [ "$FORCE" -eq 0 ]; then
-  say "  skip  已存在 $RULES_DST，请手工合并 $SUITE/AGENTS.md（用 --force 覆盖）"
+  say "  skip  已存在 ${RULES_DST}，请手工合并 $SUITE/AGENTS.md（用 --force 覆盖）"
   say "        注：这是唯一一处有意为之的跳过，可能留下一个旧版本。"
 else
   copy_one "$SUITE/$RULES_SRC" "$RULES_DST"
@@ -231,7 +231,7 @@ copy_one "$SUITE/manifest.json" "$ACS_DIR/manifest.json"
 if [ "$WITH_HOOK" -eq 1 ]; then
   GIT_HOOKS="$TARGET_FULL/.git/hooks"
   if [ ! -d "$TARGET_FULL/.git" ]; then
-    fail "--with-hook 但目标不是 git 仓库：$TARGET_FULL（无 .git 目录，挂不了 pre-commit）"
+    fail "--with-hook 但目标不是 git 仓库：${TARGET_FULL}（无 .git 目录，挂不了 pre-commit）"
   else
     copy_one "$SUITE/hooks/pre-commit" "$GIT_HOOKS/pre-commit"
     if [ "$DRY" -eq 0 ] && [ -f "$GIT_HOOKS/pre-commit" ]; then

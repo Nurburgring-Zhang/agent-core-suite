@@ -192,7 +192,7 @@ python -X utf8 scripts/gate_verify_rank.py --record templates/verify-record.exam
 
 ## Environment
 
-Python ≥ 3.8, **zero third-party dependencies**. On Windows prefer `$env:PYTHONUTF8='1'` and `python -X utf8` to avoid mojibake in Chinese output. PowerShell separates statements with `;` (no `&&`); `install.ps1` uses basic cmdlets only and is compatible with ConstrainedLanguage mode.
+Python ≥ 3.8, **zero third-party dependencies** for the gates, installer and skills (the self-test suite itself uses pytest — CI installs it explicitly). On Windows prefer `$env:PYTHONUTF8='1'` and `python -X utf8` to avoid mojibake in Chinese output. PowerShell separates statements with `;` (no `&&`); `install.ps1` uses basic cmdlets only and is compatible with ConstrainedLanguage mode.
 
 The two installers **default to different Python interpreters** (a platform-convention mismatch, not a bug): `install.ps1` defaults to `python`, `install.sh` defaults to `python3`; override with `-PythonExe` / `--python` when needed.
 
@@ -417,7 +417,7 @@ python -X utf8 scripts/gate_verify_rank.py --record templates/verify-record.exam
 
 ## 环境
 
-Python ≥ 3.8，**零第三方依赖**。Windows 建议 `$env:PYTHONUTF8='1'` 且用 `python -X utf8` 以避免中文输出乱码。
+Python ≥ 3.8，门禁 / 安装器 / 技能**零第三方依赖**（自测套件本身用 pytest，CI 已显式安装）。Windows 建议 `$env:PYTHONUTF8='1'` 且用 `python -X utf8` 以避免中文输出乱码。
 PowerShell 用 `;` 分隔语句（不支持 `&&`）；`install.ps1` 只用基础 cmdlet，兼容 ConstrainedLanguage 模式。
 
 两个安装脚本的 Python 解释器**默认值不同**（各平台常规不一致，不是 bug）：`install.ps1` 默认 `python`，`install.sh` 默认 `python3`；
