@@ -1,4 +1,4 @@
-# Agent Core Suite (ACS) v1.1.0 — 设计与标准（G2 规划门四件套）
+# Agent Core Suite (ACS) v1.2.0 — 设计与标准（G2 规划门四件套）
 
 > 面向 agent 终端的工作标准 SOP 套件：skill + harness + loop engineering + graph engineering。
 > 目标双约束：**能力上限抬高** 且 **token/时间成本下降**。

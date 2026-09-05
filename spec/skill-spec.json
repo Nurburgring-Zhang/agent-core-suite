@@ -1,0 +1,29 @@
+{
+  "spec_version": "1.2.0",
+  "_why": [
+    "规则来源：anthropics/skills 的 skill-creator/scripts/quick_validate.py（官方 Agent Skills 规范）。",
+    "官方明确 description 是唯一触发机制，且模型倾向欠触发；故描述必须写清触发条件。",
+    "本套件补充 SKIP 边界要求：入口技能只写「何时用」不写「何时不用」会过触发，把 T0 闲聊也拖进重流水线。",
+    "行数上限对应渐进披露：正文过长等于把三层结构压成一层，metadata 常驻成本随之上升。"
+  ],
+  "skills_dir": "skills",
+  "frontmatter": {
+    "allowed_keys": ["name", "description", "license", "allowed-tools", "metadata", "compatibility"],
+    "required_keys": ["name", "description"],
+    "max_name_chars": 64,
+    "name_pattern": "[a-z0-9]+(-[a-z0-9]+)*"
+  },
+  "description": {
+    "max_chars": 1024,
+    "min_chars": 40,
+    "forbidden_chars": ["<", ">"],
+    "trigger_keywords": ["当", "时必用", "时使用", "触发", "Use when", "适用"],
+    "skip_keywords": ["不触发", "不适用", "禁止", "排除", "SKIP", "Do NOT"],
+    "_skip_note": "只对 entry_skills 强制 SKIP 边界：子技能由入口按需加载，过触发风险低；入口技能是全局第一跳，必须写清边界。"
+  },
+  "body": {
+    "max_lines": 500,
+    "_note": "官方建议 SKILL.md 正文 <500 行；超限说明细节该下沉到 references/。"
+  },
+  "entry_skills": ["universal-task-code"]
+}

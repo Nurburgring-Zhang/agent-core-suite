@@ -7,7 +7,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/Nurburgring-Zhang/agent-core-suite/acs-gates.yml?label=CI&logo=githubactions)](https://github.com/Nurburgring-Zhang/agent-core-suite/actions)
 ![Python ≥ 3.8](https://img.shields.io/badge/Python-%E2%89%A53.8-blue?logo=python)
 ![Dependencies: none](https://img.shields.io/badge/dependencies-none-success)
-![Tests](https://img.shields.io/badge/tests-377%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-run%20pytest%20for%20current%20count-blue)
 ![License: MIT](https://img.shields.io/badge/license-MIT-yellow)
 
 > **Turn "I think it's done" into exit code 0.**
@@ -68,7 +68,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -Target C:\path\to\worksp
 chmod +x install.sh && ./install.sh --target /path/to/workspace
 ```
 
-Both installers default to `--mode auto`: they ask the `acs_doctor` probe what this machine has and which terminal this workspace belongs to, then decide install targets. Currently recognized: qoder / qoderwork / claude / cursor / windsurf / codex; if none matches, it lands explicitly on generic (it never pretends to have recognized something). To see the health check first:
+Both installers default to `--mode auto`: they ask the `acs_doctor` probe what this machine has and which terminal this workspace belongs to, then decide install targets. Currently recognized: qwenworkcn / qoder / qoderwork / claude / cursor / windsurf / codex; if none matches, it lands explicitly on generic (it never pretends to have recognized something). To see the health check first:
 
 ```bash
 python -X utf8 scripts/acs_doctor.py --target .        # no Python? node scripts/node/acs_gates.mjs doctor --target .
@@ -169,11 +169,21 @@ CI (`.github/workflows/acs-gates.yml`) runs four jobs: `gates` (ubuntu 3.8 / ubu
 
 ```bash
 python -X utf8 scripts/install_check.py --root .                      # inventory completeness
-python -X utf8 -m pytest tests/test_gates.py -q                       # 377 passed
+python -X utf8 -m pytest tests/test_gates.py -q                       # use the live result; do not trust a historical count
 python -X utf8 scripts/gate_reality_scan.py --root .                  # the suite passes its own reality scan
 python -X utf8 scripts/run_gates.py --state templates/task-state.example.json --root . --tier T2
 python -X utf8 scripts/gate_verify_rank.py --record templates/verify-record.example.json --tier T3
 ```
+
+## QwenWorkCN global integration
+
+QwenWorkCN uses `~/.qwenworkcn/awareness/main/SOUL.md` and `AGENTS.md` as the global behavior layer, user Skills as the capability layer, and this suite as the machine-checkable Harness. Run:
+
+```bash
+python -X utf8 scripts/qwenwork_global_verify.py --home ~/.qwenworkcn
+```
+
+The probe verifies global rule anchors, byte identity of the five core Skills, required gates/templates, and the QwenWorkCN terminal mapping. It does **not** claim access to the system prompt, private product runtime, or an unpublished global pre/post-task hook. Git hooks and CI remain explicit per-project opt-ins.
 
 ## Known limitations (declared honestly, no whitewash)
 
@@ -197,6 +207,14 @@ Python ≥ 3.8, **zero third-party dependencies** for the gates, installer and s
 The two installers **default to different Python interpreters** (a platform-convention mismatch, not a bug): `install.ps1` defaults to `python`, `install.sh` defaults to `python3`; override with `-PythonExe` / `--python` when needed.
 
 `install.ps1` messages are **deliberately all ASCII English**: Windows PowerShell 5.1 parses BOM-less `.ps1` as ANSI, and some multibyte characters end in byte `0x5C` (`\`), breaking string closure and failing the parse — a trap hit in real testing and fixed, not laziness. `install.sh` runs under `bash` (POSIX-sh-compatible style). Development machine is Windows, but it passed `bash -n` and real installs (including seven end-to-end `--with-hook` runs) under Git Bash and is pinned in pytest; **real Linux/macOS runs are the CI `installer` job's responsibility** (ubuntu-latest + macos-latest). First run in a new environment: `--dry-run` first, then install.
+
+## What's new in v1.2.0
+
+- **Creed upgraded 15 → 18 rules**: added deep-decomposition/retrieval-reliability, scientist-grade reasoning, multi-round iterative thinking, and project-description-with-owner-confirmation. All copies (global SOUL, reference-creed, SKILL) locked byte-consistent by `gate_rule_consistency.py`.
+- **Three new machine-checkable gates**: `gate_rule_consistency` (rule-system self-consistency: count sync, article markers, load-bearing phrases, cross-copy carry, external global-creed drift), `gate_skill_spec` (SKILL.md spec: frontmatter whitelist, kebab-case name matching dir, description length/forbidden-chars/trigger, entry-skill SKIP boundary, body line cap, no dead links), `gate_honesty_ledger` (evidence 7-tier basis + no silent aggregate upgrade, degradation ledger with ceiling+upgrade-path, subagent output contract + file cap, judge selftest precondition, 3-arm behavior eval with terse middle arm).
+- **Portability trio**: `spec/adapters.json` (capability→tool mapping per terminal, model-agnostic), `scripts/acs_bootstrap.py` (injection payload in claude/cursor/generic shapes, honest full/partial/soft_only enforcement), `spec/capability-coverage.json` (19 domains: 15 portable in-pack, 4 runtime-only not-bundlable with fallbacks).
+- **Orchestrator 5 → 8 gates**; run_gates honestly prints "skipped (not passed)" for rule/skillspec when the checked tree lacks their spec.
+- Sources: ponytail (rule-copy drift, judge selftest, debt comments), anthropics/skills (SKILL.md spec), caveman (evidence tiers, cavecrew, 3-arm eval), superpowers (description discipline, ledger). All are methodology migrations + local re-implementations; upstream benefit numbers were NOT reproduced here and are not claimed.
 
 ## What's new in v1.1.0
 
@@ -269,7 +287,7 @@ chmod +x install.sh && ./install.sh --target /path/to/workspace
 ```
 
 两个安装器默认 `--mode auto`：先跟 `acs_doctor` 探针问清楚「这台机器有什么、这个工作区是哪个终端」，
-再决定落点。当前识别 qoder / qoderwork / claude / cursor / windsurf / codex，全不命中则显式落到 generic（不假装识别）。
+再决定落点。当前识别 qwenworkcn / qoder / qoderwork / claude / cursor / windsurf / codex，全不命中则显式落到 generic（不假装识别）。
 想先看体检结论：
 
 ```bash
@@ -380,11 +398,21 @@ CI（`.github/workflows/acs-gates.yml`）四个作业：`gates`（ubuntu 3.8 / u
 
 ```bash
 python -X utf8 scripts/install_check.py --root .                      # 清单齐全性
-python -X utf8 -m pytest tests/test_gates.py -q                       # 377 passed
+python -X utf8 -m pytest tests/test_gates.py -q                       # use the live result; do not trust a historical count
 python -X utf8 scripts/gate_reality_scan.py --root .                  # 套件自身通过真实性扫描
 python -X utf8 scripts/run_gates.py --state templates/task-state.example.json --root . --tier T2
 python -X utf8 scripts/gate_verify_rank.py --record templates/verify-record.example.json --tier T3
 ```
+
+## 千问办公全局融合
+
+千问办公以 `~/.qwenworkcn/awareness/main/SOUL.md` 与 `AGENTS.md` 承载全局行为层，用户 Skills 承载能力层，本套件承载可机检 Harness。运行：
+
+```bash
+python -X utf8 scripts/qwenwork_global_verify.py --home ~/.qwenworkcn
+```
+
+探针验证全局规则锚点、五个核心 Skill 的字节一致性、必需门禁/模板和 QwenWorkCN 终端映射。它不宣称能修改系统提示词、产品私有运行时或未公开的全局任务前后置 Hook；Git Hook 与 CI 仍按具体项目显式授权启用。
 
 ## 已知限制（如实声明，不粉饰）
 

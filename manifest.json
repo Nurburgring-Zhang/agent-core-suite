@@ -1,7 +1,7 @@
 {
   "name": "agent-core-suite",
-  "version": "1.1.0",
-  "spec_version": "1.1.0",
+  "version": "1.2.0",
+  "spec_version": "1.2.0",
   "description": "Agent 能力增强套件：skill + harness + loop engineering + graph engineering，叠加在 agent 终端原生能力之上，用于强化其底层执行能力并压降 token 与时间成本。",
   "language": "zh-CN",
   "positioning": {
@@ -25,7 +25,7 @@
   "runtime": {
     "python": ">=3.8",
     "third_party_deps": [],
-    "note": "六个门禁脚本仅用 Python 标准库（json/os/sys/re/ast/argparse/subprocess），无需 pip 安装。Windows 下建议 python -X utf8。"
+    "note": "九道门禁脚本（run_gates 编排八门）仅用 Python 标准库（json/os/sys/re/ast/argparse/subprocess），无需 pip 安装。Windows 下建议 python -X utf8。"
   },
   "runtimes": {
     "_why": "硬门禁只有一种运行时，就等于把强制力押在单一依赖上；环境缺它，整套件退化成纪律文档。",
@@ -36,7 +36,10 @@
         "loop",
         "checklist",
         "reality",
-        "verify"
+        "verify",
+        "honesty",
+        "rule",
+        "skillspec"
       ],
       "not_covered": [],
       "authoritative": true
@@ -51,10 +54,13 @@
         "verify"
       ],
       "not_covered": [
-        "reality_scan"
+        "reality_scan",
+        "honesty",
+        "rule_consistency",
+        "skill_spec"
       ],
       "authoritative": false,
-      "note": "reality 门需 Python AST，Node 侧显式返回 USAGE_ERROR(2) 并说明理由；run 子命令强制打印 PARTIAL_COVERAGE 4/5，避免把部分覆盖读成全门通过。有 Python 时以 Python 实现为准。"
+      "note": "reality 门需 Python AST；v1.2 新增的 honesty/rule/skillspec 三门尚无 Node 镜像，Node 侧显式返回 USAGE_ERROR 并说明理由，run 子命令打印 PARTIAL_COVERAGE，避免把部分覆盖读成全门通过。有 Python 时以 Python 实现为准。"
     },
     "consistency_test": "tests/test_gates.py::test_cross_impl_exit_codes_match（同一批负样本逐个比对两实现退出码）",
     "doctor": {
@@ -103,7 +109,8 @@
   "entry": {
     "skill": "skills/universal-task-code/SKILL.md",
     "portable_rule": "AGENTS.md",
-    "gate_runner": "scripts/run_gates.py"
+    "gate_runner": "scripts/run_gates.py",
+    "bootstrap": "scripts/acs_bootstrap.py"
   },
   "skills": [
     {
@@ -162,6 +169,21 @@
       "id": "checklist",
       "script": "scripts/gate_checklist.py",
       "checks": "G0-G6 分级必填、证据非空话、对抗审核与上线测试轮次；v1.1：T3 双盲审查（≥2 独立审查者、禁建造者/重复、分歧仲裁留痕）"
+    },
+    {
+      "id": "rule",
+      "script": "scripts/gate_rule_consistency.py",
+      "checks": "规则体系自洽：条数声明同步、条目标记齐全、承重短语不丢失、多副本共同承载短语、外部全局规则文件不漂移（v1.2 新增；来源 ponytail check-rule-copies 两段式）"
+    },
+    {
+      "id": "skillspec",
+      "script": "scripts/gate_skill_spec.py",
+      "checks": "技能规范：frontmatter 键白名单、name kebab-case 且与目录一致、description 长度/禁用字符/触发条件、入口技能必须写 SKIP 边界、正文行数上限、本地引用不断链（v1.2 新增；来源 anthropics/skills quick_validate）"
+    },
+    {
+      "id": "honesty",
+      "script": "scripts/gate_honesty_ledger.py",
+      "checks": "诚实度：证据七档 basis 与禁止聚合升档、降级台账必带天花板与升级路径、子代理输出契约与文件数上限、裁判自证前置、行为评测三臂含朴素中间臂（v1.2 新增；来源 caveman 证据分级+cavecrew+三臂评测、ponytail judge selftest）"
     }
   ],
   "exit_codes": {
@@ -201,7 +223,7 @@
   },
   "install_targets": {
     "_source_of_truth": "spec/terminals.json",
-    "note": "各终端的技能目录与规则落点只存于 spec/terminals.json；install.sh / install.ps1 一律向 acs_doctor 取值，本文件不再抄第二份，避免漂移。当前覆盖：qoder / qoderwork / claude / cursor / windsurf / codex / generic。",
+    "note": "各终端的技能目录与规则落点只存于 spec/terminals.json；install.sh / install.ps1 一律向 acs_doctor 取值，本文件不再抄第二份，避免漂移。当前覆盖：qwenworkcn / qoder / qoderwork / claude / cursor / windsurf / codex / generic。",
     "scripts": "<workspace>/.acs/scripts/（含 acs_doctor.py 与 node/acs_gates.mjs）",
     "spec": "<workspace>/.acs/spec/（thresholds.json + terminals.json）"
   },
@@ -212,21 +234,26 @@
     "LICENSE",
     "README.md",
     "VERSION",
-    "manifest.json",
     "hooks/pre-commit",
     "install.ps1",
     "install.sh",
+    "manifest.json",
     "pack.py",
     "rules/agent-core-suite.md",
     "scripts/_acs_common.py",
+    "scripts/acs_bootstrap.py",
     "scripts/acs_doctor.py",
     "scripts/gate_checklist.py",
+    "scripts/gate_honesty_ledger.py",
     "scripts/gate_loop_guard.py",
     "scripts/gate_reality_scan.py",
+    "scripts/gate_rule_consistency.py",
+    "scripts/gate_skill_spec.py",
     "scripts/gate_state_validate.py",
     "scripts/gate_verify_rank.py",
     "scripts/install_check.py",
     "scripts/node/acs_gates.mjs",
+    "scripts/qwenwork_global_verify.py",
     "scripts/run_gates.py",
     "skills/graph-engineering/SKILL.md",
     "skills/loop-engineering/SKILL.md",
@@ -236,6 +263,11 @@
     "skills/universal-task-code/SKILL.md",
     "skills/universal-task-code/reference-creed.md",
     "skills/universal-task-code/reference-gates.md",
+    "spec/adapters.json",
+    "spec/capability-coverage.json",
+    "spec/qwenwork-global.json",
+    "spec/rule-consistency.json",
+    "spec/skill-spec.json",
     "spec/terminals.json",
     "spec/thresholds.json",
     "templates/handoff-summary.md",
@@ -301,13 +333,32 @@
     "install_check": "python -X utf8 scripts/install_check.py --root .",
     "doctor": "python -X utf8 scripts/acs_doctor.py --target .（Node 侧：node scripts/node/acs_gates.mjs doctor --target .）",
     "self_test": "python -X utf8 -m pytest tests/test_gates.py -q",
-    "self_test_result_at_release": "377 passed",
+    "self_test_result_at_release": "动态运行 pytest tests/test_gates.py -q；禁止把历史计数当当前证据",
     "self_scan": "python -X utf8 scripts/gate_reality_scan.py --root .",
     "hook_syntax": "bash -n hooks/pre-commit",
     "positive_sample": "python -X utf8 scripts/run_gates.py --state templates/task-state.example.json --root . --tier T2",
-    "pack": "python -X utf8 pack.py --root ."
+    "pack": "python -X utf8 pack.py --root .",
+    "rule_consistency": "python -X utf8 scripts/gate_rule_consistency.py --root . [--external <全局规则文件>]",
+    "skill_spec": "python -X utf8 scripts/gate_skill_spec.py --root .",
+    "honesty": "python -X utf8 scripts/gate_honesty_ledger.py --state templates/task-state.example.json --tier T2",
+    "bootstrap": "python -X utf8 scripts/acs_bootstrap.py --root . --profile qwenworkcn --verify"
+  },
+  "qwenwork_global_integration": {
+    "contract": "spec/qwenwork-global.json",
+    "verifier": "scripts/qwenwork_global_verify.py",
+    "global_context": [
+      "~/.qwenworkcn/awareness/main/SOUL.md",
+      "~/.qwenworkcn/awareness/main/AGENTS.md"
+    ],
+    "user_skills": "~/.qwenworkcn/skills",
+    "merge_policy": "保强三方合并：保留当前更强内容，只吸收经真实测试证明的不回退增量",
+    "boundary": "仅强化可配置 Agent 行为层、Skills、Harness 与公开设置；不修改系统提示词、产品私有内核或原生安全权限"
   },
   "known_limitations": [
+    "[v1.2 覆盖边界] 新增三门（rule/skillspec/honesty）仅 Python 实现，无 Node 镜像；且 rule/skillspec 只在被检查树自带对应 spec 时参与，业务工作区跑 run_gates 会显式打印「跳过（非通过）」而不是假装检查过。",
+    "[v1.2 借鉴来源] 三门机制分别来自 ponytail（规则副本漂移、judge selftest、债务注释）、anthropics/skills（SKILL.md 规范与 with/without 基线）、caveman（七档证据分级、子代理契约、三臂评测）、superpowers（description 写法纪律、ledger 抗压缩）。均为方法学迁移与本地重实现，非代码搬运；各上游的收益数字未在本机复现，不作为本套件主张。",
+    "[v1.2 注入边界] acs_bootstrap.py 只产出注入载荷，不写文件、不改终端配置；真正的注入由该终端的 hook/CI/人工完成。终端若无 hook 机制（如仅读 AGENTS.md 的终端），「规则确被加载」仍需自行验证，本包不代为断言。",
+    "[千问办公全局边界] 产品 1.0.2 未公开全局任务前置/后置 Hook；L1/L2 可全局注入和机检，L3 Git Hook/CI 仅对主人授权的具体项目生效，不得宣称覆盖全部聊天任务。",
     "[降维实现] 自验证评分不使用模型 logits（agent 侧不可得），改为显式 1-20 分 rubric，不宣称复现论文精度；作为补偿，冠亚加权分差 < spec.self_consistency.trigger_score_gap 时 T3 强制自一致性重采样（重复评分的分歧度是唯一可得的置信度代理），且重采样必须真的多出样本，否则 triggered=true 就只是口号。",
     "token 与耗时默认为代理指标（*_proxy）；能拿到真账时必须经 cost_metering 回填并交代来源与可复查证据（T2+ 必须显式声明 source，拿不到就写 unavailable，沉默不算声明）。来源不可审计时禁止出现 tokens_actual —— 字段名带后缀就是为了不冒充真实计量；脚本仍无法独立向平台核账，只能校验自洽性、来源声明与分级上限。",
     "Node 实现覆盖 4/5 道门，reality_scan 需 Python AST 故不覆盖（显式 USAGE_ERROR，非静默降级）；两实现退出码一致性由 test_cross_impl_exit_codes_match 守住。",
@@ -320,5 +371,33 @@
     "[外部强制点] pre-commit hook 能被 `git commit --no-verify` 绕过（有意保留的主人逃生口），故 hook 不能当唯一屏障；CI 那一层才是绕不过的。hook 默认不装，不加 --with-hook / -WithHook 就只有 L1+L2。",
     "[多终端] claude / cursor / windsurf / codex 的落点按各自公开约定写入 spec/terminals.json，已做路径解析与拷贝验证，但未在这些终端内实测「规则确被加载」；Cursor 的 .mdc 规则需自行补 frontmatter，本套件不代写。",
     "install 阶段不做哈希校验，只核对清单存在性与非空；sha256 逐项校验仅发生在 pack.py 打包时。"
-  ]
+  ],
+  "adapters_spec": {
+    "path": "spec/adapters.json",
+    "role": "single-source-of-truth",
+    "consumed_by": [
+      "scripts/acs_bootstrap.py"
+    ],
+    "note": "portable_core（跨终端不变）与 capability_adapters（随终端变）分离；换终端只加 profile，换模型不改包。"
+  },
+  "portability": {
+    "_why": "「任意 agent、任意大模型都生效」必须可验证，否则是夸大。",
+    "model_agnostic": "包内无模型 API 调用、无 provider endpoint、不依赖 logprobs；model_tier 仅作成本标签",
+    "terminal_agnostic": "规则与门禁不变，落点走 spec/terminals.json，能力映射走 spec/adapters.json",
+    "bootstrap": "scripts/acs_bootstrap.py 按 claude / cursor / 通用 三种 JSON 形状输出注入载荷；--verify 只自检不输出正文",
+    "enforcement_levels": [
+      "full（Python，9 门可机检）",
+      "partial（仅 Node，4 门）",
+      "soft_only（无运行时，强制力归零，显式声明）"
+    ],
+    "capability_coverage": "spec/capability-coverage.json 机检覆盖完整性：19 域，15 可打包 / 4 纯运行时不可打包"
+  },
+  "capability_coverage_spec": {
+    "path": "spec/capability-coverage.json",
+    "role": "single-source-of-truth",
+    "consumed_by": [
+      "tests/test_gates.py"
+    ],
+    "note": "把 qoder/qoderwork/qwenwork 全部能力域拆成可移植层(在包内)与运行时层(不可打包)，诚实标注 in_pack；禁止宣称便携包自足包含另一产品的 MCP/toolcall/记忆/任务运行时。"
+  }
 }

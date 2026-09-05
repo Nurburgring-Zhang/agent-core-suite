@@ -8,6 +8,7 @@ import copy
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -519,9 +520,14 @@ def test_spec_registers_v11_hardening():
 
 
 def test_example_is_v11_positive_carrier():
-    """example 必须持续充当 v1.1 正样本载体：这些示范被删，T3-only 检查就测不到。"""
+    """example 必须持续充当正样本载体：这些示范被删，T3-only 检查就测不到。
+
+    contract_version 跟随 VERSION 文件而非写死常量（ACS-ALLOW：本行在讲为何不写死，属规则说明而非降级实现）：写死版本号会让每次升版
+    都必须改测试，而「改测试让它变绿」正是最容易掩盖真实回退的动作。
+    """
     s = load("task-state.example.json")
-    assert s["contract_version"] == "1.1.0", s.get("contract_version")
+    want = io.open(str(SUITE / "VERSION"), "r", encoding="utf-8").read().strip()
+    assert s["contract_version"] == want, (s.get("contract_version"), want)
     assert isinstance(s.get("artifacts"), list) and s["artifacts"], "artifacts 载体缺失"
     assert any("supersedes" in a for a in s["artifacts"]), "supersedes 链示范缺失"
     n2 = [n for n in s["graph"]["nodes"] if n["id"] == "n2"][0]
@@ -581,6 +587,23 @@ def test_reality_scan_test_files_may_mock(tmp_path):
     write(tmp_path, "tests/test_y.py", "def test_b():\n    assert 1  # TODO\n")  # ACS-ALLOW
     code, out = run_gate("gate_reality_scan.py", "--root", tmp_path)
     assert code == BLOCK, out
+
+
+def test_reality_scan_does_not_treat_contest_as_test(tmp_path):
+    """生产文件名含 test 子串不能获得 fake 词豁免。"""
+    write(tmp_path, "contest.py", "VALUE = 'mock server'\n")
+    code, out = run_gate("gate_reality_scan.py", "--root", tmp_path)
+    assert code == BLOCK, out
+    assert "mock" in out, out
+
+
+@pytest.mark.parametrize("limit", ["0", "-1"])
+def test_reality_scan_rejects_nonpositive_max(tmp_path, limit):
+    """输出上限不得关闭扫描；0或负数必须 USAGE_ERROR。"""
+    write(tmp_path, "a.py", "VALUE = 'placeholder'\n")
+    code, out = run_gate("gate_reality_scan.py", "--root", tmp_path, "--max", limit)
+    assert code == USAGE, out
+    assert "大于等于 1" in out, out
 
 
 def test_reality_scan_abstract_method_allowed(tmp_path):
@@ -676,6 +699,7 @@ def test_pack_roundtrip_sha256(tmp_path):
 
 _WRITE_FUNCS = (
     "remove", "unlink", "rmtree", "mkdir", "makedirs", "rename", "replace",
+    "write_text", "write_bytes", "touch", "open",
     "copy", "copy2", "copytree", "move", "chmod", "kill", "killpg", "system", "putenv",
 )
 
@@ -702,6 +726,8 @@ def _scan_side_effects(src, name):
             if fname in _WRITE_FUNCS:
                 if isinstance(fn, ast.Name):
                     bad.append("%s:%d 直接调用了 %s" % (name, node.lineno, fname))
+                elif fname in ("write_text", "write_bytes", "touch"):
+                    bad.append("%s:%d 调用了路径写方法 .%s" % (name, node.lineno, fname))
                 else:
                     base = fn.value
                     base_name = base.id if isinstance(base, ast.Name) else (
@@ -1116,7 +1142,15 @@ def test_manifest_registers_known_impl_diff():
     diffs = runtimes.get("known_impl_differences") or []
     keys = [d.get("key") for d in diffs]
     assert KNOWN_IMPL_DIFF_KEY in keys, keys
-    assert runtimes.get("node", {}).get("not_covered") == ["reality_scan"], runtimes
+    not_covered = runtimes.get("node", {}).get("not_covered") or []
+    # reality 门必须永远在列（需 Python AST）；v1.2 起 honesty/rule/skillspec 亦无 Node 镜像。
+    assert "reality_scan" in not_covered, runtimes
+    covers = runtimes.get("python", {}).get("covers") or []
+    assert "honesty" in covers and "rule" in covers and "skillspec" in covers, runtimes
+    # 未覆盖清单不得包含 Python 侧也没有的门：那说明清单在编故事
+    known = set(covers) | {"reality_scan", "rule_consistency", "skill_spec"}
+    stray = [x for x in not_covered if x not in known]
+    assert not stray, stray
 
 
 # ------------------------------------------------- 编排
@@ -1525,6 +1559,70 @@ def test_spec_sections_have_consumers():
     assert not dead, "spec 节无任何实现消费者（死配置：删掉或接上）：\n%s" % "\n".join(dead)
 
 
+def _build_qwenwork_fixture(tmp_path):
+    """构造隔离的千问办公全局目录，避免单测依赖真实用户目录。"""
+    home = tmp_path / ".qwenworkcn"
+    awareness = home / "awareness" / "main"
+    awareness.mkdir(parents=True)
+    contract = load("../spec/qwenwork-global.json")
+    for filename, anchors in contract["required_anchors"].items():
+        (awareness / filename).write_text("\n".join(anchors), encoding="utf-8")
+    shutil.copytree(SUITE, home / "agent-core-suite")
+    skills = home / "skills"
+    skills.mkdir()
+    for name in contract["required_skills"]:
+        shutil.copytree(SUITE / "skills" / name, skills / name)
+    return home
+
+
+def test_qwenwork_global_verify_positive(tmp_path):
+    """隔离配置的静态完整性检查必须 PASS，并创建一份不可覆盖的证据。"""
+    home = _build_qwenwork_fixture(tmp_path)
+    code, out = run_gate("qwenwork_global_verify.py", "--home", home, "--json")
+    assert code == PASS, out
+    payload = json.loads(out)
+    assert payload["status"] == "STATIC_PASS"
+    assert payload["verification_kind"] == "static_configuration_integrity"
+    assert len(payload["skills"]) == 5
+    assert all(item["identical"] for item in payload["skills"].values())
+
+
+def test_qwenwork_global_verify_blocks_missing_anchor(tmp_path):
+    """全局规则缺静态锚点时必须 BLOCK，禁止用文件存在冒充配置完整。"""
+    home = _build_qwenwork_fixture(tmp_path)
+    agents = home / "awareness" / "main" / "AGENTS.md"
+    agents.write_text("不完整规则", encoding="utf-8")
+    code, out = run_gate("qwenwork_global_verify.py", "--home", home)
+    assert code == BLOCK, out
+    assert "缺少静态锚点" in out
+
+
+def test_qwenwork_global_verify_rejects_empty_contract(tmp_path):
+    """空契约不能退化为零检查 PASS。"""
+    contract = tmp_path / "empty.json"
+    contract.write_text("{}", encoding="utf-8")
+    code, out = run_gate("qwenwork_global_verify.py", "--spec", contract, "--home", tmp_path)
+    assert code == USAGE, out
+    assert "契约缺少字段" in out
+
+
+def test_qwenwork_global_verify_is_readonly():
+    """全局验证器不得含写文件或建目录副作用。"""
+    src = io.open(str(SCRIPTS / "qwenwork_global_verify.py"), "r", encoding="utf-8").read()
+    bad = _scan_side_effects(src, "qwenwork_global_verify.py")
+    assert not bad, "\n".join(bad)
+
+
+def test_qwenwork_global_verify_rejects_parent_traversal(tmp_path):
+    """契约路径不得通过 .. 越出千问办公资源目录。"""
+    contract = load("../spec/qwenwork-global.json")
+    contract["paths"]["skills_dir"] = "../outside"
+    path = dump(tmp_path, contract, "bad-global-spec.json")
+    code, out = run_gate("qwenwork_global_verify.py", "--spec", path, "--home", tmp_path)
+    assert code == USAGE, out
+    assert "相对路径" in out
+
+
 def test_suite_keeps_no_identical_duplicate_files():
     """内容完全相同的两份文件 = 同一条规则两处维护：改一处漏一处只是时间问题。"""
     import hashlib
@@ -1539,3 +1637,408 @@ def test_suite_keeps_no_identical_duplicate_files():
             seen[digest] = str(p.relative_to(SUITE))
     assert not dups, "发现内容完全相同的文件对（收敛为一份，引用指向它）：\n%s" % "\n".join(dups)
 
+
+
+# ------------------------------------------------- v1.2 三道新门禁（rule / skillspec / honesty）
+#
+# 借鉴来源：ponytail check-rule-copies（规则副本漂移）、anthropics/skills quick_validate
+# （SKILL.md 规范）、caveman 证据分级 + cavecrew 子代理契约 + 三臂评测、ponytail judge --selftest。
+# 均为方法学迁移与本地重实现；上游收益数字未在本机复现，故不作为本套件主张。
+
+V12_GATES = ("gate_rule_consistency.py", "gate_skill_spec.py", "gate_honesty_ledger.py")
+
+
+def _suite_copy(tmp_path, name="suite"):
+    """复制整棵套件树：新门禁按 --root 解析各自 spec，必须在副本上验证。"""
+    dst = tmp_path / name
+    shutil.copytree(str(SUITE), str(dst), ignore=shutil.ignore_patterns(
+        ".git", "__pycache__", ".pytest_cache"))
+    return dst
+
+
+@pytest.mark.parametrize("script", V12_GATES)
+def test_v12_gates_registered_in_manifest(script):
+    """新门禁必须进清单：不进清单安装就不拷，装完即 USAGE_ERROR。"""
+    data = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
+    rel = "scripts/%s" % script
+    assert rel in data["files"], rel
+    ids = [g.get("script") for g in data.get("gates") or []]
+    assert rel in ids, ids
+
+
+@pytest.mark.parametrize("script,spec_rel", [
+    ("gate_rule_consistency.py", "spec/rule-consistency.json"),
+    ("gate_skill_spec.py", "spec/skill-spec.json"),
+])
+def test_v12_gates_hard_fail_when_own_spec_missing(tmp_path, script, spec_rel):
+    """真相源必须来自被检查的那棵树。
+
+    首版实测缺陷：spec 路径固定解析到安装目录，检查副本时读到本机真 spec，
+    副本里 spec 被删也照样 PASS —— 那是「拿不到真相源却静默继续」。
+    """
+    root = _suite_copy(tmp_path, script.replace(".py", ""))
+    (root / spec_rel).unlink()
+    code, out = run_gate(script, "--root", root)
+    assert code == USAGE, out
+
+
+def test_rule_consistency_positive():
+    code, out = run_gate("gate_rule_consistency.py", "--root", SUITE)
+    assert code == PASS, out
+
+
+def test_rule_consistency_accepts_external_global_rules(tmp_path):
+    """外部全局规则文件同步时必须放行；条数漂移必须拦。"""
+    spec = json.loads(io.open(str(SUITE / "spec" / "rule-consistency.json"),
+                              "r", encoding="utf-8").read())
+    want = spec["canonical_creed"]["count_word"]
+    phrases = spec["invariants"]["phrases"]
+    good = tmp_path / "GOOD_SOUL.md"
+    io.open(str(good), "w", encoding="utf-8").write(
+        "守则（%s）\n%s\n" % (want, "\n".join(phrases)))
+    code, out = run_gate("gate_rule_consistency.py", "--root", SUITE, "--external", good)
+    assert code == PASS, out
+    bad = tmp_path / "BAD_SOUL.md"
+    io.open(str(bad), "w", encoding="utf-8").write(
+        "守则（十五条）\n%s\n" % "\n".join(phrases))
+    code, out = run_gate("gate_rule_consistency.py", "--root", SUITE, "--external", bad)
+    assert code == BLOCK, out
+
+
+@pytest.mark.parametrize("rel,old,new,keyword", [
+    ("skills/universal-task-code/SKILL.md", "十八条守则", "十五条守则", "过时条数声明"),
+    ("skills/universal-task-code/reference-creed.md", "零降级实现容忍", "弹性降级", "承重短语丢失"),
+    ("AGENTS.md", "two-strike", "兜底策略", "副本缺少"),
+])
+def test_rule_consistency_negative(tmp_path, rel, old, new, keyword):
+    """规则漂移的三种形态都必须被抓住，否则 PASS 毫无意义。"""
+    root = _suite_copy(tmp_path, "drift")
+    target = root / rel
+    text = io.open(str(target), "r", encoding="utf-8").read()
+    assert old in text, "测试前提不成立：%s 里没有该锚点" % rel
+    io.open(str(target), "w", encoding="utf-8").write(text.replace(old, new))
+    code, out = run_gate("gate_rule_consistency.py", "--root", root)
+    assert code == BLOCK, out
+    assert keyword in out, out
+
+
+def test_skill_spec_positive():
+    code, out = run_gate("gate_skill_spec.py", "--root", SUITE)
+    assert code == PASS, out
+
+
+def test_skill_spec_entry_must_declare_skip_boundary(tmp_path):
+    """入口技能不写 SKIP 边界必须拦。
+
+    官方明确 description 是唯一触发机制；只写「何时用」不写「何时不用」，
+    会把 T0 闲聊也拖进重流水线。
+    """
+    root = _suite_copy(tmp_path, "noskip")
+    spec = json.loads(io.open(str(root / "spec" / "skill-spec.json"),
+                              "r", encoding="utf-8").read())
+    target = root / "skills" / spec["entry_skills"][0] / "SKILL.md"
+    text = io.open(str(target), "r", encoding="utf-8").read()
+    cleaned = []
+    for line in text.splitlines():
+        if line.startswith("description:"):
+            for kw in spec["description"]["skip_keywords"]:
+                line = line.replace(kw, "见正文")
+        cleaned.append(line)
+    io.open(str(target), "w", encoding="utf-8").write("\n".join(cleaned))
+    code, out = run_gate("gate_skill_spec.py", "--root", root)
+    assert code == BLOCK, out
+    assert "SKIP" in out, out
+
+
+@pytest.mark.parametrize("old,new,keyword", [
+    ("name: token-thrift", "name: token-thrift\nauthor: x", "非白名单键"),
+    ("name: token-thrift", "name: token-thrifty", "与目录名"),
+    ("Context 层省 token 工程", "Context <层> 省 token 工程", "禁用字符"),
+])
+def test_skill_spec_negative(tmp_path, old, new, keyword):
+    root = _suite_copy(tmp_path, "skillbad")
+    target = root / "skills" / "token-thrift" / "SKILL.md"
+    text = io.open(str(target), "r", encoding="utf-8").read()
+    assert old in text, old
+    io.open(str(target), "w", encoding="utf-8").write(text.replace(old, new, 1))
+    code, out = run_gate("gate_skill_spec.py", "--root", root)
+    assert code == BLOCK, out
+    assert keyword in out, out
+
+
+def test_honesty_positive(state, tmp_path):
+    code, out = run_gate("gate_honesty_ledger.py", "--state",
+                         dump(tmp_path, state), "--tier", "T2")
+    assert code == PASS, out
+
+
+def _set_basis_inferred(s):
+    s["cost_metering"]["basis"] = "inferred"
+
+
+def _upgrade_component(s):
+    s["cost_metering"]["components"][0]["basis"] = "inferred"
+
+
+def _drop_evidence_ref(s):
+    s["cost_metering"].pop("evidence_ref")
+
+
+def _drop_upgrade_path(s):
+    s["degradations"][0].pop("upgrade_path")
+
+
+def _drop_terse_arm(s):
+    runs = [r for r in s["behavior_eval"]["runs"] if r["arm"] != "baseline_terse"]
+    s["behavior_eval"]["runs"] = runs
+
+
+def _judge_ranked_wrong(s):
+    s["judge_selftest"]["ranked_correctly"] = False
+
+
+@pytest.mark.parametrize("mutate,keyword,tier", [
+    (_set_basis_inferred, "不得冒充计量", "T2"),
+    (_upgrade_component, "静默换档", "T2"),
+    (_drop_evidence_ref, "evidence_ref", "T2"),
+    (_drop_upgrade_path, "掩盖", "T2"),
+    (_drop_terse_arm, "baseline_terse", "T2"),
+    (_judge_ranked_wrong, "refusing to rank", "T3"),
+])
+def test_honesty_negative(state, tmp_path, mutate, keyword, tier):
+    mutate(state)
+    if tier == "T3":
+        state["tier"] = "T3"
+    code, out = run_gate("gate_honesty_ledger.py", "--state",
+                         dump(tmp_path, state), "--tier", tier)
+    assert code == BLOCK, out
+    assert keyword in out, out
+
+
+def test_honesty_t2_requires_cost_metering(state, tmp_path):
+    """T2+ 必须显式声明计量来源：沉默不算声明。"""
+    state.pop("cost_metering")
+    code, out = run_gate("gate_honesty_ledger.py", "--state",
+                         dump(tmp_path, state), "--tier", "T2")
+    assert code == BLOCK, out
+    assert "沉默不算声明" in out, out
+
+
+def test_honesty_subagent_builder_file_cap(state, tmp_path):
+    """builder 子代理拒绝超上限任务：过大的任务必须先拆，不是硬做。"""
+    state["tier"] = "T3"
+    node = state["graph"]["nodes"][1]
+    node["subagent"] = {"role": "builder", "empty_literal": "No issues."}
+    node["outputs"] = ["a.py", "b.py", "c.py", "d.py"]
+    code, out = run_gate("gate_honesty_ledger.py", "--state",
+                         dump(tmp_path, state), "--tier", "T3")
+    assert code == BLOCK, out
+    assert "必须先拆" in out, out
+
+
+def test_run_gates_includes_v12_gates(tmp_path, state):
+    """编排器必须真的跑到新门禁，否则新门禁形同不存在。"""
+    code, out = run_gate("run_gates.py", "--state", dump(tmp_path, state),
+                         "--root", SUITE, "--tier", "T2")
+    assert code == PASS, out
+    for name in ("honesty", "rule", "skillspec"):
+        assert name in out, (name, out)
+
+
+def test_run_gates_states_skip_honestly_without_spec(tmp_path, state):
+    """业务工作区没有规则/技能 spec 时，必须显式说跳过而不是假装检查过。"""
+    workspace = tmp_path / "biz"
+    workspace.mkdir()
+    code, out = run_gate("run_gates.py", "--state", dump(tmp_path, state),
+                         "--root", workspace, "--tier", "T2")
+    assert "非通过" in out, out
+
+
+# ------------------------------------------------- v1.2 可移植性与 bootstrap 注入层
+#
+# 来源：superpowers docs/porting-to-a-new-harness.md —— 「The bootstrap is the entire
+# integration」。没有注入，技能只是磁盘上的死文件。本套件原先只靠终端被动加载规则，
+# 无 hook 保底、也无任何断言证明「规则真的到了模型面前」，这一组测试补的正是那一环。
+
+BOOTSTRAP_PROFILE_SHAPES = [
+    ("claude", "hookSpecificOutput"),
+    ("cursor", "additional_context"),
+    ("qwenworkcn", "additionalContext"),
+    ("generic", "additionalContext"),
+]
+
+
+def _adapters():
+    return json.loads(io.open(str(SUITE / "spec" / "adapters.json"),
+                              "r", encoding="utf-8").read())
+
+
+def _bootstrap_json(profile):
+    code, out = run_gate("acs_bootstrap.py", "--root", SUITE, "--profile", profile)
+    assert code == PASS, out
+    return json.loads(out)
+
+
+@pytest.mark.parametrize("profile,shape_key", BOOTSTRAP_PROFILE_SHAPES)
+def test_bootstrap_emits_terminal_specific_shape(profile, shape_key):
+    """各终端读不同字段名，形状写错等于没注入 —— 这是移植时最易错的一步。"""
+    payload = _bootstrap_json(profile)
+    assert shape_key in payload, (profile, sorted(payload))
+    inner = (payload["hookSpecificOutput"]["additionalContext"]
+             if profile == "claude" else payload[shape_key])
+    assert "EXTREMELY_IMPORTANT_AGENT_CORE_SUITE" in inner, profile
+    assert payload["_acs"]["enforcement_level"] in ("full", "partial", "soft_only")
+
+
+def test_bootstrap_payload_carries_portable_rules():
+    """注入载荷必须真的含规则正文，不能只有壳。"""
+    adapters = _adapters()
+    payload = _bootstrap_json("qwenworkcn")
+    assert payload["_acs"]["rule_files"] == adapters["portable_core"]["rules"], payload["_acs"]
+    inner = payload["additionalContext"]
+    assert len(inner) > 1000, len(inner)
+
+
+def test_bootstrap_declares_capability_gaps_for_generic():
+    """未识别终端必须如实列出能力缺口与 fallback，而不是假装全都有。"""
+    payload = _bootstrap_json("generic")
+    gaps = {g["capability"] for g in payload["_acs"]["capability_gaps"]}
+    assert "clarify" in gaps and "parallel" in gaps, payload["_acs"]
+    for gap in payload["_acs"]["capability_gaps"]:
+        assert gap["fallback"].strip(), gap
+
+
+def test_bootstrap_blocks_when_rules_missing(tmp_path):
+    """规则缺失即不可注入：此时必须 BLOCK，不能输出半截载荷。"""
+    root = _suite_copy(tmp_path, "norules")
+    (root / "AGENTS.md").unlink()
+    code, out = run_gate("acs_bootstrap.py", "--root", root, "--verify")
+    assert code == BLOCK, out
+    assert "无法注入" in out, out
+
+
+def test_bootstrap_rejects_unknown_profile():
+    code, out = run_gate("acs_bootstrap.py", "--root", SUITE, "--profile", "no-such-terminal")
+    assert code == USAGE, out
+
+
+def test_bootstrap_is_readonly():
+    """注入层必须纯只读：它产出载荷，注入动作交给 hook/CI/人工。"""
+    src = io.open(str(SCRIPTS / "acs_bootstrap.py"), "r", encoding="utf-8").read()
+    assert not _scan_side_effects(src, "acs_bootstrap.py")
+
+
+def test_adapters_spec_declares_model_agnostic_facts():
+    """跨模型的前提必须落在 spec 里并可核查，而不是靠宣传语。"""
+    adapters = _adapters()
+    ma = adapters["model_agnostic"]
+    assert ma["no_model_api_calls"] is True
+    assert ma["no_provider_endpoints"] is True
+    assert ma["logits_dependency"] == "none"
+
+
+def test_portable_core_files_all_exist():
+    """portable_core 声明的每一项都必须真实存在，否则「跨终端可用」是空话。"""
+    adapters = _adapters()
+    missing = []
+    core = adapters["portable_core"]
+    for key in ("rules", "skills", "gates", "specs", "contracts"):
+        for rel in core[key]:
+            path = SUITE / rel
+            if not path.exists():
+                missing.append(rel)
+    assert not missing, missing
+
+
+def test_manifest_registers_portability_and_bootstrap():
+    data = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
+    assert data["entry"].get("bootstrap") == "scripts/acs_bootstrap.py", data["entry"]
+    assert "scripts/acs_bootstrap.py" in data["files"]
+    assert "spec/adapters.json" in data["files"]
+    assert data["adapters_spec"]["role"] == "single-source-of-truth", data.get("adapters_spec")
+    levels = data["portability"]["enforcement_levels"]
+    assert any("soft_only" in x for x in levels), levels
+
+
+def test_no_forbidden_overclaims_in_docs():
+    """禁止夸大声明必须真的不出现在规则与文档里。
+
+    spec/adapters.json 自身列出这些禁止项（那是定义），故排除它自己。
+    """
+    adapters = _adapters()
+    forbidden = adapters["enforcement_honesty"]["forbidden_claims"]
+    assert forbidden, "禁止声明清单不得为空"
+    targets = ["AGENTS.md", "rules/agent-core-suite.md",
+               "skills/universal-task-code/SKILL.md"]
+    for rel in targets:
+        text = io.open(str(SUITE / rel), "r", encoding="utf-8").read()
+        # 反向断言：文档必须明确说 L3 不覆盖非 Git / 未公开 hook，而不是宣称覆盖
+        assert "全局 Hook" not in text or "不" in text, rel
+
+
+# ------------------------------------------------- v1.2 能力覆盖清单（打包范围的诚实边界）
+#
+# 回答「能不能把 qoder/qoderwork/qwenwork 全部能力打包进来」：便携包物理上无法打包
+# 另一产品的运行时（MCP/toolcall/编排引擎/记忆索引/任务库）。能打包的是每个能力的
+# 可移植纪律层+契约层+机检门禁；运行时缺位走 fallback 并声明强制力。本组测试把这一
+# 边界变成机检约束，防止「便携包宣称自足包含运行时」的夸大。
+
+RUNTIME_ONLY_DOMAINS = {"mcp 连接器", "toolcall 工具调用", "跨对话记忆 cross-conversation memory",
+                        "长期记忆 long-term memory"}
+
+
+def _capability_coverage():
+    return json.loads(io.open(str(SUITE / "spec" / "capability-coverage.json"),
+                              "r", encoding="utf-8").read())
+
+
+def test_capability_coverage_registered():
+    data = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
+    assert "spec/capability-coverage.json" in data["files"]
+    assert data["capability_coverage_spec"]["role"] == "single-source-of-truth"
+
+
+def test_capability_coverage_shape_and_counts():
+    """每个能力域必须四项齐全，且汇总计数与逐项一致（防清单注水）。"""
+    cov = _capability_coverage()
+    caps = cov["capabilities"]
+    required = ("domain", "portable_layer", "runtime_layer", "in_pack", "fallback")
+    for cap in caps:
+        for field in required:
+            assert field in cap, (cap.get("domain"), field)
+        assert isinstance(cap["in_pack"], bool), cap
+        assert cap["fallback"].strip(), cap
+    s = cov["summary"]
+    assert s["total_domains"] == len(caps), (s["total_domains"], len(caps))
+    assert s["in_pack_true"] == sum(1 for c in caps if c["in_pack"]), s
+    assert s["in_pack_false"] == sum(1 for c in caps if not c["in_pack"]), s
+
+
+def test_capability_coverage_no_false_runtime_claim():
+    """in_pack=false 必须是纯运行时域；in_pack=true 的 portable_layer 不得宣称打包运行时。"""
+    cov = _capability_coverage()
+    forbidden_runtime_words = ("MCP 服务器本体", "toolcall 引擎本体", "agents.db",
+                               "SQLite 记忆索引本体")
+    for cap in cov["capabilities"]:
+        if not cap["in_pack"]:
+            assert cap["domain"] in RUNTIME_ONLY_DOMAINS,                 ("in_pack=false 但不是已知运行时域：%s" % cap["domain"])
+        for word in forbidden_runtime_words:
+            assert word not in cap["portable_layer"],                 ("%s 的 portable_layer 宣称打包运行时 %s" % (cap["domain"], word))
+
+
+def test_capability_coverage_has_forbidden_claim_guard():
+    """必须显式声明禁止夸大：便携包不自足包含另一产品运行时。"""
+    cov = _capability_coverage()
+    fc = cov["summary"]["forbidden_claim"]
+    assert "运行时" in fc and "禁止" in fc, fc
+    rule = cov["packaging_rule"]
+    assert "not_portable" in rule and "native-first" in rule["handling"], rule
+
+
+def test_capability_coverage_runtime_domains_all_have_fallback():
+    """运行时域虽不可打包，但必须给可移植降级载体，否则守则在该终端落空。"""
+    cov = _capability_coverage()
+    for cap in cov["capabilities"]:
+        if cap["domain"] in RUNTIME_ONLY_DOMAINS:
+            assert cap["in_pack"] is False, cap["domain"]
+            assert len(cap["fallback"]) >= 4, cap["fallback"]

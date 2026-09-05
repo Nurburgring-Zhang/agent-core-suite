@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.1.0",
+  "spec_version": "1.2.0",
   "_readme": [
     "阈值单一真相源（single source of truth）。",
     "Python 门禁、Node 门禁、文档与 CI 一律从本文件取值，任何实现都不得自带同名常量。",
@@ -12,10 +12,34 @@
     "usage_error": 2
   },
   "tiers": {
-    "T0": { "n": 0, "r": 0, "threshold": 0.0, "max_rounds": 1, "max_minutes": 5 },
-    "T1": { "n": 1, "r": 1, "threshold": 14.0, "max_rounds": 3, "max_minutes": 15 },
-    "T2": { "n": 1, "r": 2, "threshold": 16.0, "max_rounds": 6, "max_minutes": 45 },
-    "T3": { "n": 3, "r": 3, "threshold": 17.0, "max_rounds": 10, "max_minutes": 120 }
+    "T0": {
+      "n": 0,
+      "r": 0,
+      "threshold": 0.0,
+      "max_rounds": 1,
+      "max_minutes": 5
+    },
+    "T1": {
+      "n": 1,
+      "r": 1,
+      "threshold": 14.0,
+      "max_rounds": 3,
+      "max_minutes": 15
+    },
+    "T2": {
+      "n": 1,
+      "r": 2,
+      "threshold": 16.0,
+      "max_rounds": 6,
+      "max_minutes": 45
+    },
+    "T3": {
+      "n": 3,
+      "r": 3,
+      "threshold": 17.0,
+      "max_rounds": 10,
+      "max_minutes": 120
+    }
   },
   "loop": {
     "max_outputs_per_step": 1,
@@ -40,9 +64,29 @@
     "min_release_tests": 2,
     "required_gates_by_tier": {
       "T0": [],
-      "T1": ["G0", "G3", "G4"],
-      "T2": ["G0", "G1", "G2", "G3", "G4", "G5", "G6"],
-      "T3": ["G0", "G1", "G2", "G3", "G4", "G5", "G6"]
+      "T1": [
+        "G0",
+        "G3",
+        "G4"
+      ],
+      "T2": [
+        "G0",
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6"
+      ],
+      "T3": [
+        "G0",
+        "G1",
+        "G2",
+        "G3",
+        "G4",
+        "G5",
+        "G6"
+      ]
     },
     "hardened": {
       "_why": [
@@ -56,10 +100,33 @@
       "min_claim_chars": 4,
       "min_basis_chars": 6,
       "min_reviews": 1,
-      "cognition_fields": ["goal", "boundary", "dependencies", "impact", "acceptance", "risks"],
-      "plan_fields": ["phases", "design_standards", "stage_goals", "boundary"],
-      "report_fields": ["deliverables", "evidence", "risks", "next_steps"],
-      "rsi_fields": ["problem", "root_cause", "action", "verification", "stored_at"],
+      "cognition_fields": [
+        "goal",
+        "boundary",
+        "dependencies",
+        "impact",
+        "acceptance",
+        "risks"
+      ],
+      "plan_fields": [
+        "phases",
+        "design_standards",
+        "stage_goals",
+        "boundary"
+      ],
+      "report_fields": [
+        "deliverables",
+        "evidence",
+        "risks",
+        "next_steps"
+      ],
+      "rsi_fields": [
+        "problem",
+        "root_cause",
+        "action",
+        "verification",
+        "stored_at"
+      ],
       "field_owner_gate": {
         "steelman": "G0",
         "key_questions": "G0",
@@ -74,9 +141,27 @@
       },
       "required_by_tier": {
         "T0": [],
-        "T1": ["G4_acceptance_actual"],
-        "T2": ["G0_steelman", "G1_cognition", "G2_plan", "G3_review_closure", "G4_acceptance_actual", "G5_report"],
-        "T3": ["G0_steelman", "G1_cognition", "G2_plan", "G3_review_closure", "G4_acceptance_actual", "G5_report", "G5_blind_reviews", "G6_rsi"]
+        "T1": [
+          "G4_acceptance_actual"
+        ],
+        "T2": [
+          "G0_steelman",
+          "G1_cognition",
+          "G2_plan",
+          "G3_review_closure",
+          "G4_acceptance_actual",
+          "G5_report"
+        ],
+        "T3": [
+          "G0_steelman",
+          "G1_cognition",
+          "G2_plan",
+          "G3_review_closure",
+          "G4_acceptance_actual",
+          "G5_report",
+          "G5_blind_reviews",
+          "G6_rsi"
+        ]
       }
     }
   },
@@ -86,7 +171,10 @@
     "weight_tol": 0.001,
     "weighted_tol": 0.05,
     "min_criteria": 5,
-    "t3_hard_floor": { "correctness": 17.0, "risk": 16.0 }
+    "t3_hard_floor": {
+      "correctness": 17.0,
+      "risk": 16.0
+    }
   },
   "reality_scan": {
     "allow_marker": "ACS-ALLOW",
@@ -94,12 +182,32 @@
   },
   "vague_phrases": {
     "acceptance": [
-      "功能正常", "已完善", "应该可以", "逻辑无误", "符合预期", "没有问题",
-      "运行良好", "基本完成", "大致", "看起来", "works fine", "looks good", "should work"
+      "功能正常",
+      "已完善",
+      "应该可以",
+      "逻辑无误",
+      "符合预期",
+      "没有问题",
+      "运行良好",
+      "基本完成",
+      "大致",
+      "看起来",
+      "works fine",
+      "looks good",
+      "should work"
     ],
     "evidence": [
-      "已完成", "没问题", "已检查", "已确认无误", "应该可以", "符合要求", "都过了",
-      "ok", "done", "fine", "passed all"
+      "已完成",
+      "没问题",
+      "已检查",
+      "已确认无误",
+      "应该可以",
+      "符合要求",
+      "都过了",
+      "ok",
+      "done",
+      "fine",
+      "passed all"
     ]
   },
   "self_consistency": {
@@ -108,7 +216,9 @@
       "冠亚分差很小时直接定案，等于把噪声当结论；此时必须重采样再定案。",
       "重采样是花 token 的，所以只在真可能改判的区间触发，不无脑全量采样。"
     ],
-    "enabled_tiers": ["T3"],
+    "enabled_tiers": [
+      "T3"
+    ],
     "trigger_score_gap": 1.5,
     "extra_samples": 2,
     "max_extra_samples": 4
@@ -120,11 +230,27 @@
       "来源不可审计时字段名必须留在 *_proxy，不得改叫 actual 冒充计量。",
       "tokens_actual 上限取自反面基线：同框架对照模型 9 个任务共 956,630 token（均 ~106k/任务），T3 给到 1.2M 已是 11 倍宽容。"
     ],
-    "sources": ["unavailable", "self_reported", "terminal_ui", "api_usage", "cli_usage"],
-    "auditable_sources": ["api_usage", "cli_usage"],
-    "declare_required_tiers": ["T2", "T3"],
+    "sources": [
+      "unavailable",
+      "self_reported",
+      "terminal_ui",
+      "api_usage",
+      "cli_usage"
+    ],
+    "auditable_sources": [
+      "api_usage",
+      "cli_usage"
+    ],
+    "declare_required_tiers": [
+      "T2",
+      "T3"
+    ],
     "min_evidence_chars": 6,
-    "max_tokens_actual_by_tier": { "T1": 100000, "T2": 400000, "T3": 1200000 }
+    "max_tokens_actual_by_tier": {
+      "T1": 100000,
+      "T2": 400000,
+      "T3": 1200000
+    }
   },
   "edge_gates": {
     "_why": [
@@ -132,7 +258,9 @@
       "schema 只能保证边门形状合法，不能保证图里真的用了门；T3 高风险图若一条边门都没有，验证就形同虚设。",
       "边门 kind=cmd 与节点/步骤验收同规矩：没有 expect_exit 的命令验证无法判成败，等于没有验证。"
     ],
-    "required_tiers": ["T3"],
+    "required_tiers": [
+      "T3"
+    ],
     "min_edge_gates": 1
   },
   "retry": {
@@ -151,7 +279,11 @@
       "验收命令必须直接打到声明的产出物上（子串可核验），否则它证明的是『没改坏』而不是『真的交付了』。",
       "只对文件型产出物强制（含路径或扩展名特征）；纯逻辑名产出无法用子串绑定，不误伤。"
     ],
-    "apply_tiers": ["T1", "T2", "T3"],
+    "apply_tiers": [
+      "T1",
+      "T2",
+      "T3"
+    ],
     "min_basename_chars": 3
   },
   "double_blind": {
@@ -160,7 +292,9 @@
       "审批者与建造者不得兼任盲审：角色不分离，双盲就退化成自评。",
       "分歧不是噪音是信号：verdict 冲突 = 验收标准有歧义，必须仲裁留痕（arbitration），否则规则手册的歧义永远不暴露。"
     ],
-    "required_tiers": ["T3"],
+    "required_tiers": [
+      "T3"
+    ],
     "min_reviewers": 2
   },
   "artifacts": {
@@ -169,7 +303,9 @@
       "supersedes 链就是最小版本谱系：改了契约/决策系统立刻知道新旧关系（ADR 同构，Tutti 数据契约版本化的落点）。",
       "回答『这份输出为什么值得相信』：能溯源到节点、能查到前代版本的工件，才叫交付物。"
     ],
-    "required_tiers": ["T3"],
+    "required_tiers": [
+      "T3"
+    ],
     "min_artifacts": 1
   },
   "contract": {
@@ -178,7 +314,7 @@
       "状态文件自带版本，校验器才能识别『来自更新套件的文件』并提示升级，而不是报一堆莫名字段错误。",
       "旧版本文件照常通过（向后兼容）：只有格式非法才拦，版本高于已知只告警不拦。"
     ],
-    "known_version": "1.1.0",
+    "known_version": "1.2.0",
     "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
   },
   "model_tier": {
@@ -187,6 +323,139 @@
       "T3 高风险图里凡调模型的节点必须声明档位，否则『贵模型干杂活』的浪费无人可见。",
       "档位只登记不评判：这是计量字段（让成本可见），不是性能门（不拦你用强模型）。"
     ],
-    "required_tiers": ["T3"]
+    "required_tiers": [
+      "T3"
+    ]
+  },
+  "evidence_basis": {
+    "_why": [
+      "来源：caveman docs/technical/accounting-and-evidence.md 的七档 basis。",
+      "原有 cost_metering.source 只区分「有/无」；但 inferred（本地估算）、provider_reported（回包）、benchmark_counterfactual（受控对照）、observed（前后相关）强度完全不同，混为一谈就是把弱证据当强证据用。",
+      "硬规则：值必须与 basis 并列；聚合时 basis 取各分量的下界，禁止静默换档（弱证据聚合出强结论是最常见的造假路径）。",
+      "价格/数量未知记 0 并标 unpriced：0 防编造，标签防误读为免费。"
+    ],
+    "levels": [
+      "measured",
+      "provider_reported",
+      "cli_usage",
+      "benchmark_counterfactual",
+      "observed",
+      "inferred",
+      "self_reported",
+      "unpriced",
+      "unavailable"
+    ],
+    "strength_order": {
+      "measured": 8,
+      "provider_reported": 7,
+      "cli_usage": 6,
+      "benchmark_counterfactual": 5,
+      "observed": 4,
+      "inferred": 3,
+      "self_reported": 2,
+      "unpriced": 1,
+      "unavailable": 0
+    },
+    "strong_levels": [
+      "measured",
+      "provider_reported",
+      "cli_usage"
+    ],
+    "require_evidence_ref_levels": [
+      "measured",
+      "provider_reported",
+      "cli_usage",
+      "benchmark_counterfactual"
+    ],
+    "min_evidence_chars": 6,
+    "declare_required_tiers": [
+      "T2",
+      "T3"
+    ],
+    "no_silent_upgrade": true
+  },
+  "degradation_ledger": {
+    "_why": [
+      "来源：ponytail skills/ponytail-debt 的 `ponytail:` 注释约定。",
+      "比裸 TODO 强的关键：强制写明天花板与升级触发条件，缺触发条件即标 no-trigger。",
+      "并入既有「降级必须标 [DEGRADED]」纪律，让降级可被 grep 汇总成台账，而不是散落在各份报告里。"
+    ],
+    "markers": [
+      "[DEGRADED]",
+      "[降维实现]"
+    ],
+    "required_fields": [
+      "what",
+      "ceiling",
+      "upgrade_path"
+    ],
+    "min_field_chars": 4,
+    "required_tiers": [
+      "T2",
+      "T3"
+    ]
+  },
+  "subagent_contract": {
+    "_why": [
+      "来源：caveman docs/technical/exploration-and-delegation.md 与 skills/cavecrew。",
+      "关键做法：硬文件数上限（builder 拒绝 ≥3 文件的任务）+ 强制空结果字面量（无结果必须写固定串而非猜测）。",
+      "强制空结果字面量可机检，直接对症「子 agent 编造引用」这一最难发现的失败模式。"
+    ],
+    "roles": [
+      "investigator",
+      "builder",
+      "reviewer",
+      "verifier"
+    ],
+    "max_files_per_builder_task": 3,
+    "empty_result_literals": [
+      "no relevant locations found",
+      "No issues.",
+      "未找到相关位置",
+      "无问题"
+    ],
+    "require_output_contract_tiers": [
+      "T3"
+    ]
+  },
+  "judge_selftest": {
+    "_why": [
+      "来源：ponytail benchmarks/agentic/judge.py 的 --selftest 硬规则。",
+      "LLM 裁判必须先把已知好/坏参考样本排对，否则拒绝评判整个矩阵；不验证打分器本身，排序结论就没有地基。",
+      "落到 self-verify-scaling：T3 打分排序前必须记录一次裁判自证。"
+    ],
+    "required_tiers": [
+      "T3"
+    ],
+    "required_fields": [
+      "known_good",
+      "known_bad",
+      "ranked_correctly"
+    ],
+    "refuse_message": "refusing to rank without judge selftest"
+  },
+  "behavior_eval": {
+    "_why": [
+      "来源：caveman evals/README.md 三臂设计与 anthropics/skills 的 with/without 基线评测。",
+      "只对比「有规则 vs 无提示」会把通用效应算成自家功劳（caveman 自陈踩过这个坑，早期数字虚高）。",
+      "故必须有中间臂：同等强度的朴素指令。诚实 delta = skill 臂 vs 朴素臂，而非 vs 空白臂。"
+    ],
+    "arms": [
+      "baseline_none",
+      "baseline_terse",
+      "with_skill"
+    ],
+    "honest_delta_pair": [
+      "with_skill",
+      "baseline_terse"
+    ],
+    "min_queries": 4,
+    "min_near_miss_negatives": 2,
+    "required_fields": [
+      "arm",
+      "query",
+      "passed",
+      "evidence"
+    ]
   }
 }

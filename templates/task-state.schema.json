@@ -1,50 +1,174 @@
 {
-  "$comment": "Agent Core Suite v1.1.0 — task-state.json 契约（JSON Schema 子集，由 gate_state_validate.py 真实校验）；v1.1 新增字段均为可选属性=出现即校验，分级必填由门禁按 spec 判定",
+  "$comment": "Agent Core Suite v1.2.0 — task-state.json 契约（JSON Schema 子集，由 gate_state_validate.py 真实校验）；v1.1 新增字段均为可选属性=出现即校验，分级必填由门禁按 spec 判定",
   "type": "object",
-  "required": ["task_id", "tier", "tier_reason", "known_gaps", "steps", "gates"],
+  "required": [
+    "task_id",
+    "tier",
+    "tier_reason",
+    "known_gaps",
+    "steps",
+    "gates"
+  ],
   "additionalProperties": false,
   "properties": {
-    "task_id": { "type": "string", "minLength": 1 },
-    "tier": { "type": "string", "enum": ["T0", "T1", "T2", "T3"] },
-    "tier_reason": { "type": "string", "minLength": 4 },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "T0",
+        "T1",
+        "T2",
+        "T3"
+      ]
+    },
+    "tier_reason": {
+      "type": "string",
+      "minLength": 4
+    },
     "known_gaps": {
       "$comment": "G1 硬要求：抓不到的信息必须如实声明为缺口；确实无缺口时写空数组，但字段必须存在",
       "type": "array",
-      "items": { "type": "string", "minLength": 2 }
+      "items": {
+        "type": "string",
+        "minLength": 2
+      }
     },
     "enabled_engineering": {
       "type": "array",
-      "items": { "type": "string", "enum": ["loop", "graph", "self-verify", "token-thrift"] },
+      "items": {
+        "type": "string",
+        "enum": [
+          "loop",
+          "graph",
+          "self-verify",
+          "token-thrift"
+        ]
+      },
       "uniqueItems": true
     },
     "cost_metering": {
       "$comment": "token 真实计量回填口。source 不属可审计来源时不得填 tokens_actual —— 字段名本身就是诚实声明",
       "type": "object",
-      "required": ["source"],
+      "required": [
+        "source"
+      ],
       "additionalProperties": false,
       "properties": {
-        "source": { "type": "string", "enum": ["unavailable", "self_reported", "terminal_ui", "api_usage", "cli_usage"] },
-        "tokens_actual": { "type": "integer", "minimum": 1 },
-        "input_tokens_actual": { "type": "integer", "minimum": 0 },
-        "output_tokens_actual": { "type": "integer", "minimum": 0 },
-        "evidence_ref": { "type": "string", "minLength": 1 },
-        "note": { "type": "string" }
+        "source": {
+          "type": "string",
+          "enum": [
+            "unavailable",
+            "self_reported",
+            "terminal_ui",
+            "api_usage",
+            "cli_usage"
+          ]
+        },
+        "tokens_actual": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "input_tokens_actual": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "output_tokens_actual": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "type": "string"
+        },
+        "basis": {
+          "$comment": "证据档位（caveman 七档降维）：数值必须与 basis 并列；弱档禁止出现 *_actual",
+          "type": "string",
+          "enum": [
+            "measured",
+            "provider_reported",
+            "cli_usage",
+            "benchmark_counterfactual",
+            "observed",
+            "inferred",
+            "self_reported",
+            "unpriced",
+            "unavailable"
+          ]
+        },
+        "components": {
+          "$comment": "分量证据档位：聚合 basis 不得强于最弱分量（禁止静默换档）",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "label",
+              "basis"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "basis": {
+                "type": "string",
+                "enum": [
+                  "measured",
+                  "provider_reported",
+                  "cli_usage",
+                  "benchmark_counterfactual",
+                  "observed",
+                  "inferred",
+                  "self_reported",
+                  "unpriced",
+                  "unavailable"
+                ]
+              }
+            }
+          }
+        }
       }
     },
     "safety_valve": {
       "type": "object",
-      "required": ["max_rounds", "max_requests_proxy", "max_minutes", "on_break"],
+      "required": [
+        "max_rounds",
+        "max_requests_proxy",
+        "max_minutes",
+        "on_break"
+      ],
       "additionalProperties": false,
       "properties": {
-        "max_rounds": { "type": "integer", "minimum": 1, "maximum": 50 },
-        "max_requests_proxy": { "type": "integer", "minimum": 1 },
-        "max_minutes": { "type": "integer", "minimum": 1 },
-        "on_break": { "type": "string", "minLength": 4 }
+        "max_rounds": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "max_requests_proxy": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_minutes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "on_break": {
+          "type": "string",
+          "minLength": 4
+        }
       }
     },
     "graph": {
       "type": "object",
-      "required": ["nodes"],
+      "required": [
+        "nodes"
+      ],
       "additionalProperties": false,
       "properties": {
         "nodes": {
@@ -52,41 +176,104 @@
           "minItems": 1,
           "items": {
             "type": "object",
-            "required": ["id", "goal", "inputs", "outputs", "acceptance", "deterministic", "owner", "verifier"],
+            "required": [
+              "id",
+              "goal",
+              "inputs",
+              "outputs",
+              "acceptance",
+              "deterministic",
+              "owner",
+              "verifier"
+            ],
             "additionalProperties": false,
             "properties": {
-              "id": { "type": "string", "minLength": 1 },
-              "goal": { "type": "string", "minLength": 4 },
-              "inputs": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-              "outputs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "goal": {
+                "type": "string",
+                "minLength": 4
+              },
+              "inputs": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "outputs": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
               "acceptance": {
                 "type": "array",
                 "minItems": 1,
                 "items": {
                   "type": "object",
-                  "required": ["kind", "value"],
+                  "required": [
+                    "kind",
+                    "value"
+                  ],
                   "additionalProperties": false,
                   "properties": {
-                    "kind": { "type": "string", "enum": ["cmd", "file", "assert"] },
-                    "value": { "type": "string", "minLength": 3 },
-                    "expect_exit": { "type": "integer" },
-                    "actual": { "type": "string" }
+                    "kind": {
+                      "type": "string",
+                      "enum": [
+                        "cmd",
+                        "file",
+                        "assert"
+                      ]
+                    },
+                    "value": {
+                      "type": "string",
+                      "minLength": 3
+                    },
+                    "expect_exit": {
+                      "type": "integer"
+                    },
+                    "actual": {
+                      "type": "string"
+                    }
                   }
                 }
               },
-              "deterministic": { "type": "boolean" },
-              "calls_model": { "type": "boolean" },
-              "owner": { "type": "string", "minLength": 1 },
-              "verifier": { "type": "string", "minLength": 1 },
+              "deterministic": {
+                "type": "boolean"
+              },
+              "calls_model": {
+                "type": "boolean"
+              },
+              "owner": {
+                "type": "string",
+                "minLength": 1
+              },
+              "verifier": {
+                "type": "string",
+                "minLength": 1
+              },
               "model_tier": {
                 "$comment": "模型分层（图让成本看得见）：cheap=杂活模型 / standard=常规 / strong=判断节点；T3 时 calls_model=true 的节点必填（spec: model_tier.required_tiers）",
                 "type": "string",
-                "enum": ["cheap", "standard", "strong"]
+                "enum": [
+                  "cheap",
+                  "standard",
+                  "strong"
+                ]
               },
               "on_failure": {
                 "$comment": "失败隔离策略：isolate=抛错置空不污染并行兄弟（fan-in 前 filter），abort=快速失败，retry=受 spec retry.max_retries 约束的有界重试",
                 "type": "string",
-                "enum": ["abort", "isolate", "retry"]
+                "enum": [
+                  "abort",
+                  "isolate",
+                  "retry"
+                ]
               }
             }
           }
@@ -95,20 +282,44 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["from", "to"],
+            "required": [
+              "from",
+              "to"
+            ],
             "additionalProperties": false,
             "properties": {
-              "from": { "type": "string", "minLength": 1 },
-              "to": { "type": "string", "minLength": 1 },
+              "from": {
+                "type": "string",
+                "minLength": 1
+              },
+              "to": {
+                "type": "string",
+                "minLength": 1
+              },
               "gate": {
                 "$comment": "边上验证门：产出放行下游前先过验证；kind=cmd 时必须带 expect_exit（与节点/步骤验收同规矩）；T3 图至少一条边挂门（spec: edge_gates）",
                 "type": "object",
-                "required": ["kind", "value"],
+                "required": [
+                  "kind",
+                  "value"
+                ],
                 "additionalProperties": false,
                 "properties": {
-                  "kind": { "type": "string", "enum": ["cmd", "file", "assert"] },
-                  "value": { "type": "string", "minLength": 3 },
-                  "expect_exit": { "type": "integer" }
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "cmd",
+                      "file",
+                      "assert"
+                    ]
+                  },
+                  "value": {
+                    "type": "string",
+                    "minLength": 3
+                  },
+                  "expect_exit": {
+                    "type": "integer"
+                  }
                 }
               }
             }
@@ -116,21 +327,46 @@
         },
         "parallel_groups": {
           "type": "array",
-          "items": { "type": "array", "minItems": 2, "items": { "type": "string", "minLength": 1 } }
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
         },
         "barriers": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["at", "waits_for"],
+            "required": [
+              "at",
+              "waits_for"
+            ],
             "additionalProperties": false,
             "properties": {
-              "at": { "type": "string", "minLength": 1 },
-              "waits_for": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+              "at": {
+                "type": "string",
+                "minLength": 1
+              },
+              "waits_for": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
               "policy": {
                 "$comment": "汇聚语义（Graph Engineering 四类）：all_success=全量成功（默认）/ min_success=最小成功数（需 min_count）/ timeout_degrade=超时降级带已完成结果继续 / critical_fail_stop=关键失败即停",
                 "type": "string",
-                "enum": ["all_success", "min_success", "timeout_degrade", "critical_fail_stop"]
+                "enum": [
+                  "all_success",
+                  "min_success",
+                  "timeout_degrade",
+                  "critical_fail_stop"
+                ]
               },
               "min_count": {
                 "$comment": "policy=min_success 时的最小成功分支数（门禁机检：1 ≤ min_count ≤ len(waits_for)）",
@@ -146,44 +382,121 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "goal", "outputs", "acceptance", "budget_min", "context_bytes_proxy", "refeed_full_history", "summary_chars", "think_ratio", "evidence_delta", "builder", "verifier"],
+        "required": [
+          "id",
+          "goal",
+          "outputs",
+          "acceptance",
+          "budget_min",
+          "context_bytes_proxy",
+          "refeed_full_history",
+          "summary_chars",
+          "think_ratio",
+          "evidence_delta",
+          "builder",
+          "verifier"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "node_id": { "type": "string", "minLength": 1 },
-          "goal": { "type": "string", "minLength": 4 },
-          "outputs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "node_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "goal": {
+            "type": "string",
+            "minLength": 4
+          },
+          "outputs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
           "acceptance": {
             "type": "array",
             "minItems": 1,
             "items": {
               "type": "object",
-              "required": ["kind", "value"],
+              "required": [
+                "kind",
+                "value"
+              ],
               "additionalProperties": false,
               "properties": {
-                "kind": { "type": "string", "enum": ["cmd", "file", "assert"] },
-                "value": { "type": "string", "minLength": 3 },
-                "expect_exit": { "type": "integer" },
-                "actual": { "type": "string" }
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "cmd",
+                    "file",
+                    "assert"
+                  ]
+                },
+                "value": {
+                  "type": "string",
+                  "minLength": 3
+                },
+                "expect_exit": {
+                  "type": "integer"
+                },
+                "actual": {
+                  "type": "string"
+                }
               }
             }
           },
-          "budget_min": { "type": "integer", "minimum": 1 },
-          "context_bytes_proxy": { "type": "integer", "minimum": 0 },
-          "files_read_proxy": { "type": "integer", "minimum": 0 },
-          "refeed_full_history": { "type": "boolean" },
-          "summary_chars": { "type": "integer", "minimum": 0 },
-          "think_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
-          "evidence_delta": { "type": "integer", "minimum": 0 },
-          "builder": { "type": "string", "minLength": 1 },
-          "verifier": { "type": "string", "minLength": 1 },
-          "summary": { "type": "string" },
+          "budget_min": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "context_bytes_proxy": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "files_read_proxy": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "refeed_full_history": {
+            "type": "boolean"
+          },
+          "summary_chars": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "think_ratio": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "evidence_delta": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "builder": {
+            "type": "string",
+            "minLength": 1
+          },
+          "verifier": {
+            "type": "string",
+            "minLength": 1
+          },
+          "summary": {
+            "type": "string"
+          },
           "retries": {
             "$comment": "有界重试（FinBot 教训）：默认 0；上限与留痕长度由 spec retry 节管，门禁机检 retries>0 必须 retry_reason+delta_from_last",
             "type": "integer",
             "minimum": 0
           },
-          "retry_reason": { "type": "string" },
+          "retry_reason": {
+            "type": "string"
+          },
           "delta_from_last": {
             "$comment": "本轮重试与上轮的打法差异：同一打法原样重跑即空转（loop-until-dry 收敛条件）",
             "type": "string"
@@ -195,16 +508,35 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "G0": { "$ref_inline": "gate-entry" },
-        "G1": { "$ref_inline": "gate-entry" },
-        "G2": { "$ref_inline": "gate-entry" },
-        "G3": { "$ref_inline": "gate-entry" },
-        "G4": { "$ref_inline": "gate-entry" },
-        "G5": { "$ref_inline": "gate-entry" },
-        "G6": { "$ref_inline": "gate-entry" }
+        "G0": {
+          "$ref_inline": "gate-entry"
+        },
+        "G1": {
+          "$ref_inline": "gate-entry"
+        },
+        "G2": {
+          "$ref_inline": "gate-entry"
+        },
+        "G3": {
+          "$ref_inline": "gate-entry"
+        },
+        "G4": {
+          "$ref_inline": "gate-entry"
+        },
+        "G5": {
+          "$ref_inline": "gate-entry"
+        },
+        "G6": {
+          "$ref_inline": "gate-entry"
+        }
       }
     },
-    "progress_trend": { "type": "array", "items": { "type": "number" } },
+    "progress_trend": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    },
     "contract_version": {
       "$comment": "契约版本化（Tutti 教训）：语义化版本 X.Y.Z；旧版本照常通过，高于套件已知版本只告警（spec: contract）",
       "type": "string",
@@ -215,14 +547,157 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["id", "kind", "produced_by"],
+        "required": [
+          "id",
+          "kind",
+          "produced_by"
+        ],
         "additionalProperties": false,
         "properties": {
-          "id": { "type": "string", "minLength": 1 },
-          "kind": { "type": "string", "enum": ["code", "doc", "test", "data", "config", "report", "other"] },
-          "produced_by": { "type": "string", "minLength": 1 },
-          "supersedes": { "type": "string", "minLength": 1 },
-          "path": { "type": "string", "minLength": 1 }
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "code",
+              "doc",
+              "test",
+              "data",
+              "config",
+              "report",
+              "other"
+            ]
+          },
+          "produced_by": {
+            "type": "string",
+            "minLength": 1
+          },
+          "supersedes": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "degradations": {
+      "$comment": "降级债务台账（ponytail 债务注释同构）：降级必须写天花板与升级路径，否则只是掩盖",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "marker",
+          "what",
+          "ceiling",
+          "upgrade_path"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "marker": {
+            "type": "string",
+            "enum": [
+              "[DEGRADED]",
+              "[降维实现]"
+            ]
+          },
+          "what": {
+            "type": "string",
+            "minLength": 4
+          },
+          "ceiling": {
+            "type": "string",
+            "minLength": 4
+          },
+          "upgrade_path": {
+            "type": "string",
+            "minLength": 4
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "judge_selftest": {
+      "$comment": "裁判自证前置（ponytail judge --selftest）：打分器排不对已知样本就拒绝评判",
+      "type": "object",
+      "required": [
+        "known_good",
+        "known_bad",
+        "ranked_correctly"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "known_good": {
+          "type": "string",
+          "minLength": 4
+        },
+        "known_bad": {
+          "type": "string",
+          "minLength": 4
+        },
+        "ranked_correctly": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "behavior_eval": {
+      "$comment": "行为对照评测三臂（caveman evals）：诚实 delta = with_skill vs baseline_terse，不与空白臂比",
+      "type": "object",
+      "required": [
+        "runs"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "runs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "arm",
+              "query",
+              "passed",
+              "evidence"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "arm": {
+                "type": "string",
+                "enum": [
+                  "baseline_none",
+                  "baseline_terse",
+                  "with_skill"
+                ]
+              },
+              "query": {
+                "type": "string",
+                "minLength": 2
+              },
+              "passed": {
+                "type": "boolean"
+              },
+              "evidence": {
+                "type": "string",
+                "minLength": 4
+              },
+              "near_miss": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "honest_delta": {
+          "type": "string",
+          "minLength": 4
         }
       }
     }
@@ -232,82 +707,208 @@
     "gate-entry": {
       "$comment": "七个硬化字段（steelman/key_questions/cognition/plan/reviews/report/rsi）在此只校验形状；哪道门必须有哪个字段、字段是否写错门，由 gate_checklist.py 按分级判定",
       "type": "object",
-      "required": ["status", "evidence"],
+      "required": [
+        "status",
+        "evidence"
+      ],
       "additionalProperties": false,
       "properties": {
-        "status": { "type": "string", "enum": ["pass", "fail", "skipped"] },
-        "evidence": { "type": "string", "minLength": 4 },
-        "approved_by": { "type": "string", "minLength": 1 },
-        "adversarial_reviews": { "type": "integer", "minimum": 0 },
-        "release_tests": { "type": "integer", "minimum": 0 },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "skipped"
+          ]
+        },
+        "evidence": {
+          "type": "string",
+          "minLength": 4
+        },
+        "approved_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adversarial_reviews": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "release_tests": {
+          "type": "integer",
+          "minimum": 0
+        },
         "blind_reviews": {
           "$comment": "双盲审查（Anthropic 图工程第 6 步）：两个互相看不见对方推理的独立审查者；T3 交付门必填 ≥N 人（spec: double_blind）",
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["reviewer", "verdict"],
+            "required": [
+              "reviewer",
+              "verdict"
+            ],
             "additionalProperties": false,
             "properties": {
-              "reviewer": { "type": "string", "minLength": 1 },
-              "verdict": { "type": "string", "enum": ["approve", "reject"] },
-              "findings": { "type": "array", "items": { "type": "string", "minLength": 4 } }
+              "reviewer": {
+                "type": "string",
+                "minLength": 1
+              },
+              "verdict": {
+                "type": "string",
+                "enum": [
+                  "approve",
+                  "reject"
+                ]
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 4
+                }
+              }
             }
           }
         },
         "arbitration": {
           "$comment": "盲审分歧仲裁留痕：verdict 冲突 = 验收标准有歧义，必须写 resolution + reason（分歧不是噪音是信号）",
           "type": "object",
-          "required": ["resolution", "reason"],
+          "required": [
+            "resolution",
+            "reason"
+          ],
           "additionalProperties": false,
           "properties": {
-            "resolution": { "type": "string", "minLength": 4 },
-            "reason": { "type": "string", "minLength": 4 }
+            "resolution": {
+              "type": "string",
+              "minLength": 4
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 4
+            }
           }
         },
         "steelman": {
           "type": "object",
-          "required": ["pro", "con", "divergence", "key_variable"],
+          "required": [
+            "pro",
+            "con",
+            "divergence",
+            "key_variable"
+          ],
           "additionalProperties": false,
           "properties": {
-            "pro": { "type": "array", "minItems": 1, "items": { "$ref_inline": "claim-basis" } },
-            "con": { "type": "array", "minItems": 1, "items": { "$ref_inline": "claim-basis" } },
-            "divergence": { "type": "string", "minLength": 4 },
-            "key_variable": { "type": "string", "minLength": 2 }
+            "pro": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref_inline": "claim-basis"
+              }
+            },
+            "con": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref_inline": "claim-basis"
+              }
+            },
+            "divergence": {
+              "type": "string",
+              "minLength": 4
+            },
+            "key_variable": {
+              "type": "string",
+              "minLength": 2
+            }
           }
         },
         "key_questions": {
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["q", "answer"],
+            "required": [
+              "q",
+              "answer"
+            ],
             "additionalProperties": false,
             "properties": {
-              "q": { "type": "string", "minLength": 4 },
-              "answer": { "type": "string" }
+              "q": {
+                "type": "string",
+                "minLength": 4
+              },
+              "answer": {
+                "type": "string"
+              }
             }
           }
         },
-        "questions_compressed_reason": { "type": "string", "minLength": 4 },
+        "questions_compressed_reason": {
+          "type": "string",
+          "minLength": 4
+        },
         "cognition": {
           "type": "object",
-          "required": ["goal", "boundary", "dependencies", "impact", "acceptance", "risks"],
+          "required": [
+            "goal",
+            "boundary",
+            "dependencies",
+            "impact",
+            "acceptance",
+            "risks"
+          ],
           "additionalProperties": false,
           "properties": {
-            "goal": { "type": "string", "minLength": 4 },
-            "boundary": { "type": "string", "minLength": 4 },
-            "dependencies": { "type": "array", "items": { "type": "string", "minLength": 2 } },
-            "impact": { "type": "string", "minLength": 4 },
-            "acceptance": { "type": "array", "items": { "type": "string", "minLength": 4 } },
-            "risks": { "type": "array", "items": { "type": "string", "minLength": 4 } },
+            "goal": {
+              "type": "string",
+              "minLength": 4
+            },
+            "boundary": {
+              "type": "string",
+              "minLength": 4
+            },
+            "dependencies": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 2
+              }
+            },
+            "impact": {
+              "type": "string",
+              "minLength": 4
+            },
+            "acceptance": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 4
+              }
+            },
+            "risks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 4
+              }
+            },
             "assumptions": {
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["text", "risk"],
+                "required": [
+                  "text",
+                  "risk"
+                ],
                 "additionalProperties": false,
                 "properties": {
-                  "text": { "type": "string", "minLength": 4 },
-                  "risk": { "type": "string", "minLength": 2 }
+                  "text": {
+                    "type": "string",
+                    "minLength": 4
+                  },
+                  "risk": {
+                    "type": "string",
+                    "minLength": 2
+                  }
                 }
               }
             }
@@ -315,20 +916,62 @@
         },
         "plan": {
           "type": "object",
-          "required": ["phases", "design_standards", "stage_goals", "boundary"],
+          "required": [
+            "phases",
+            "design_standards",
+            "stage_goals",
+            "boundary"
+          ],
           "additionalProperties": false,
           "properties": {
-            "phases": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 4 } },
-            "design_standards": { "type": "string", "minLength": 4 },
-            "stage_goals": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 4 } },
+            "phases": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 4
+              }
+            },
+            "design_standards": {
+              "type": "string",
+              "minLength": 4
+            },
+            "stage_goals": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 4
+              }
+            },
             "boundary": {
               "type": "object",
-              "required": ["in_scope", "out_scope", "out_of_scope_policy"],
+              "required": [
+                "in_scope",
+                "out_scope",
+                "out_of_scope_policy"
+              ],
               "additionalProperties": false,
               "properties": {
-                "in_scope": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 2 } },
-                "out_scope": { "type": "array", "items": { "type": "string", "minLength": 2 } },
-                "out_of_scope_policy": { "type": "string", "minLength": 4 }
+                "in_scope": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 2
+                  }
+                },
+                "out_scope": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 2
+                  }
+                },
+                "out_of_scope_policy": {
+                  "type": "string",
+                  "minLength": 4
+                }
               }
             }
           }
@@ -337,39 +980,119 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["round", "builder", "verifier", "findings"],
+            "required": [
+              "round",
+              "builder",
+              "verifier",
+              "findings"
+            ],
             "additionalProperties": false,
             "properties": {
-              "round": { "type": "integer", "minimum": 1 },
-              "builder": { "type": "string", "minLength": 1 },
-              "verifier": { "type": "string", "minLength": 1 },
-              "findings": { "type": "array", "items": { "type": "string", "minLength": 4 } },
-              "fixed": { "type": "array", "items": { "type": "string", "minLength": 4 } },
-              "recheck": { "type": "string" }
+              "round": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "builder": {
+                "type": "string",
+                "minLength": 1
+              },
+              "verifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 4
+                }
+              },
+              "fixed": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 4
+                }
+              },
+              "recheck": {
+                "type": "string"
+              }
             }
           }
         },
         "report": {
           "type": "object",
-          "required": ["deliverables", "evidence", "risks", "next_steps"],
+          "required": [
+            "deliverables",
+            "evidence",
+            "risks",
+            "next_steps"
+          ],
           "additionalProperties": false,
           "properties": {
-            "deliverables": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 2 } },
-            "evidence": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 4 } },
-            "risks": { "type": "array", "items": { "type": "string", "minLength": 2 } },
-            "next_steps": { "type": "array", "items": { "type": "string", "minLength": 2 } }
+            "deliverables": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 2
+              }
+            },
+            "evidence": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 4
+              }
+            },
+            "risks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 2
+              }
+            },
+            "next_steps": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 2
+              }
+            }
           }
         },
         "rsi": {
           "type": "object",
-          "required": ["problem", "root_cause", "action", "verification", "stored_at"],
+          "required": [
+            "problem",
+            "root_cause",
+            "action",
+            "verification",
+            "stored_at"
+          ],
           "additionalProperties": false,
           "properties": {
-            "problem": { "type": "string", "minLength": 4 },
-            "root_cause": { "type": "string", "minLength": 4 },
-            "action": { "type": "string", "minLength": 4 },
-            "verification": { "type": "string", "minLength": 4 },
-            "stored_at": { "type": "string", "minLength": 2 }
+            "problem": {
+              "type": "string",
+              "minLength": 4
+            },
+            "root_cause": {
+              "type": "string",
+              "minLength": 4
+            },
+            "action": {
+              "type": "string",
+              "minLength": 4
+            },
+            "verification": {
+              "type": "string",
+              "minLength": 4
+            },
+            "stored_at": {
+              "type": "string",
+              "minLength": 2
+            }
           }
         }
       }
@@ -377,11 +1100,20 @@
     "claim-basis": {
       "$comment": "钢人条目：主张必须配依据，只写主张不写依据等于没论证",
       "type": "object",
-      "required": ["claim", "basis"],
+      "required": [
+        "claim",
+        "basis"
+      ],
       "additionalProperties": false,
       "properties": {
-        "claim": { "type": "string", "minLength": 4 },
-        "basis": { "type": "string", "minLength": 4 }
+        "claim": {
+          "type": "string",
+          "minLength": 4
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 4
+        }
       }
     }
   }

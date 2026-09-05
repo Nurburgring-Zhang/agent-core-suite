@@ -61,7 +61,7 @@ SKIP_DIRS = (
     ".idea", ".vscode", "site-packages", ".tox", "coverage",
 )
 
-TEST_HINTS = ("test", "spec", "__tests__", "fixture")
+TEST_DIR_NAMES = {"test", "tests", "__tests__", "fixture", "fixtures"}  # 不含 spec/specs：本套件 spec/ 存真相源 JSON 而非测试，且下游 spec/ 子目录的 .py 不应被当测试替身豁免；spec 风格测试文件靠文件名 _spec/_test 后缀识别
 
 
 def load_whitelist(path):
@@ -85,8 +85,12 @@ def is_whitelisted(rel, globs):
 
 
 def is_test_path(rel):
-    low = rel.lower()
-    return any(hint in low for hint in TEST_HINTS)
+    parts = rel.replace("\\", "/").lower().split("/")
+    filename = parts[-1]
+    stem = os.path.splitext(filename)[0]
+    in_test_dir = any(part in TEST_DIR_NAMES for part in parts[:-1])
+    test_filename = stem == "test" or stem.startswith("test_") or stem.endswith("_test") or stem.endswith("_spec")
+    return in_test_dir or test_filename
 
 
 def scan_lines(rel, text, report, counter, limit):
@@ -170,9 +174,12 @@ def main(argv):
     exts = tuple(x.strip().lower() for x in args["ext"].split(",")) if args.get("ext") else DEFAULT_EXTS
     globs = load_whitelist(args.get("whitelist"))
     try:
-        limit = int(args.get("max") or DEFAULT_MAX_FINDINGS)
+        raw_limit = args.get("max")
+        limit = int(raw_limit) if raw_limit is not None else DEFAULT_MAX_FINDINGS
     except ValueError:
         usage_exit("--max 必须是整数")
+    if limit < 1:
+        usage_exit("--max 必须是大于等于 1 的整数")
 
     report = Report("gate_reality_scan (真实性扫描)")
     report.note("root=%s ext=%s whitelist=%d 条 限额=%d" % (root, ",".join(exts), len(globs), limit))

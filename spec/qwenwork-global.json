@@ -1,0 +1,75 @@
+{
+  "spec_version": "1.0.0",
+  "product": "qwenworkcn",
+  "positioning": "可配置 Agent 行为层与 Harness 的全局融合契约；不代表系统提示词或产品私有内核可被修改",
+  "paths": {
+    "home_marker": ".qwenworkcn",
+    "awareness_dir": "awareness/main",
+    "soul_file": "SOUL.md",
+    "agents_file": "AGENTS.md",
+    "skills_dir": "skills",
+    "suite_dir": "agent-core-suite"
+  },
+  "required_skills": [
+    "universal-task-code",
+    "loop-engineering",
+    "graph-engineering",
+    "self-verify-scaling",
+    "token-thrift"
+  ],
+  "required_suite_files": [
+    "scripts/run_gates.py",
+    "scripts/gate_state_validate.py",
+    "scripts/gate_loop_guard.py",
+    "scripts/gate_verify_rank.py",
+    "scripts/gate_reality_scan.py",
+    "scripts/gate_checklist.py",
+    "templates/task-state.example.json",
+    "templates/task-state.schema.json",
+    "templates/verify-record.example.json",
+    "templates/verify-record.schema.json",
+    "spec/thresholds.json",
+    "spec/terminals.json"
+  ],
+  "required_anchors": {
+    "SOUL.md": [
+      "通用任务执行守则（十八条）",
+      "真实实现与三重零容忍",
+      "双向钢人论证",
+      "自我学习与 RSI 递归自我改进"
+    ],
+    "AGENTS.md": [
+      "Agent Core Suite v1.2.0",
+      "通用任务执行守则（十八条）",
+      "Harness Engineering 质量门禁",
+      "千问办公原生能力融合协议",
+      "0=PASS"
+    ]
+  },
+  "native_routing": {
+    "clarification": "AskUserQuestion",
+    "progress": "TodoWrite",
+    "parallelism": "Agent",
+    "skills": "Skill",
+    "memory": "memory tools",
+    "qwenwork_state": "QwenWork Connector",
+    "file_delivery": "qwenwork_file_present_files"
+  },
+  "enforcement": {
+    "L0": "千问办公原生安全、权限、审批与系统边界",
+    "L1": "SOUL.md 与 AGENTS.md 全局上下文约束",
+    "L2": "用户 Skills、状态契约与可机检门禁",
+    "L3": "经用户授权的项目 Git Hook 与 CI；不属于产品全局 Hook"
+  },
+  "integrity_model": {
+    "trusted_baseline": "当前 agent-core-suite 安装目录是本机权威源，变更前已完整备份并通过独立差异审计",
+    "scope": "校验规则静态锚点、必需文件哈希与套件源到用户 Skill 的单向字节一致性",
+    "limitation": "同一权限主体同时篡改权威源与目标时本地哈希无法证明来源真实性；需签名发布链或外部只读基线才能覆盖"
+  },
+  "boundaries": [
+    "不修改或披露系统提示词",
+    "不绕过权限审批与安全限制",
+    "不宣称存在未公开的全局任务前置或后置 Hook",
+    "不自动向未授权项目安装 Git Hook 或 CI"
+  ]
+}

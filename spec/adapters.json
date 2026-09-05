@@ -1,0 +1,123 @@
+{
+  "spec_version": "1.2.0",
+  "_why": [
+    "通用增强包必须能装到任意 agent 终端、接任意大模型；但落点、上下文注入方式、可用工具名各终端不同。",
+    "故把「不变的部分」与「随终端变的部分」彻底分开：规则与门禁不变，落点与工具映射走适配层。",
+    "来源：superpowers docs/porting-to-a-new-harness.md 的「技能只写动作、工具映射外置」——一份技能体跑多个终端，移植只加映射，禁改 SKILL.md。",
+    "教训：ponytail 已适配 Qoder 但未适配千问办公，路径与环境变量都不同，直接装不生效。适配层缺一项就是「装了但没生效」。"
+  ],
+  "portable_core": {
+    "_note": "与终端、模型完全无关，任何环境按原样安装即生效（能跑 Python 即为硬约束，不能跑则显式降为软约束）。",
+    "rules": ["AGENTS.md", "rules/agent-core-suite.md"],
+    "skills": [
+      "skills/universal-task-code",
+      "skills/loop-engineering",
+      "skills/graph-engineering",
+      "skills/self-verify-scaling",
+      "skills/token-thrift"
+    ],
+    "gates": [
+      "scripts/run_gates.py",
+      "scripts/gate_state_validate.py",
+      "scripts/gate_loop_guard.py",
+      "scripts/gate_checklist.py",
+      "scripts/gate_reality_scan.py",
+      "scripts/gate_verify_rank.py",
+      "scripts/gate_honesty_ledger.py",
+      "scripts/gate_rule_consistency.py",
+      "scripts/gate_skill_spec.py"
+    ],
+    "specs": [
+      "spec/thresholds.json",
+      "spec/terminals.json",
+      "spec/rule-consistency.json",
+      "spec/skill-spec.json",
+      "spec/adapters.json"
+    ],
+    "contracts": ["templates/task-state.schema.json", "templates/verify-record.schema.json"]
+  },
+  "model_agnostic": {
+    "_why": "包内不含任何模型 API 调用、不含 provider base URL、不含 token 计价表；故换模型不需要改包。",
+    "no_model_api_calls": true,
+    "no_provider_endpoints": true,
+    "model_tier_is_label_only": true,
+    "_tier_note": "model_tier（cheap/standard/strong）只是成本可见性标签，不绑定具体厂商型号；换模型只需按自家档位映射，不改门禁。",
+    "logits_dependency": "none",
+    "_logits_note": "自验证评分用显式 1-20 rubric 而非 logits，故不要求模型暴露 logprobs —— 这是能跨模型的前提，也是已登记的 [降维实现]。"
+  },
+  "capability_adapters": {
+    "_why": "门禁强制的是「标准与证据」，不是具体工具名。各终端把自己的等价能力填进来即可，缺失项必须显式写 null 并说明影响。",
+    "required_capabilities": [
+      {"id": "clarify", "purpose": "向主人收敛关键决策（守则 2）", "fallback": "在正文提问并等待答复"},
+      {"id": "progress", "purpose": "任务清单与进度可见（守则 9/11）", "fallback": "写入 .acs/task-state.json 的 steps"},
+      {"id": "parallel", "purpose": "派发独立子代理并分离 builder/verifier（守则 8/12）", "fallback": "串行执行并显式声明未做并行"},
+      {"id": "skill_load", "purpose": "按需加载子技能（守则 7）", "fallback": "人工粘贴对应 SKILL.md"},
+      {"id": "memory", "purpose": "跨会话沉淀经验（守则 17）", "fallback": "写入仓库内 docs/lessons.md"},
+      {"id": "file_delivery", "purpose": "把产物交付给主人（守则 16）", "fallback": "打印绝对路径"},
+      {"id": "shell", "purpose": "运行硬门禁脚本（全部机检的前提）", "fallback": "无 shell 则强制力降为 soft_only 并显式声明"}
+    ],
+    "profiles": {
+      "generic": {
+        "label": "通用（未识别终端）",
+        "clarify": null, "progress": null, "parallel": null,
+        "skill_load": null, "memory": null, "file_delivery": null, "shell": "bash|cmd",
+        "note": "未识别终端：能力映射全空即按 fallback 执行，并在交付报告写明哪些守则是以降级方式满足的。"
+      },
+      "qwenworkcn": {
+        "label": "千问办公 (QwenWorkCN)",
+        "clarify": "AskUserQuestion",
+        "progress": "TodoWrite",
+        "parallel": "Agent",
+        "skill_load": "Skill",
+        "memory": "memory",
+        "file_delivery": "qwenwork_file_present_files",
+        "shell": "Bash",
+        "global_rules": "~/.qwenworkcn/awareness/main/AGENTS.md",
+        "global_creed": "~/.qwenworkcn/awareness/main/SOUL.md",
+        "skills_dir": "~/.qwenworkcn/skills",
+        "note": "产品未公开全局任务前置/后置 Hook，故 L3 只覆盖获授权项目的 Git Hook/CI，不覆盖聊天入口。"
+      },
+      "claude": {
+        "label": "Claude Code",
+        "clarify": "AskUserQuestion",
+        "progress": "TodoWrite",
+        "parallel": "Task",
+        "skill_load": "Skill",
+        "memory": null,
+        "file_delivery": null,
+        "shell": "Bash",
+        "hooks": "SessionStart / UserPromptSubmit",
+        "skills_dir": "~/.claude/skills",
+        "note": "支持 hooks，可做 bootstrap 注入，L2 强制力最完整。"
+      },
+      "cursor": {
+        "label": "Cursor",
+        "clarify": null, "progress": null, "parallel": null,
+        "skill_load": null, "memory": null, "file_delivery": null, "shell": "terminal",
+        "rules_target": "<workspace>/.cursor/rules/agent-core-suite.mdc",
+        "note": ".mdc 需自行补 frontmatter（如 alwaysApply: true）才会常驻；本套件不代写，避免假装已生效。"
+      },
+      "codex": {
+        "label": "Codex CLI / 读 AGENTS.md 的终端",
+        "clarify": null, "progress": null, "parallel": null,
+        "skill_load": null, "memory": null, "file_delivery": null, "shell": "shell",
+        "rules_target": "<workspace>/AGENTS.md",
+        "note": "靠 AGENTS.md 常驻；无 hook 则规则是否真的到了模型面前需自行验证。"
+      }
+    }
+  },
+  "enforcement_honesty": {
+    "_why": "「全面生效」在不同终端强度天然不同；不分级声明就是夸大。",
+    "levels": {
+      "full": "有 Python：9 道门可机检，退出码可证",
+      "partial": "仅 Node：4 道门可机检；honesty/rule/skillspec 与 reality 无 Node 镜像，显式 USAGE_ERROR",
+      "soft_only": "无 Python 也无 Node：只剩上下文软约束，强制力归零 —— 这是显式结论，不是静默降级"
+    },
+    "must_declare_in_delivery_report": true,
+    "forbidden_claims": [
+      "宣称包能覆盖终端未公开的全局 Hook",
+      "宣称软约束等价于硬门禁",
+      "把上游项目的收益数字当作本包已复现的结论"
+    ]
+  }
+}

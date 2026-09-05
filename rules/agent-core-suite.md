@@ -1,5 +1,5 @@
 ---
-description: Agent Core Suite v1.1.0 工作标准 SOP（能力增强层，叠加于终端原生能力之上而非替代它）。接到任何非闲聊任务时始终生效：先定级（T0-T3）、跑七道门（P0-P6）、守四道成本闸门与有界重试，能跑硬门禁脚本就必须跑。
+description: Agent Core Suite v1.2.0 工作标准 SOP（能力增强层，叠加于终端原生能力之上而非替代它）。接到任何非闲聊任务时始终生效：先定级（T0-T3）、跑七道门（P0-P6）、守四道成本闸门与有界重试，能跑硬门禁脚本就必须跑。
 alwaysApply: true
 ---
 
@@ -77,8 +77,14 @@ python -X utf8 <SUITE>/scripts/run_gates.py --state .acs/task-state.json --root 
 - 未做的说未做，拿不到的数据说拿不到，失败与不确定性主动上报。
 - 跳过任何门禁需主人明确批准，并写入 `.acs/task-state.json` 的 `approved_by` 与交付报告。
 
-## 6 高频违规（自查）
+## 6 千问办公原生能力映射
+
+在千问办公中，本套件必须叠加到原生能力而不是另起平行体系：需求决策用 `AskUserQuestion`，进度用 `TodoWrite`，并行与独立验证用 `Agent`，专业能力用 `Skill`，长期经验用 Memory，产品设置与任务状态用 `QwenWork Connector`，最终文件用 `qwenwork_file_present_files`。所有操作继续服从原生权限、审批与文件保护规则。
+
+全局融合以 `~/.qwenworkcn/awareness/main/SOUL.md`、`AGENTS.md` 和用户 Skills 为 L1/L2；运行 `scripts/qwenwork_global_verify.py` 证明全局锚点、五个核心 Skill、门禁、模板与 QwenWorkCN 终端映射一致。Git Hook/CI 只在主人授权的具体项目启用，属于 L3 项目外部强制，不得宣称为千问办公产品级全局 Hook。
+
+## 7 高频违规（自查）
 
 跳过钢人论证直接动手 / 同一视角自签充当双 AI 互审 / 用编译冒充运行时验证 / 卡点停工等指示 /
 交付后不做复盘沉淀 / **拆了很多步但每步仍很重且带着全量上文（最贵的错误）** /
-事后调低评分门槛或改权重来让方案「通过」。
+事后调低评分门槛或改权重来让方案「通过」 / 用包装入口冒充未公开的产品全局 Hook。

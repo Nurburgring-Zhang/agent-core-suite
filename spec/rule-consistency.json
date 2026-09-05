@@ -1,0 +1,90 @@
+{
+  "spec_version": "1.2.0",
+  "_why": [
+    "规则同时存在于 SOUL/AGENTS/rules/skills 多处，靠人眼保持一致必然漂移，且漂移后两边都自活、没人报错。",
+    "实测教训：reference-creed.md 长期写「十二条」而全局守则写「十五条」，388 项测试全绿也拦不住 —— 因为没有一条断言检查规则体系自身。",
+    "两段式做法（来源：ponytail check-rule-copies.js）：精简副本逐字节比对；长文档无法字节比对，改用不可丢失短语不变量断言。"
+  ],
+  "canonical_creed": {
+    "path": "skills/universal-task-code/reference-creed.md",
+    "expected_article_count": 18,
+    "count_word": "十八条",
+    "article_markers": [
+      "第一条", "第二条", "第三条", "第四条", "第五条", "第六条",
+      "第七条", "第八条", "第九条", "第十条", "第十一条", "第十二条",
+      "第十三条", "第十四条", "第十五条", "第十六条", "第十七条", "第十八条"
+    ]
+  },
+  "count_declarations": {
+    "_why": "条数一旦分叉，读到旧数字的执行者就会漏掉整条守则；故凡是声明条数的文件都必须写同一个词。",
+    "files": [
+      "skills/universal-task-code/reference-creed.md",
+      "skills/universal-task-code/SKILL.md",
+      "rules/agent-core-suite.md",
+      "AGENTS.md"
+    ],
+    "_files_note": "纳入跨终端入口 AGENTS.md：reviewer-G 终审发现全局 AGENTS.md 曾残留十五条映射表而本门未覆盖（count_declarations 原不含 AGENTS.md），现补入以堵住该盲区。",
+    "stale_phrases": [
+      "守则十二条", "守则十五条", "守则十六条", "守则十七条",
+      "十二条守则", "十五条守则", "十六条守则", "十七条守则",
+      "本十二条", "本十五条", "本十六条", "本十七条",
+      "守则（十二条）", "守则（十五条）", "守则（十六条）", "守则（十七条）"
+    ],
+    "_stale_note": "必须匹配「守则+条数」组合而非裸条数词：守则原文本身含「第十二条」「第十五条」等条目标记，裸子串会把正文条目误报为漂移（首版实测踩到）。"
+  },
+  "invariants": {
+    "_why": "这些短语是承重墙：安全豁免、零容忍、停止条件、诚实声明。任何一条被改写丢失，规则体系就出现静默缺口。",
+    "phrases": [
+      "零虚假容忍",
+      "零模拟实现容忍",
+      "零降级实现容忍",
+      "[DEGRADED]",
+      "双向钢人论证",
+      "递归自我改进",
+      "看起来完成但未真实验证"
+    ],
+    "sources": [
+      "skills/universal-task-code/reference-creed.md"
+    ]
+  },
+  "cross_copies": {
+    "_why": "同一段纪律出现在多个文件时，必须能指出它们共同承载哪些短语；缺失即视为副本漂移。",
+    "groups": [
+      {
+        "id": "zero-tolerance",
+        "_note": "各副本容许「零虚假容忍」与「零虚假」两种写法（长文档用全称、精简副本用简写），故断言取语义承重的最小片段；但三项必须同时在场，缺一即为静默放宽。",
+        "phrases": ["零虚假", "零模拟实现", "零降级"],
+        "files": [
+          "skills/universal-task-code/SKILL.md",
+          "rules/agent-core-suite.md",
+          "AGENTS.md"
+        ]
+      },
+      {
+        "id": "exit-codes",
+        "phrases": ["0=PASS", "1=BLOCK", "2=USAGE_ERROR"],
+        "files": [
+          "skills/universal-task-code/SKILL.md",
+          "rules/agent-core-suite.md",
+          "AGENTS.md"
+        ]
+      },
+      {
+        "id": "cost-gates",
+        "_note": "四道闸门的承重语义：单步一产出、禁止回灌、空转 two-strike、思考占比上限。精简副本可用「单步一产出」代替「窄步闸」，故断言取跨副本共有的语义锚点。",
+        "phrases": ["回灌", "two-strike", "0.40"],
+        "files": [
+          "skills/universal-task-code/SKILL.md",
+          "rules/agent-core-suite.md",
+          "AGENTS.md"
+        ]
+      }
+    ]
+  },
+  "external_context": {
+    "_why": "终端全局规则文件不在套件内，路径随终端而变；由调用方用 --external 显式传入，不传则只校验套件内副本并如实说明覆盖范围。",
+    "flag": "--external",
+    "must_match": ["count_word", "invariants"],
+    "_scope_note": "--external 只接『守则载体』文件（如千问办公的 SOUL.md，承载十八条原文与全部承重短语）。Harness 手册（如 AGENTS.md）不是守则载体，其完整性由 qwenwork_global_verify 的锚点集单独校验，不应传入本门用守则不变量强验——否则会把『手册用简写措辞』误判为漂移（实测踩到）。"
+  }
+}

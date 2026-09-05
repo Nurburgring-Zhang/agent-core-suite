@@ -2,18 +2,33 @@
   "task_id": "acs-demo-001",
   "tier": "T2",
   "tier_reason": "涉及 3 个文件与一个可执行脚本，有持久状态且需要真实运行测试，故定为 T2（拿不准时取高一级）",
-  "contract_version": "1.1.0",
+  "contract_version": "1.2.0",
   "known_gaps": [
     "目标运行环境的 CI 版本未确认，已按本机 Python 3.12 验证"
   ],
-  "enabled_engineering": ["loop", "graph", "token-thrift"],
+  "enabled_engineering": [
+    "loop",
+    "graph",
+    "token-thrift"
+  ],
   "cost_metering": {
     "source": "api_usage",
     "tokens_actual": 128340,
     "input_tokens_actual": 121600,
     "output_tokens_actual": 6740,
     "evidence_ref": ".acs/usage/2026-08-27-run.json（终端 usage 落盘，可逐条复查）",
-    "note": "拿不到真实计费时改写 source=unavailable 并删掉本对象里的 *_actual 字段；字段名就是声明"
+    "note": "拿不到真实计费时改写 source=unavailable 并删掉本对象里的 *_actual 字段；字段名就是声明",
+    "basis": "provider_reported",
+    "components": [
+      {
+        "label": "输入 token",
+        "basis": "provider_reported"
+      },
+      {
+        "label": "输出 token",
+        "basis": "provider_reported"
+      }
+    ]
   },
   "safety_valve": {
     "max_rounds": 6,
@@ -53,10 +68,17 @@
       {
         "id": "n1",
         "goal": "产出解析器契约 schema 文件",
-        "inputs": ["docs/brief.md"],
-        "outputs": ["out/schema.json"],
+        "inputs": [
+          "docs/brief.md"
+        ],
+        "outputs": [
+          "out/schema.json"
+        ],
         "acceptance": [
-          { "kind": "file", "value": "out/schema.json" }
+          {
+            "kind": "file",
+            "value": "out/schema.json"
+          }
         ],
         "deterministic": false,
         "owner": "builder-A",
@@ -65,10 +87,19 @@
       {
         "id": "n2",
         "goal": "按契约实现解析器",
-        "inputs": ["n1.outputs.schema", "docs/brief.md"],
-        "outputs": ["src/parser.py"],
+        "inputs": [
+          "n1.outputs.schema",
+          "docs/brief.md"
+        ],
+        "outputs": [
+          "src/parser.py"
+        ],
         "acceptance": [
-          { "kind": "cmd", "value": "pytest tests/test_parser.py -q", "expect_exit": 0 }
+          {
+            "kind": "cmd",
+            "value": "pytest tests/test_parser.py -q",
+            "expect_exit": 0
+          }
         ],
         "deterministic": false,
         "calls_model": true,
@@ -80,10 +111,18 @@
       {
         "id": "n3",
         "goal": "统计契约字段数并写入报告",
-        "inputs": ["n1.outputs.schema"],
-        "outputs": ["out/field-count.txt"],
+        "inputs": [
+          "n1.outputs.schema"
+        ],
+        "outputs": [
+          "out/field-count.txt"
+        ],
         "acceptance": [
-          { "kind": "cmd", "value": "python -X utf8 tools/count_fields.py out/schema.json --report out/field-count.txt", "expect_exit": 0 }
+          {
+            "kind": "cmd",
+            "value": "python -X utf8 tools/count_fields.py out/schema.json --report out/field-count.txt",
+            "expect_exit": 0
+          }
         ],
         "deterministic": true,
         "calls_model": false,
@@ -92,10 +131,29 @@
       }
     ],
     "edges": [
-      { "from": "n1", "to": "n2", "gate": { "kind": "file", "value": "out/schema.json" } },
-      { "from": "n1", "to": "n3", "gate": { "kind": "file", "value": "out/schema.json" } }
+      {
+        "from": "n1",
+        "to": "n2",
+        "gate": {
+          "kind": "file",
+          "value": "out/schema.json"
+        }
+      },
+      {
+        "from": "n1",
+        "to": "n3",
+        "gate": {
+          "kind": "file",
+          "value": "out/schema.json"
+        }
+      }
     ],
-    "parallel_groups": [["n2", "n3"]],
+    "parallel_groups": [
+      [
+        "n2",
+        "n3"
+      ]
+    ],
     "barriers": []
   },
   "steps": [
@@ -103,9 +161,15 @@
       "id": "s1",
       "node_id": "n1",
       "goal": "写出契约 schema 文件",
-      "outputs": ["out/schema.json"],
+      "outputs": [
+        "out/schema.json"
+      ],
       "acceptance": [
-        { "kind": "file", "value": "out/schema.json", "actual": "存在，2143 字节，含 required 字段" }
+        {
+          "kind": "file",
+          "value": "out/schema.json",
+          "actual": "存在，2143 字节，含 required 字段"
+        }
       ],
       "budget_min": 20,
       "context_bytes_proxy": 5200,
@@ -121,9 +185,16 @@
       "id": "s2",
       "node_id": "n2",
       "goal": "实现解析器并通过单测",
-      "outputs": ["src/parser.py"],
+      "outputs": [
+        "src/parser.py"
+      ],
       "acceptance": [
-        { "kind": "cmd", "value": "pytest tests/test_parser.py -q", "expect_exit": 0, "actual": "exit=0, 7 passed" }
+        {
+          "kind": "cmd",
+          "value": "pytest tests/test_parser.py -q",
+          "expect_exit": 0,
+          "actual": "exit=0, 7 passed"
+        }
       ],
       "budget_min": 25,
       "context_bytes_proxy": 7400,
@@ -139,9 +210,16 @@
       "id": "s3",
       "node_id": "n3",
       "goal": "统计字段数写入报告",
-      "outputs": ["out/field-count.txt"],
+      "outputs": [
+        "out/field-count.txt"
+      ],
       "acceptance": [
-        { "kind": "cmd", "value": "python -X utf8 tools/count_fields.py out/schema.json --report out/field-count.txt", "expect_exit": 0, "actual": "exit=0, fields=18, out/field-count.txt 已生成" }
+        {
+          "kind": "cmd",
+          "value": "python -X utf8 tools/count_fields.py out/schema.json --report out/field-count.txt",
+          "expect_exit": 0,
+          "actual": "exit=0, fields=18, out/field-count.txt 已生成"
+        }
       ],
       "budget_min": 10,
       "retries": 1,
@@ -163,21 +241,45 @@
       "evidence": "正向钢人 3 条、反向钢人 3 条已输出；向主人提出 2 个关键问题并获答复（见 progress.md 第 1 节）",
       "steelman": {
         "pro": [
-          { "claim": "先定契约再写实现能避开返工", "basis": "docs/brief.md 第 2 节列了 3 个下游消费方" },
-          { "claim": "字段数统计可做成确定性节点", "basis": "输入仅 out/schema.json，无需语义判断" },
-          { "claim": "单测可作硬验收", "basis": "tests/test_parser.py 已存在且可直接运行" }
+          {
+            "claim": "先定契约再写实现能避开返工",
+            "basis": "docs/brief.md 第 2 节列了 3 个下游消费方"
+          },
+          {
+            "claim": "字段数统计可做成确定性节点",
+            "basis": "输入仅 out/schema.json，无需语义判断"
+          },
+          {
+            "claim": "单测可作硬验收",
+            "basis": "tests/test_parser.py 已存在且可直接运行"
+          }
         ],
         "con": [
-          { "claim": "契约先行可能因需求变动而重写", "basis": "brief.md 未冻结字段集，反例：上一任务改过两轮" },
-          { "claim": "n2/n3 并行收益有限", "basis": "n3 预估 10 分钟，反例：并行调度本身有协同开销" },
-          { "claim": "CI 版本未确认可能使本机验证失效", "basis": "known_gaps 已记；反例：旧版 Python 不支持本写法" }
+          {
+            "claim": "契约先行可能因需求变动而重写",
+            "basis": "brief.md 未冻结字段集，反例：上一任务改过两轮"
+          },
+          {
+            "claim": "n2/n3 并行收益有限",
+            "basis": "n3 预估 10 分钟，反例：并行调度本身有协同开销"
+          },
+          {
+            "claim": "CI 版本未确认可能使本机验证失效",
+            "basis": "known_gaps 已记；反例：旧版 Python 不支持本写法"
+          }
         ],
         "divergence": "分歧在于契约是否已足够稳定到可以先冻结",
         "key_variable": "brief.md 字段集是否会再变"
       },
       "key_questions": [
-        { "q": "契约字段集是否可以冻结？", "answer": "可以冻结，变动走版本升级" },
-        { "q": "目标 CI 的 Python 版本？", "answer": "未确认，已记入 known_gaps" }
+        {
+          "q": "契约字段集是否可以冻结？",
+          "answer": "可以冻结，变动走版本升级"
+        },
+        {
+          "q": "目标 CI 的 Python 版本？",
+          "answer": "未确认，已记入 known_gaps"
+        }
       ]
     },
     "G1": {
@@ -186,12 +288,26 @@
       "cognition": {
         "goal": "产出契约 schema、按契约实现解析器并统计字段数",
         "boundary": "只改 out/ 与 src/parser.py；不动现有 CI 配置与下游调用方",
-        "dependencies": ["docs/brief.md", "tests/test_parser.py", "tools/count_fields.py"],
+        "dependencies": [
+          "docs/brief.md",
+          "tests/test_parser.py",
+          "tools/count_fields.py"
+        ],
         "impact": "影响 3 个文件与一个可执行脚本；下游 3 个消费方靠 schema 契约",
-        "acceptance": ["out/schema.json 存在且含 required", "pytest tests/test_parser.py 退出码 0", "字段数统计与 schema 一致"],
-        "risks": ["CI Python 版本未确认，本机验证可能不等于 CI 通过", "契约变动会连带解析器重写"],
+        "acceptance": [
+          "out/schema.json 存在且含 required",
+          "pytest tests/test_parser.py 退出码 0",
+          "字段数统计与 schema 一致"
+        ],
+        "risks": [
+          "CI Python 版本未确认，本机验证可能不等于 CI 通过",
+          "契约变动会连带解析器重写"
+        ],
         "assumptions": [
-          { "text": "tests/test_parser.py 的断言可代表真实验收标准", "risk": "中：若断言不足则验收偏弱" }
+          {
+            "text": "tests/test_parser.py 的断言可代表真实验收标准",
+            "risk": "中：若断言不足则验收偏弱"
+          }
         ]
       }
     },
@@ -199,12 +315,27 @@
       "status": "pass",
       "evidence": "DESIGN.md 四件套齐全；DAG 3 节点 2 边 1 并行组已登记",
       "plan": {
-        "phases": ["P1 冻结契约并产出 schema", "P2 实现解析器并跑单测", "P3 统计字段数并写报告"],
+        "phases": [
+          "P1 冻结契约并产出 schema",
+          "P2 实现解析器并跑单测",
+          "P3 统计字段数并写报告"
+        ],
         "design_standards": "架构：DESIGN.md 第 3 节；数据契约：out/schema.json；API：无对外接口；验收逐条见 cognition.acceptance",
-        "stage_goals": ["P1 交付 out/schema.json", "P2 交付 src/parser.py 且单测绿", "P3 交付 out/field-count.txt"],
+        "stage_goals": [
+          "P1 交付 out/schema.json",
+          "P2 交付 src/parser.py 且单测绿",
+          "P3 交付 out/field-count.txt"
+        ],
         "boundary": {
-          "in_scope": ["out/schema.json", "src/parser.py", "out/field-count.txt"],
-          "out_scope": ["CI 配置改造", "下游消费方适配"],
+          "in_scope": [
+            "out/schema.json",
+            "src/parser.py",
+            "out/field-count.txt"
+          ],
+          "out_scope": [
+            "CI 配置改造",
+            "下游消费方适配"
+          ],
           "out_of_scope_policy": "边界外需求不自行动手，记入后续建议并请主人确认"
         }
       }
@@ -217,8 +348,12 @@
           "round": 1,
           "builder": "builder-A",
           "verifier": "verifier-B",
-          "findings": ["解析器未处理空文件输入"],
-          "fixed": ["src/parser.py 增加空输入分支并补用例"],
+          "findings": [
+            "解析器未处理空文件输入"
+          ],
+          "fixed": [
+            "src/parser.py 增加空输入分支并补用例"
+          ],
           "recheck": "pytest tests/test_parser.py -q 退出码 0（7 passed，含新增空输入用例）"
         },
         {
@@ -230,21 +365,46 @@
         }
       ]
     },
-    "G4": { "status": "pass", "evidence": "pytest 退出码 0（7 passed）；字段数实测 18，与认知摘要一致" },
+    "G4": {
+      "status": "pass",
+      "evidence": "pytest 退出码 0（7 passed）；字段数实测 18，与认知摘要一致"
+    },
     "G5": {
       "status": "pass",
       "evidence": "对抗审核 2 轮（HIGH 项 2 个已处置）；上线测试 2 轮均 exit=0；交付报告四要素齐全",
       "adversarial_reviews": 2,
       "release_tests": 2,
       "blind_reviews": [
-        { "reviewer": "reviewer-D", "verdict": "approve", "findings": ["字段数统计与 schema 实测一致"] },
-        { "reviewer": "reviewer-E", "verdict": "approve", "findings": [] }
+        {
+          "reviewer": "reviewer-D",
+          "verdict": "approve",
+          "findings": [
+            "字段数统计与 schema 实测一致"
+          ]
+        },
+        {
+          "reviewer": "reviewer-E",
+          "verdict": "approve",
+          "findings": []
+        }
       ],
       "report": {
-        "deliverables": ["out/schema.json", "src/parser.py", "out/field-count.txt"],
-        "evidence": ["pytest tests/test_parser.py -q → exit=0, 7 passed", "count_fields.py → exit=0, fields=18", "gate_reality_scan.py → exit=0"],
-        "risks": ["CI Python 版本未确认（见 known_gaps）"],
-        "next_steps": ["在目标 CI 上补跑一轮完整验证"]
+        "deliverables": [
+          "out/schema.json",
+          "src/parser.py",
+          "out/field-count.txt"
+        ],
+        "evidence": [
+          "pytest tests/test_parser.py -q → exit=0, 7 passed",
+          "count_fields.py → exit=0, fields=18",
+          "gate_reality_scan.py → exit=0"
+        ],
+        "risks": [
+          "CI Python 版本未确认（见 known_gaps）"
+        ],
+        "next_steps": [
+          "在目标 CI 上补跑一轮完整验证"
+        ]
       }
     },
     "G6": {
@@ -259,5 +419,63 @@
       }
     }
   },
-  "progress_trend": [12.5, 15.0, 17.2]
+  "progress_trend": [
+    12.5,
+    15.0,
+    17.2
+  ],
+  "degradations": [
+    {
+      "marker": "[降维实现]",
+      "what": "自验证评分改用 1-20 rubric，不使用模型 logits",
+      "ceiling": "无法复现论文精度，仅保证机制方向一致",
+      "upgrade_path": "若终端未来暴露 logprobs，改回概率加权并保留 rubric 作对照"
+    }
+  ],
+  "judge_selftest": {
+    "known_good": "templates/verify-record.example.json 的 c1（correctness 18/risk 18）",
+    "known_bad": "同文件 c3（完全信任工具回执，correctness 14/risk 12）",
+    "ranked_correctly": true,
+    "note": "裁判先把已知好坏样本排对，才允许对真实候选评分排序"
+  },
+  "behavior_eval": {
+    "runs": [
+      {
+        "arm": "baseline_none",
+        "query": "帮我把这三个文件重构一下",
+        "passed": false,
+        "evidence": "无规则臂未定级、未建状态文件、未跑门禁",
+        "near_miss": false
+      },
+      {
+        "arm": "baseline_terse",
+        "query": "帮我把这三个文件重构一下",
+        "passed": false,
+        "evidence": "朴素指令臂做了分步但无可机检验收，完成标准仍为「功能正常」",
+        "near_miss": false
+      },
+      {
+        "arm": "with_skill",
+        "query": "帮我把这三个文件重构一下",
+        "passed": true,
+        "evidence": "定级 T2、建 .acs/task-state.json、run_gates 退出码 0",
+        "near_miss": false
+      },
+      {
+        "arm": "with_skill",
+        "query": "今天天气怎么样",
+        "passed": true,
+        "evidence": "识别为 T0 未起流水线，符合 SKIP 边界",
+        "near_miss": true
+      },
+      {
+        "arm": "with_skill",
+        "query": "看下这个 SQL 慢在哪",
+        "passed": true,
+        "evidence": "单文件只读诊断按 T0/T1 处理，未升级为全量流水线",
+        "near_miss": true
+      }
+    ],
+    "honest_delta": "with_skill vs baseline_terse：可机检验收从 0/3 升到 3/3；delta 不与 baseline_none 比较，避免把通用效应算成增益"
+  }
 }

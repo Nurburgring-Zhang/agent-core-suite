@@ -6,12 +6,40 @@
     "探测只看文件系统标记（目录/文件是否存在），不联网、不猜测、不读环境变量之外的隐私信息。",
     "探测不到就落到 generic：显式降到最通用的 AGENTS.md 路径，而不是假装识别成某个终端。"
   ],
-  "detect_order": ["qoder", "qoderwork", "claude", "cursor", "windsurf", "codex", "generic"],
+  "detect_order": [
+    "qwenworkcn",
+    "qoder",
+    "qoderwork",
+    "claude",
+    "cursor",
+    "windsurf",
+    "codex",
+    "generic"
+  ],
   "terminals": {
+    "qwenworkcn": {
+      "label": "千问办公 (QwenWorkCN)",
+      "markers_home": [
+        ".qwenworkcn"
+      ],
+      "markers_workspace": [],
+      "skills_dir": "~/.qwenworkcn/skills",
+      "rules_source": "rules/agent-core-suite.md",
+      "rules_target": "<workspace>/AGENTS.md",
+      "global_awareness_dir": "~/.qwenworkcn/awareness/main",
+      "global_soul_target": "~/.qwenworkcn/awareness/main/SOUL.md",
+      "global_agents_target": "~/.qwenworkcn/awareness/main/AGENTS.md",
+      "global_verify": "scripts/qwenwork_global_verify.py",
+      "post_install_note": "技能装完新开会话即被千问办公加载；机器级常驻规则由全局 SOUL.md/AGENTS.md 承载，写入前必须备份并做保强三方合并；运行 qwenwork_global_verify.py 验证规则锚点、Skill 同步和终端映射。安装器仍不自动覆盖全局行为文件。"
+    },
     "qoder": {
       "label": "Qoder",
-      "markers_home": [".qoder"],
-      "markers_workspace": [".qoder"],
+      "markers_home": [
+        ".qoder"
+      ],
+      "markers_workspace": [
+        ".qoder"
+      ],
       "skills_dir": "~/.qoder/skills",
       "rules_source": "rules/agent-core-suite.md",
       "rules_target": "<workspace>/.qoder/rules/agent-core-suite.md",
@@ -19,7 +47,9 @@
     },
     "qoderwork": {
       "label": "QoderWork",
-      "markers_home": [".qoderwork"],
+      "markers_home": [
+        ".qoderwork"
+      ],
       "markers_workspace": [],
       "skills_dir": "~/.qoderwork/skills",
       "rules_source": "rules/agent-core-suite.md",
@@ -28,8 +58,13 @@
     },
     "claude": {
       "label": "Claude Code",
-      "markers_home": [".claude"],
-      "markers_workspace": [".claude", "CLAUDE.md"],
+      "markers_home": [
+        ".claude"
+      ],
+      "markers_workspace": [
+        ".claude",
+        "CLAUDE.md"
+      ],
       "skills_dir": "~/.claude/skills",
       "rules_source": "AGENTS.md",
       "rules_target": "<workspace>/CLAUDE.md",
@@ -37,8 +72,12 @@
     },
     "cursor": {
       "label": "Cursor",
-      "markers_home": [".cursor"],
-      "markers_workspace": [".cursor"],
+      "markers_home": [
+        ".cursor"
+      ],
+      "markers_workspace": [
+        ".cursor"
+      ],
       "skills_dir": "<workspace>/.agent/skills",
       "rules_source": "rules/agent-core-suite.md",
       "rules_target": "<workspace>/.cursor/rules/agent-core-suite.mdc",
@@ -46,8 +85,13 @@
     },
     "windsurf": {
       "label": "Windsurf",
-      "markers_home": [".codeium", ".windsurf"],
-      "markers_workspace": [".windsurf"],
+      "markers_home": [
+        ".codeium",
+        ".windsurf"
+      ],
+      "markers_workspace": [
+        ".windsurf"
+      ],
       "skills_dir": "<workspace>/.agent/skills",
       "rules_source": "rules/agent-core-suite.md",
       "rules_target": "<workspace>/.windsurf/rules/agent-core-suite.md",
@@ -55,8 +99,12 @@
     },
     "codex": {
       "label": "Codex CLI / 其它读 AGENTS.md 的终端",
-      "markers_home": [".codex"],
-      "markers_workspace": ["AGENTS.md"],
+      "markers_home": [
+        ".codex"
+      ],
+      "markers_workspace": [
+        "AGENTS.md"
+      ],
       "skills_dir": "<workspace>/.agent/skills",
       "rules_source": "AGENTS.md",
       "rules_target": "<workspace>/AGENTS.md",

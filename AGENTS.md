@@ -1,4 +1,4 @@
-# AGENTS.md —— Agent Core Suite v1.1.0
+# AGENTS.md —— Agent Core Suite v1.2.0
 
 > 本文件是**跨终端通用入口**（AGENTS.md 约定被主流 agent 终端自动读取）。
 > 无论你是哪个终端上的 agent，进入本仓库后，以下内容为**强制工作标准**。
@@ -45,10 +45,14 @@ python -X utf8 scripts/run_gates.py --state .acs/task-state.json --root . --tier
 
 ```
 skills/      五个技能：1 个瘦入口 + 4 个按需子技能（软约束）
-scripts/     六个门禁脚本，零第三方依赖，纯 stdlib（硬约束；Node 镜像同覆盖）
+scripts/     九道门禁脚本（run_gates 编排 state/loop/checklist/reality/verify/honesty/rule/skillspec 八门）
+             + acs_bootstrap 注入层 + acs_doctor 探针 + install_check，零第三方依赖，纯 stdlib
+             （硬约束；Node 镜像覆盖 4/9，其余显式 USAGE_ERROR，不假装全门通过）
+spec/        thresholds 阈值 / terminals 终端映射 / rule-consistency 规则自洽 / skill-spec 技能规范
+             / adapters 适配层 / capability-coverage 能力覆盖（均为单一真相源，缺即 USAGE_ERROR）
 templates/   task-state / verify-record 的 schema + 正样本 + 交接总结模板
 rules/       工作区常驻规则（Qoder 等支持 rules 的终端）
-tests/       377 项双向验证（正样本 PASS / 负样本 BLOCK + 套件卫生机检）
+tests/       双向验证（正样本 PASS / 负样本 BLOCK + 套件卫生机检；当前数量以 pytest 实跑为准）
 DESIGN.md    设计基线与证据表 E1-E27，每条硬约束可追溯
 ```
 
