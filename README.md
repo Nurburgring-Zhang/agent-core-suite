@@ -68,7 +68,7 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1 -Target C:\path\to\worksp
 chmod +x install.sh && ./install.sh --target /path/to/workspace
 ```
 
-Both installers default to `--mode auto`: they ask the `acs_doctor` probe what this machine has and which terminal this workspace belongs to, then decide install targets. Currently recognized: qwenworkcn / qoder / qoderwork / claude / cursor / windsurf / codex; if none matches, it lands explicitly on generic (it never pretends to have recognized something). To see the health check first:
+Both installers default to `--mode auto`: they ask the `acs_doctor` probe what this machine has and which terminal this workspace belongs to, then decide install targets. Built-in profiles cover the common agent terminals (claude / cursor / windsurf / codex) plus product-specific terminals registered in `spec/terminals.json`; if none matches, it lands explicitly on generic (it never pretends to have recognized something). To see the health check first:
 
 ```bash
 python -X utf8 scripts/acs_doctor.py --target .        # no Python? node scripts/node/acs_gates.mjs doctor --target .
@@ -175,15 +175,15 @@ python -X utf8 scripts/run_gates.py --state templates/task-state.example.json --
 python -X utf8 scripts/gate_verify_rank.py --record templates/verify-record.example.json --tier T3
 ```
 
-## QwenWorkCN global integration
+## Terminal global integration
 
-QwenWorkCN uses `~/.qwenworkcn/awareness/main/SOUL.md` and `AGENTS.md` as the global behavior layer, user Skills as the capability layer, and this suite as the machine-checkable Harness. Run:
+Agent terminals that maintain a persistent global rules layer (a user-level `SOUL.md`/`AGENTS.md` outside any single workspace) can wire this suite in as the machine-checkable Harness beneath that layer: the global rules file carries the creed, user Skills carry the capability layer, and this suite carries the gates. Each such terminal ships a dedicated adapter verifier under `scripts/` (registered in `spec/adapters.json`); run it against the terminal's home directory:
 
 ```bash
-python -X utf8 scripts/qwenwork_global_verify.py --home ~/.qwenworkcn
+python -X utf8 scripts/<terminal>_global_verify.py --home <terminal-home>
 ```
 
-The probe verifies global rule anchors, byte identity of the five core Skills, required gates/templates, and the QwenWorkCN terminal mapping. It does **not** claim access to the system prompt, private product runtime, or an unpublished global pre/post-task hook. Git hooks and CI remain explicit per-project opt-ins.
+The verifier checks global rule anchors, byte identity of the core Skills, required gates/templates, and the terminal mapping. It does **not** claim access to the system prompt, private product runtime, or an unpublished global pre/post-task hook. Git hooks and CI remain explicit per-project opt-ins.
 
 ## Known limitations (declared honestly, no whitewash)
 
@@ -194,7 +194,7 @@ The probe verifies global rule anchors, byte identity of the five core Skills, r
 5. Soft constraints (skills & rules) **can be drifted around by the model**; only `scripts/` exit codes are provable. This is a design tradeoff, not concealment. The 7 formerly self-enforced items now live as structured fields in `task-state.json`, machine-checked by `gate_checklist.py` (mapping in `reference-gates.md`); but that layer only blocks "skipped wholesale" and "written as empty phrases" — **it cannot grade the quality of thinking** (that stays native). Unhardened `[soft]` items still rely on conscience.
 6. Install performs **no hash verification** — existence and non-emptiness against the inventory only. Per-file sha256 checks happen **only at `pack.py` packaging time**, so post-distribution tampering is undetectable.
 7. **No Python no longer means zero enforcement, but not full either**: Node only runs 4/5 gates (`reality_scan` needs Python AST; the Node side returns `USAGE_ERROR` explicitly instead of pretending). Only when both are missing is it `soft_only`, and `acs_doctor` says so with exit=1 — **an explicit verdict, not a silent downgrade**.
-8. **Multi-terminal targets are path-verified, not load-verified**: claude / cursor / windsurf / codex / qoderwork targets are written into `spec/terminals.json` per each terminal's published conventions, with dual-implementation byte-identical path resolution and copy verification — but rule loading has not been empirically confirmed inside those terminals. Cursor's `.mdc` needs its frontmatter added by you; this suite does not write it.
+8. **Multi-terminal targets are path-verified, not load-verified**: claude / cursor / windsurf / codex and the product-specific terminals are written into `spec/terminals.json` per each terminal's published conventions, with dual-implementation byte-identical path resolution and copy verification — but rule loading has not been empirically confirmed inside those terminals. Cursor's `.mdc` needs its frontmatter added by you; this suite does not write it.
 9. **L3 is not airtight**: `hooks/pre-commit` is off by default (opt-in), and even installed it can be bypassed with `git commit --no-verify` — **an intentionally preserved owner escape hatch**, not a vulnerability. It only intercepts `git commit`, not `git push`, rebase, or other write paths. The truly unbypassable layer is CI.
 10. `hooks/pre-commit` and the CI yml are **outside `gate_reality_scan`'s coverage** (no extension / `.yml` not in `DEFAULT_EXTS`); covered instead by `bash -n` and YAML-parse tests. An indented-wrong workflow doesn't error — it simply never runs — so that assertion is mandatory.
 11. **v1.1's T3-only contract items trigger only at T3** (edge-gate coverage / artifact registry / model tier / double-blind review; acceptance binding is the exception, active from T1): tiers below T2 don't check them — the tiering itself is the token-saving design. The cost: T2 deliverables get no artifact lineage or double-blind protection. If a T2 delivery needs equal strength, set `tier` to T3 and re-run the gates — no extra rules needed.
@@ -224,7 +224,7 @@ The two installers **default to different Python interpreters** (a platform-conv
 - **T3 double-blind review**: ≥2 independent reviewers who can't see each other's reasoning; builder banned; conflicting verdicts must be arbitrated on record.
 - **T3 self-consistency resampling**: top-two gaps < 1.5 force real extra samples before a verdict.
 - **Suite hygiene pinned in pytest**: tombstones, dead links, orphaned spec sections, duplicate files — read-only audit, report never deletes.
-- **QoderWork terminal support** added to `spec/terminals.json` (detect order, skills dir, rules target).
+- **Product-specific terminal adapters** added to `spec/terminals.json` (detect order, skills dir, rules target).
 - Cross-implementation exit-code consistency expanded to T3 positive samples; suite self-test grew to 377.
 
 ## License
@@ -287,7 +287,7 @@ chmod +x install.sh && ./install.sh --target /path/to/workspace
 ```
 
 两个安装器默认 `--mode auto`：先跟 `acs_doctor` 探针问清楚「这台机器有什么、这个工作区是哪个终端」，
-再决定落点。当前识别 qwenworkcn / qoder / qoderwork / claude / cursor / windsurf / codex，全不命中则显式落到 generic（不假装识别）。
+再决定落点。内置 profile 覆盖常见 agent 终端（claude / cursor / windsurf / codex）及登记于 `spec/terminals.json` 的产品专属终端，全不命中则显式落到 generic（不假装识别）。
 想先看体检结论：
 
 ```bash
@@ -404,15 +404,15 @@ python -X utf8 scripts/run_gates.py --state templates/task-state.example.json --
 python -X utf8 scripts/gate_verify_rank.py --record templates/verify-record.example.json --tier T3
 ```
 
-## 千问办公全局融合
+## 终端全局集成
 
-千问办公以 `~/.qwenworkcn/awareness/main/SOUL.md` 与 `AGENTS.md` 承载全局行为层，用户 Skills 承载能力层，本套件承载可机检 Harness。运行：
+凡维护「持久全局规则层」（用户级、跨工作区的 `SOUL.md`/`AGENTS.md`）的 agent 终端，都可把本套件接为该层之下的可机检 Harness：全局规则文件承载守则，用户 Skills 承载能力层，本套件承载门禁。每个此类终端在 `scripts/` 下配一个专属适配校验器（登记于 `spec/adapters.json`），对终端家目录运行：
 
 ```bash
-python -X utf8 scripts/qwenwork_global_verify.py --home ~/.qwenworkcn
+python -X utf8 scripts/<terminal>_global_verify.py --home <terminal-home>
 ```
 
-探针验证全局规则锚点、五个核心 Skill 的字节一致性、必需门禁/模板和 QwenWorkCN 终端映射。它不宣称能修改系统提示词、产品私有运行时或未公开的全局任务前后置 Hook；Git Hook 与 CI 仍按具体项目显式授权启用。
+校验器验证全局规则锚点、核心 Skill 的字节一致性、必需门禁/模板与终端映射。它不宣称能修改系统提示词、产品私有运行时或未公开的全局任务前后置 Hook；Git Hook 与 CI 仍按具体项目显式授权启用。
 
 ## 已知限制（如实声明，不粉饰）
 
@@ -431,7 +431,7 @@ python -X utf8 scripts/qwenwork_global_verify.py --home ~/.qwenworkcn
 6. `install` 阶段**不做哈希校验**，只核对清单存在性与非空；sha256 逐项校验**仅发生在 `pack.py` 打包时**，因此无法检测分发后被篡改。
 7. **无 Python 不再等于强制力归零，但也不是全门**：只有 Node 时跑 4/5 道门（`reality_scan` 需 Python AST，Node 侧直接 `USAGE_ERROR` 而不假装能跑）；
    两者皆无才是 `soft_only`，此时 `acs_doctor` 以 exit=1 明说强制力归零 —— **显式结论，不是静默降级**。
-8. **多终端落点已验路径，未验「确被加载」**：claude / cursor / windsurf / codex / qoderwork 的落点按各自公开约定写入 `spec/terminals.json`，
+8. **多终端落点已验路径，未验「确被加载」**：claude / cursor / windsurf / codex 及产品专属终端的落点按各自公开约定写入 `spec/terminals.json`，
    已做双实现逐字一致与拷贝验证，但未在这些终端内实测规则是否真的被注入；Cursor 的 `.mdc` 需自行补 frontmatter，本套件不代写。
 9. **L3 外部强制点不是密不透风**：`hooks/pre-commit` 默认不装（opt-in），装了也可被 `git commit --no-verify` 绕过 ——
    这是**有意保留的主人逃生口**，不是漏洞；它只拦 `git commit`，不管 `git push`、rebase 与其他写入路径。真正绕不过的是 CI 那一层。
@@ -465,7 +465,7 @@ PowerShell 用 `;` 分隔语句（不支持 `&&`）；`install.ps1` 只用基础
 - **T3 双盲审查**：≥2 名互相看不见对方推理的独立审查者，禁建造者兼任、禁重复，verdict 冲突必须仲裁留痕。
 - **T3 自一致性重采样**：冠亚加权分差 < 1.5 时强制真的增加样本后再定案，防把噪声当结论。
 - **套件卫生机检固化入 pytest**：墓碑文件/失效本地链接/无消费者 spec 节/重复文件，只读审计，只报不删。
-- **新增 QoderWork 终端支持**：`spec/terminals.json` 增加 qoderwork 识别标记、技能目录与规则落点。
+- **新增产品专属终端适配**：`spec/terminals.json` 增加产品专属终端的识别标记、技能目录与规则落点。
 - 双实现退出码一致性扩展到 T3 正样本；自证测试增至 377 项。
 
 ## 许可
