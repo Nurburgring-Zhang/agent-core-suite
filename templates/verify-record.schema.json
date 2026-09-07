@@ -1,5 +1,5 @@
 {
-  "$comment": "Agent Core Suite v1.0.0 — verify-record.json 契约（由 gate_verify_rank.py 真实校验）",
+  "$comment": "Agent Core Suite v2.0.0 — verify-record.json 契约（由 gate_verify_rank.py 真实校验）",
   "type": "object",
   "required": ["task_id", "tier", "criteria", "weights", "repeats", "candidates", "ranking", "winner", "winner_reason", "builder", "verifier"],
   "additionalProperties": false,

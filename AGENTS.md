@@ -1,7 +1,9 @@
-# AGENTS.md —— Agent Core Suite v1.2.0
+# AGENTS.md —— Agent Core Suite v2.0.0
 
 > 本文件是**跨终端通用入口**（AGENTS.md 约定被主流 agent 终端自动读取）。
 > 无论你是哪个终端上的 agent，进入本仓库后，以下内容为**强制工作标准**。
+>
+> **v2.0 头号变化：多产品全局融合。** v1.2 的全局层是 qwenworkcn 单产品硬编码；v2.0 泛化为数据驱动的多产品架构——`qoderwork` 与 `qwenworkcn` 并列为一级全局融合终端，各自持有一份 `spec/<product>-global.json` 契约，共用同一台只读静态校验引擎 `scripts/acs_global_verify.py`（`--product <id>`）。新增产品只加一份契约 + `PRODUCTS` 一条登记，引擎与门禁零产品特化。
 
 ## 定位：增强层，不是替代层
 
@@ -46,10 +48,12 @@ python -X utf8 scripts/run_gates.py --state .acs/task-state.json --root . --tier
 ```
 skills/      五个技能：1 个瘦入口 + 4 个按需子技能（软约束）
 scripts/     九道门禁脚本（run_gates 编排 state/loop/checklist/reality/verify/honesty/rule/skillspec 八门）
-             + acs_bootstrap 注入层 + acs_doctor 探针 + install_check，零第三方依赖，纯 stdlib
+             + acs_bootstrap 注入层 + acs_doctor 探针 + install_check
+             + acs_global_verify 多产品全局静态校验引擎（qwenwork_global_verify 为其 qwenworkcn 薄壳），零第三方依赖，纯 stdlib
              （硬约束；Node 镜像覆盖 4/9，其余显式 USAGE_ERROR，不假装全门通过）
 spec/        thresholds 阈值 / terminals 终端映射 / rule-consistency 规则自洽 / skill-spec 技能规范
-             / adapters 适配层 / capability-coverage 能力覆盖（均为单一真相源，缺即 USAGE_ERROR）
+             / adapters 适配层 / capability-coverage 能力覆盖
+             / qoderwork-global + qwenwork-global 两份产品全局融合契约（均为单一真相源，缺即 USAGE_ERROR）
 templates/   task-state / verify-record 的 schema + 正样本 + 交接总结模板
 rules/       工作区常驻规则（Qoder 等支持 rules 的终端）
 tests/       双向验证（正样本 PASS / 负样本 BLOCK + 套件卫生机检；当前数量以 pytest 实跑为准）

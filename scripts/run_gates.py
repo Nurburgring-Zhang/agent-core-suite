@@ -94,6 +94,12 @@ def main(argv):
         else:
             sys.stdout.write("\n=== gate_skill_spec ===\n"
                              "  note  %s 无 spec/skill-spec.json，本树不含技能定义，跳过（非通过）\n" % root)
+    if "capability" not in skip:
+        if os.path.isfile(os.path.join(root, "spec", "capability-registry.json")):
+            results.append(run("capability", "gate_capability_registry.py", ["--root", root]))
+        else:
+            sys.stdout.write("\n=== gate_capability_registry ===\n"
+                             "  note  %s 无 spec/capability-registry.json，本树不含能力治理清单，跳过（非通过）\n" % root)
 
     record = args.get("record")
     if "verify" not in skip:

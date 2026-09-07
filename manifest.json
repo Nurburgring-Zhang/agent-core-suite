@@ -1,8 +1,8 @@
 {
   "name": "agent-core-suite",
-  "version": "1.2.0",
-  "spec_version": "1.2.0",
-  "description": "Agent 能力增强套件：skill + harness + loop engineering + graph engineering，叠加在 agent 终端原生能力之上，用于强化其底层执行能力并压降 token 与时间成本。",
+  "version": "2.0.0",
+  "spec_version": "2.0.0",
+  "description": "Agent 能力增强套件：skill + harness + loop engineering + graph engineering，叠加在 agent 终端原生能力之上，用于强化其底层执行能力并压降 token 与时间成本。v2.0：把全局融合从 qwenworkcn 单产品硬编码泛化为多产品数据驱动（qoderwork 与 qwenworkcn 并列为一级全局融合终端），新增 acs_global_verify.py 多产品静态校验引擎。",
   "language": "zh-CN",
   "positioning": {
     "kind": "augmentation-layer",
@@ -39,7 +39,8 @@
         "verify",
         "honesty",
         "rule",
-        "skillspec"
+        "skillspec",
+        "capability"
       ],
       "not_covered": [],
       "authoritative": true
@@ -57,7 +58,8 @@
         "reality_scan",
         "honesty",
         "rule_consistency",
-        "skill_spec"
+        "skill_spec",
+        "capability_registry"
       ],
       "authoritative": false,
       "note": "reality 门需 Python AST；v1.2 新增的 honesty/rule/skillspec 三门尚无 Node 镜像，Node 侧显式返回 USAGE_ERROR 并说明理由，run 子命令打印 PARTIAL_COVERAGE，避免把部分覆盖读成全门通过。有 Python 时以 Python 实现为准。"
@@ -184,6 +186,11 @@
       "id": "honesty",
       "script": "scripts/gate_honesty_ledger.py",
       "checks": "诚实度：证据七档 basis 与禁止聚合升档、降级台账必带天花板与升级路径、子代理输出契约与文件数上限、裁判自证前置、行为评测三臂含朴素中间臂（v1.2 新增；来源 caveman 证据分级+cavecrew+三臂评测、ponytail judge selftest）"
+    },
+    {
+      "id": "capability",
+      "script": "scripts/gate_capability_registry.py",
+      "checks": "能力治理清单：portable 域必须在包内且有真实载体、runtime 域禁止谎称打包(in_pack=false/carrier=null)、每域必须有 governed_by+discipline、runtime 必须有 fallback、与 capability-coverage 经 coverage_domain_map 语义一致（v2.0 新增）"
     }
   ],
   "exit_codes": {
@@ -223,7 +230,7 @@
   },
   "install_targets": {
     "_source_of_truth": "spec/terminals.json",
-    "note": "各终端的技能目录与规则落点只存于 spec/terminals.json；install.sh / install.ps1 一律向 acs_doctor 取值，本文件不再抄第二份，避免漂移。当前覆盖：qwenworkcn / qoder / qoderwork / claude / cursor / windsurf / codex / generic。",
+    "note": "各终端的技能目录与规则落点只存于 spec/terminals.json；install.sh / install.ps1 一律向 acs_doctor 取值，本文件不再抄第二份，避免漂移。当前覆盖：qoderwork / qwenworkcn / qoder / claude / cursor / windsurf / codex / generic。其中 qoderwork 与 qwenworkcn 为一级全局融合终端（各自持有 <product>-global.json 契约与静态校验入口）。",
     "scripts": "<workspace>/.acs/scripts/（含 acs_doctor.py 与 node/acs_gates.mjs）",
     "spec": "<workspace>/.acs/spec/（thresholds.json + terminals.json）"
   },
@@ -243,6 +250,9 @@
     "scripts/_acs_common.py",
     "scripts/acs_bootstrap.py",
     "scripts/acs_doctor.py",
+    "scripts/acs_global_verify.py",
+    "scripts/acs_handoff_compress.py",
+    "scripts/gate_capability_registry.py",
     "scripts/gate_checklist.py",
     "scripts/gate_honesty_ledger.py",
     "scripts/gate_loop_guard.py",
@@ -265,6 +275,8 @@
     "skills/universal-task-code/reference-gates.md",
     "spec/adapters.json",
     "spec/capability-coverage.json",
+    "spec/capability-registry.json",
+    "spec/qoderwork-global.json",
     "spec/qwenwork-global.json",
     "spec/rule-consistency.json",
     "spec/skill-spec.json",
@@ -341,20 +353,43 @@
     "rule_consistency": "python -X utf8 scripts/gate_rule_consistency.py --root . [--external <全局规则文件>]",
     "skill_spec": "python -X utf8 scripts/gate_skill_spec.py --root .",
     "honesty": "python -X utf8 scripts/gate_honesty_ledger.py --state templates/task-state.example.json --tier T2",
-    "bootstrap": "python -X utf8 scripts/acs_bootstrap.py --root . --profile qwenworkcn --verify"
+    "bootstrap": "python -X utf8 scripts/acs_bootstrap.py --root . --profile qwenworkcn --verify",
+    "global_verify": "python -X utf8 scripts/acs_global_verify.py --product qoderwork --json（qwenworkcn 侧：--product qwenworkcn；须对本机真实资源目录跑，STATIC_PASS 才算全局融合生效）",
+    "capability_registry": "python -X utf8 scripts/gate_capability_registry.py --root .",
+    "handoff_compress": "python -X utf8 scripts/acs_handoff_compress.py --state templates/task-state.example.json --out .acs/handoff.md"
   },
-  "qwenwork_global_integration": {
-    "contract": "spec/qwenwork-global.json",
-    "verifier": "scripts/qwenwork_global_verify.py",
-    "global_context": [
-      "~/.qwenworkcn/awareness/main/SOUL.md",
-      "~/.qwenworkcn/awareness/main/AGENTS.md"
-    ],
-    "user_skills": "~/.qwenworkcn/skills",
+  "global_integration": {
+    "_why": "v1.2 的全局融合层是 qwenworkcn 单产品硬编码；v2.0 泛化为多产品数据驱动，qoderwork 与 qwenworkcn 并列为一级全局融合终端。新增产品只需加一个 spec/<id>-global.json 契约与 acs_global_verify.py 里 PRODUCTS 的一条登记，其余代码零产品特化。",
+    "engine": "scripts/acs_global_verify.py",
+    "back_compat_shim": "scripts/qwenwork_global_verify.py（薄壳，转发 --product qwenworkcn，不含独立校验逻辑）",
+    "engine_kind": "static_configuration_integrity（只读；不写文件、不改终端配置、不联网）",
+    "products": {
+      "qoderwork": {
+        "contract": "spec/qoderwork-global.json",
+        "global_context": [
+          "~/.qoderwork/awareness/main/SOUL.md",
+          "~/.qoderwork/awareness/main/AGENTS.md"
+        ],
+        "user_skills": "~/.qoderwork/skills",
+        "suite_dir": "~/.qoderwork/agent-core-suite",
+        "verify": "python -X utf8 scripts/acs_global_verify.py --product qoderwork"
+      },
+      "qwenworkcn": {
+        "contract": "spec/qwenwork-global.json",
+        "global_context": [
+          "~/.qwenworkcn/awareness/main/SOUL.md",
+          "~/.qwenworkcn/awareness/main/AGENTS.md"
+        ],
+        "user_skills": "~/.qwenworkcn/skills",
+        "suite_dir": "~/.qwenworkcn/agent-core-suite",
+        "verify": "python -X utf8 scripts/acs_global_verify.py --product qwenworkcn"
+      }
+    },
     "merge_policy": "保强三方合并：保留当前更强内容，只吸收经真实测试证明的不回退增量",
-    "boundary": "仅强化可配置 Agent 行为层、Skills、Harness 与公开设置；不修改系统提示词、产品私有内核或原生安全权限"
+    "boundary": "仅强化可配置 Agent 行为层、Skills、Harness 与公开设置；不修改系统提示词、产品私有内核或原生安全权限；不打包任一产品的运行时（MCP/toolcall/记忆索引/任务库/调度引擎），运行时缺位一律走 native-first + fallback 并如实声明强制力等级。"
   },
   "known_limitations": [
+    "[v2.0 全局融合边界] acs_global_verify.py 是静态配置完整性校验（规则锚点在位、5 个 Skill 与套件源字节一致、必需套件文件在位、terminals.json 映射与契约一致），只读、不写文件、不联网、不改终端配置；它不证明产品在运行时真的加载了规则，不修改系统提示词或产品私有内核，也不打包任一产品的运行时（MCP/toolcall/记忆索引/任务库/Connector/调度引擎）。校验只对调用方 --home 指向的资源目录负责；产品若无公开全局 Hook，「规则确被加载」仍需该终端自行验证。多产品泛化后新增产品只加 spec/<id>-global.json + PRODUCTS 一条登记，引擎零产品特化。",
     "[v1.2 覆盖边界] 新增三门（rule/skillspec/honesty）仅 Python 实现，无 Node 镜像；且 rule/skillspec 只在被检查树自带对应 spec 时参与，业务工作区跑 run_gates 会显式打印「跳过（非通过）」而不是假装检查过。",
     "[v1.2 借鉴来源] 三门机制分别来自 ponytail（规则副本漂移、judge selftest、债务注释）、anthropics/skills（SKILL.md 规范与 with/without 基线）、caveman（七档证据分级、子代理契约、三臂评测）、superpowers（description 写法纪律、ledger 抗压缩）。均为方法学迁移与本地重实现，非代码搬运；各上游的收益数字未在本机复现，不作为本套件主张。",
     "[v1.2 注入边界] acs_bootstrap.py 只产出注入载荷，不写文件、不改终端配置；真正的注入由该终端的 hook/CI/人工完成。终端若无 hook 机制（如仅读 AGENTS.md 的终端），「规则确被加载」仍需自行验证，本包不代为断言。",
@@ -384,13 +419,13 @@
     "_why": "「任意 agent、任意大模型都生效」必须可验证，否则是夸大。",
     "model_agnostic": "包内无模型 API 调用、无 provider endpoint、不依赖 logprobs；model_tier 仅作成本标签",
     "terminal_agnostic": "规则与门禁不变，落点走 spec/terminals.json，能力映射走 spec/adapters.json",
-    "bootstrap": "scripts/acs_bootstrap.py 按 claude / cursor / 通用 三种 JSON 形状输出注入载荷；--verify 只自检不输出正文",
+    "bootstrap": "scripts/acs_bootstrap.py 按 claude / cursor / qwenworkcn / qoderwork / generic 的 JSON 形状输出注入载荷；--verify 只自检不输出正文",
     "enforcement_levels": [
       "full（Python，9 门可机检）",
       "partial（仅 Node，4 门）",
       "soft_only（无运行时，强制力归零，显式声明）"
     ],
-    "capability_coverage": "spec/capability-coverage.json 机检覆盖完整性：19 域，15 可打包 / 4 纯运行时不可打包"
+    "capability_coverage": "spec/capability-coverage.json 机检覆盖完整性：23 域，17 可打包 / 6 纯运行时不可打包"
   },
   "capability_coverage_spec": {
     "path": "spec/capability-coverage.json",

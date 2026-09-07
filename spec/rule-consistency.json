@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.2.0",
+  "spec_version": "2.0.0",
   "_why": [
     "规则同时存在于 SOUL/AGENTS/rules/skills 多处，靠人眼保持一致必然漂移，且漂移后两边都自活、没人报错。",
     "实测教训：reference-creed.md 长期写「十二条」而全局守则写「十五条」，388 项测试全绿也拦不住 —— 因为没有一条断言检查规则体系自身。",
@@ -85,6 +85,6 @@
     "_why": "终端全局规则文件不在套件内，路径随终端而变；由调用方用 --external 显式传入，不传则只校验套件内副本并如实说明覆盖范围。",
     "flag": "--external",
     "must_match": ["count_word", "invariants"],
-    "_scope_note": "--external 只接『守则载体』文件（如千问办公的 SOUL.md，承载十八条原文与全部承重短语）。Harness 手册（如 AGENTS.md）不是守则载体，其完整性由 qwenwork_global_verify 的锚点集单独校验，不应传入本门用守则不变量强验——否则会把『手册用简写措辞』误判为漂移（实测踩到）。"
+    "_scope_note": "--external 只接『守则载体』文件（如任一全局融合产品的 SOUL.md，承载十八条原文与全部承重短语）。Harness 手册（如 AGENTS.md）不是守则载体，其完整性由 acs_global_verify（--product <id>）的锚点集单独校验，不应传入本门用守则不变量强验——否则会把『手册用简写措辞』误判为漂移（实测踩到）。"
   }
 }

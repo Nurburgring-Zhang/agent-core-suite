@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.2.0",
+  "spec_version": "2.0.0",
   "_why": [
     "通用增强包必须能装到任意 agent 终端、接任意大模型；但落点、上下文注入方式、可用工具名各终端不同。",
     "故把「不变的部分」与「随终端变的部分」彻底分开：规则与门禁不变，落点与工具映射走适配层。",
@@ -25,14 +25,18 @@
       "scripts/gate_verify_rank.py",
       "scripts/gate_honesty_ledger.py",
       "scripts/gate_rule_consistency.py",
-      "scripts/gate_skill_spec.py"
+      "scripts/gate_skill_spec.py",
+      "scripts/acs_global_verify.py"
     ],
     "specs": [
       "spec/thresholds.json",
       "spec/terminals.json",
       "spec/rule-consistency.json",
       "spec/skill-spec.json",
-      "spec/adapters.json"
+      "spec/adapters.json",
+      "spec/capability-coverage.json",
+      "spec/qoderwork-global.json",
+      "spec/qwenwork-global.json"
     ],
     "contracts": ["templates/task-state.schema.json", "templates/verify-record.schema.json"]
   },
@@ -76,6 +80,23 @@
         "global_creed": "~/.qwenworkcn/awareness/main/SOUL.md",
         "skills_dir": "~/.qwenworkcn/skills",
         "note": "产品未公开全局任务前置/后置 Hook，故 L3 只覆盖获授权项目的 Git Hook/CI，不覆盖聊天入口。"
+      },
+      "qoderwork": {
+        "label": "QoderWork",
+        "clarify": "AskUserQuestion",
+        "progress": "TaskCreate / TaskUpdate / TaskList（等价 TodoWrite）",
+        "parallel": "Agent（Explore / Plan / general-purpose，可并行与后台）",
+        "skill_load": "Skill",
+        "memory": "memory / memory_search / memory_get（target=user|memory|daily）",
+        "file_delivery": "present_files（scratchpad 产物自动落 outputs）+ file:// 绝对路径",
+        "shell": "Bash",
+        "connector": "QoderWork Connector：qw_query / qw_action（qoderwork.tasks、cron、skills、connectors、MCP、usage）",
+        "mcp_runtime": "qw_mcp_list / qw_mcp_get / qw_mcp_call（懒加载：builtin_browser、builtin_computer_use、tinyfish、ali-employee-assistant）",
+        "scheduling": "qoder_cron（定时任务，missedRunPolicy 显式声明）",
+        "global_rules": "~/.qoderwork/awareness/main/AGENTS.md",
+        "global_creed": "~/.qoderwork/awareness/main/SOUL.md",
+        "skills_dir": "~/.qoderwork/skills",
+        "note": "awareness/main 常驻注入 SOUL.md+AGENTS.md（L1）；产品未公开全局任务前置/后置 Hook，故 L3 只覆盖获授权项目的 Git Hook/CI，不覆盖聊天入口。MCP/Connector/记忆索引/任务库属运行时，不可打包，只用真名映射，缺位走 fallback 并声明强制力等级。"
       },
       "claude": {
         "label": "Claude Code",

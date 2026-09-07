@@ -1,5 +1,5 @@
 <#
-Agent Core Suite v1.1.0 - Windows installer (PowerShell)
+Agent Core Suite v2.0.0 - Windows installer (PowerShell)
 
 NOTE: This script is intentionally ASCII-only. Windows PowerShell 5.1 parses .ps1
 files as ANSI when there is no BOM, and some multi-byte characters end with byte

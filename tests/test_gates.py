@@ -707,8 +707,16 @@ _WRITE_FUNCS = (
 _WRITE_MODULES = ("os", "shutil", "path", "subprocess", "Path", "pathlib")
 
 
+# 只读约束适用于「判断类脚本」（门禁 gate_*.py + run_gates + 只读校验器/探针 acs_bootstrap/
+# acs_global_verify/acs_doctor/install_check）。渲染类脚本 acs_handoff_compress.py 例外：
+# 它的职责就是把 handoff 渲染写入 .acs/handoff.md（每轮压缩交接），写文件是其设计目的，
+# 不是「门禁偷偷写报告」。故排除它，避免把合法渲染误判为门禁越权。
+_READONLY_EXEMPT = {"acs_handoff_compress.py"}
+
+
 def _gate_sources():
-    names = [p for p in sorted(os.listdir(str(SCRIPTS))) if p.endswith(".py")]
+    names = [p for p in sorted(os.listdir(str(SCRIPTS)))
+             if p.endswith(".py") and p not in _READONLY_EXEMPT]
     assert names, "scripts/ 下没有 .py，测试前提不成立"
     return names
 
@@ -1147,8 +1155,11 @@ def test_manifest_registers_known_impl_diff():
     assert "reality_scan" in not_covered, runtimes
     covers = runtimes.get("python", {}).get("covers") or []
     assert "honesty" in covers and "rule" in covers and "skillspec" in covers, runtimes
-    # 未覆盖清单不得包含 Python 侧也没有的门：那说明清单在编故事
-    known = set(covers) | {"reality_scan", "rule_consistency", "skill_spec"}
+    assert "capability" in covers, runtimes
+    # 未覆盖清单不得包含 Python 侧也没有的门：那说明清单在编故事。
+    # covers 用 gate id（honesty/rule/skillspec/capability），not_covered 用脚本名风格
+    # （rule_consistency/skill_spec/capability_registry），故 known 须兼容两种命名。
+    known = set(covers) | {"reality_scan", "rule_consistency", "skill_spec", "capability_registry"}
     stray = [x for x in not_covered if x not in known]
     assert not stray, stray
 
@@ -1458,7 +1469,8 @@ def test_ci_workflow_present_and_covers_acceptance():
     src = io.open(str(CI_WORKFLOW), "r", encoding="utf-8").read()
     for needle in ("install_check.py", "gate_reality_scan.py", "run_gates.py",
                    "acs_doctor.py", "pytest", "pack.py",
-                   "acs_gates.mjs", "install.sh", "--with-hook", "--no-verify"):
+                   "acs_gates.mjs", "install.sh", "--with-hook", "--no-verify",
+                   "acs_global_verify.py"):
         assert needle in src, "CI 里缺了验收命令/证据：%s" % needle
     for needle in ("ubuntu-latest", "macos-latest", "setup-node", "setup-python"):
         assert needle in src, "CI 里缺了环境覆盖：%s" % needle
@@ -1470,7 +1482,7 @@ def test_ci_workflow_parses_as_yaml():
     with io.open(str(CI_WORKFLOW), "r", encoding="utf-8") as fh:
         doc = yaml.safe_load(fh)
     jobs = doc["jobs"]
-    assert set(["gates", "node-fallback", "installer", "pre-commit-hook"]).issubset(jobs), sorted(jobs)
+    assert set(["gates", "node-fallback", "installer", "pre-commit-hook", "global-verify"]).issubset(jobs), sorted(jobs)
     for name, job in jobs.items():
         assert job.get("steps"), "%s 没有 steps" % name
 
@@ -1621,6 +1633,116 @@ def test_qwenwork_global_verify_rejects_parent_traversal(tmp_path):
     code, out = run_gate("qwenwork_global_verify.py", "--spec", path, "--home", tmp_path)
     assert code == USAGE, out
     assert "相对路径" in out
+
+
+def _build_qoderwork_fixture(tmp_path):
+    """构造隔离的 QoderWork 全局目录，避免单测依赖真实用户目录。"""
+    home = tmp_path / ".qoderwork"
+    awareness = home / "awareness" / "main"
+    awareness.mkdir(parents=True)
+    contract = load("../spec/qoderwork-global.json")
+    for filename, anchors in contract["required_anchors"].items():
+        (awareness / filename).write_text("\n".join(anchors), encoding="utf-8")
+    shutil.copytree(SUITE, home / "agent-core-suite",
+                    ignore=shutil.ignore_patterns("__pycache__", ".git", ".acs"))
+    skills = home / "skills"
+    skills.mkdir()
+    for name in contract["required_skills"]:
+        shutil.copytree(SUITE / "skills" / name, skills / name)
+    return home
+
+
+def test_qoderwork_global_verify_positive(tmp_path):
+    """多产品引擎对 qoderwork 同样必须 PASS，并产出结构化静态证据。"""
+    home = _build_qoderwork_fixture(tmp_path)
+    code, out = run_gate("acs_global_verify.py", "--product", "qoderwork", "--home", home, "--json")
+    assert code == PASS, out
+    payload = json.loads(out)
+    assert payload["status"] == "STATIC_PASS"
+    assert payload["product"] == "qoderwork"
+    assert payload["verification_kind"] == "static_configuration_integrity"
+    assert len(payload["skills"]) == 5
+    assert all(item["identical"] for item in payload["skills"].values())
+
+
+def test_qoderwork_global_verify_blocks_missing_anchor(tmp_path):
+    """QoderWork 全局规则缺静态锚点时必须 BLOCK，禁止用文件存在冒充配置完整。"""
+    home = _build_qoderwork_fixture(tmp_path)
+    agents = home / "awareness" / "main" / "AGENTS.md"
+    agents.write_text("不完整规则", encoding="utf-8")
+    code, out = run_gate("acs_global_verify.py", "--product", "qoderwork", "--home", home)
+    assert code == BLOCK, out
+    assert "缺少静态锚点" in out
+
+
+def test_qoderwork_global_verify_rejects_empty_contract(tmp_path):
+    """空契约不能退化为零检查 PASS（qoderwork 侧）。"""
+    contract = tmp_path / "empty-qoderwork.json"
+    contract.write_text("{}", encoding="utf-8")
+    code, out = run_gate("acs_global_verify.py", "--product", "qoderwork", "--spec", contract, "--home", tmp_path)
+    assert code == USAGE, out
+    assert "契约缺少字段" in out
+
+
+def test_qoderwork_global_verify_rejects_parent_traversal(tmp_path):
+    """契约路径不得通过 .. 越出 QoderWork 资源目录。"""
+    contract = load("../spec/qoderwork-global.json")
+    contract["paths"]["skills_dir"] = "../outside"
+    path = dump(tmp_path, contract, "bad-qoderwork-spec.json")
+    code, out = run_gate("acs_global_verify.py", "--product", "qoderwork", "--spec", path, "--home", tmp_path)
+    assert code == USAGE, out
+    assert "相对路径" in out
+
+
+def test_acs_global_verify_rejects_unknown_product(tmp_path):
+    """未登记产品必须 USAGE_ERROR，而不是静默按默认产品跑。"""
+    code, out = run_gate("acs_global_verify.py", "--product", "nosuchproduct", "--home", tmp_path)
+    assert code == USAGE, out
+    assert "未知产品" in out
+
+
+def test_acs_global_verify_rejects_product_contract_mismatch(tmp_path):
+    """--product 与契约 product 字段不符必须 USAGE_ERROR（防张冠李戴拿错契约）。"""
+    contract = load("../spec/qoderwork-global.json")   # 其 product 字段为 qoderwork
+    path = dump(tmp_path, contract, "mismatch-qoderwork.json")
+    code, out = run_gate("acs_global_verify.py", "--product", "qwenworkcn", "--spec", path, "--home", tmp_path)
+    assert code == USAGE, out
+    assert "product 必须是" in out
+
+
+def _import_engine():
+    if str(SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(SCRIPTS))
+    import acs_global_verify as agv
+    return agv
+
+
+def test_multi_product_registry_contracts_all_validate():
+    """PRODUCTS 登记表里每个产品都必须有一份能通过 validate_spec 的契约，且 product/版本自洽。"""
+    agv = _import_engine()
+    assert {"qoderwork", "qwenworkcn"}.issubset(set(agv.PRODUCTS))
+    for product, filename in agv.PRODUCTS.items():
+        spec_path = agv.default_spec_path(product)
+        assert spec_path.name == filename, (product, spec_path.name, filename)
+        assert spec_path.is_file(), "登记了 %s 却缺契约文件 %s" % (product, spec_path)
+        spec = agv.validate_spec(agv.load_json(spec_path), product)
+        assert spec["product"] == product
+        assert spec["spec_version"] == agv.CONTRACT_VERSION
+
+
+def test_engine_derives_terminals_wiring_from_contract():
+    """引擎从契约派生的 terminals 接线必须与 spec/terminals.json 实际接线逐字一致——这是「引擎零产品特化」的证据。"""
+    agv = _import_engine()
+    terminals = _terminals()
+    order = terminals["detect_order"]
+    assert order[-1] == "generic", "detect_order 末项必须是 generic 兜底"
+    for product in agv.PRODUCTS:
+        assert product in order, "detect_order 缺产品 %s" % product
+        spec = agv.load_json(agv.default_spec_path(product))
+        wanted = agv.expected_terminals_wiring(product, spec["paths"])
+        actual = terminals["terminals"].get(product) or {}
+        for key, val in wanted.items():
+            assert actual.get(key) == val, "%s.%s 期望 %r 实际 %r" % (product, key, val, actual.get(key))
 
 
 def test_suite_keeps_no_identical_duplicate_files():
@@ -1864,6 +1986,7 @@ BOOTSTRAP_PROFILE_SHAPES = [
     ("claude", "hookSpecificOutput"),
     ("cursor", "additional_context"),
     ("qwenworkcn", "additionalContext"),
+    ("qoderwork", "additionalContext"),
     ("generic", "additionalContext"),
 ]
 
@@ -1984,7 +2107,8 @@ def test_no_forbidden_overclaims_in_docs():
 # 边界变成机检约束，防止「便携包宣称自足包含运行时」的夸大。
 
 RUNTIME_ONLY_DOMAINS = {"mcp 连接器", "toolcall 工具调用", "跨对话记忆 cross-conversation memory",
-                        "长期记忆 long-term memory"}
+                        "长期记忆 long-term memory", "qoderwork connector 应用编排",
+                        "定时任务 scheduling/cron"}
 
 
 def _capability_coverage():
@@ -2042,3 +2166,159 @@ def test_capability_coverage_runtime_domains_all_have_fallback():
         if cap["domain"] in RUNTIME_ONLY_DOMAINS:
             assert cap["in_pack"] is False, cap["domain"]
             assert len(cap["fallback"]) >= 4, cap["fallback"]
+
+
+# ------------------------------------------------- v2.0 能力治理门禁 + handoff 压缩
+
+def _cap_registry():
+    return json.loads(io.open(str(SUITE / "spec" / "capability-registry.json"),
+                              "r", encoding="utf-8").read())
+
+
+def _mutated_registry(tmp_path, mutate):
+    root = _suite_copy(tmp_path, "capreg")
+    reg = json.loads(io.open(str(root / "spec" / "capability-registry.json"),
+                             "r", encoding="utf-8").read())
+    mutate(reg)
+    io.open(str(root / "spec" / "capability-registry.json"), "w",
+            encoding="utf-8").write(json.dumps(reg, ensure_ascii=False, indent=2))
+    return root
+
+
+def test_capability_registry_positive():
+    code, out = run_gate("gate_capability_registry.py", "--root", SUITE)
+    assert code == PASS, out
+
+
+def test_capability_registry_registered_in_manifest():
+    data = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
+    assert "spec/capability-registry.json" in data["files"]
+    assert "scripts/gate_capability_registry.py" in data["files"]
+    assert any(g.get("id") == "capability" for g in data["gates"]), [g.get("id") for g in data["gates"]]
+
+
+def test_capability_registry_spec_missing_usage_error(tmp_path):
+    root = _suite_copy(tmp_path, "capreg-missing")
+    (root / "spec" / "capability-registry.json").unlink()
+    code, out = run_gate("gate_capability_registry.py", "--root", root)
+    assert code == USAGE, out
+
+
+def test_capability_registry_runtime_false_bundled_blocked(tmp_path):
+    """runtime 域谎称已打包（in_pack=true）必须 BLOCK——核心诚实边界。"""
+    def mutate(reg):
+        for item in reg["registry"]:
+            if item["domain"] == "mcp":
+                item["in_pack"] = True
+    root = _mutated_registry(tmp_path, mutate)
+    code, out = run_gate("gate_capability_registry.py", "--root", root)
+    assert code == BLOCK, out
+    assert "禁止谎称" in out, out
+
+
+def test_capability_registry_runtime_missing_fallback_blocked(tmp_path):
+    def mutate(reg):
+        for item in reg["registry"]:
+            if item["domain"] == "toolcalling":
+                item["fallback"] = ""
+    root = _mutated_registry(tmp_path, mutate)
+    code, out = run_gate("gate_capability_registry.py", "--root", root)
+    assert code == BLOCK, out
+    assert "fallback" in out, out
+
+
+def test_capability_registry_portable_not_in_pack_blocked(tmp_path):
+    def mutate(reg):
+        for item in reg["registry"]:
+            if item["domain"] == "skill":
+                item["in_pack"] = False
+    root = _mutated_registry(tmp_path, mutate)
+    code, out = run_gate("gate_capability_registry.py", "--root", root)
+    assert code == BLOCK, out
+    assert "未登记入包" in out, out
+
+
+def test_capability_registry_governance_blind_spot_blocked(tmp_path):
+    def mutate(reg):
+        reg["registry"][0]["governed_by"] = []
+    root = _mutated_registry(tmp_path, mutate)
+    code, out = run_gate("gate_capability_registry.py", "--root", root)
+    assert code == BLOCK, out
+    assert "治理盲区" in out, out
+
+
+def test_capability_registry_coverage_map_broken_blocked(tmp_path):
+    def mutate(reg):
+        reg["coverage_domain_map"]["mcp"] = "不存在的域"
+    root = _mutated_registry(tmp_path, mutate)
+    code, out = run_gate("gate_capability_registry.py", "--root", root)
+    assert code == BLOCK, out
+    assert "coverage" in out.lower() or "映射" in out, out
+
+
+def test_capability_registry_portable_carrier_must_exist(tmp_path):
+    def mutate(reg):
+        for item in reg["registry"]:
+            if item["domain"] == "harness":
+                item["carrier"] = "scripts/不存在的脚本.py"
+    root = _mutated_registry(tmp_path, mutate)
+    code, out = run_gate("gate_capability_registry.py", "--root", root)
+    assert code == BLOCK, out
+    assert "carrier" in out, out
+
+
+def test_run_gates_includes_capability_gate(tmp_path, state):
+    code, out = run_gate("run_gates.py", "--state", dump(tmp_path, state),
+                         "--root", SUITE, "--tier", "T2")
+    assert code == PASS, out
+    assert "capability" in out, out
+
+
+# ---- handoff 压缩（每轮压缩 + 保留目标防跑偏）----
+
+def test_handoff_positive_in_example():
+    """正样本 task-state 每步含合法 handoff，loop_guard 应 PASS。"""
+    code, out = run_gate("gate_loop_guard.py", "--state",
+                         SUITE / "templates" / "task-state.example.json", "--tier", "T2")
+    assert code == PASS, out
+
+
+def test_handoff_missing_blocked(tmp_path, state):
+    """step 缺 handoff 必须 BLOCK——每步结束必须写目标/已完成/下一步交接。"""
+    state["steps"][0].pop("handoff", None)
+    code, out = run_gate("gate_loop_guard.py", "--state", dump(tmp_path, state), "--tier", "T2")
+    assert code == BLOCK, out
+    assert "handoff" in out, out
+
+
+def test_handoff_missing_section_blocked(tmp_path, state):
+    """handoff 缺 current_goal 段必须 BLOCK——目标锚点是防跑偏关键。"""
+    state["steps"][0]["handoff"].pop("current_goal", None)
+    code, out = run_gate("gate_loop_guard.py", "--state", dump(tmp_path, state), "--tier", "T2")
+    assert code == BLOCK, out
+    assert "current_goal" in out or "handoff" in out, out
+
+
+def test_handoff_overlong_blocked(tmp_path, state):
+    """handoff 三段合计超 1000 字必须 BLOCK——压缩只压过程不压结论/证据/目标。"""
+    state["steps"][0]["handoff"] = {"current_goal": "x" * 500,
+                                    "completed": "y" * 500, "next_step": "z" * 100}
+    code, out = run_gate("gate_loop_guard.py", "--state", dump(tmp_path, state), "--tier", "T2")
+    assert code == BLOCK, out
+    assert "1000" in out, out
+
+
+def test_handoff_compress_script_renders(tmp_path):
+    """acs_handoff_compress.py 从 task-state 渲染 .acs/handoff.md，≤1000 字。"""
+    out_file = tmp_path / "handoff.md"
+    code, out = run_gate("acs_handoff_compress.py", "--state",
+                         SUITE / "templates" / "task-state.example.json", "--out", str(out_file))
+    assert code == PASS, out
+    assert out_file.is_file(), "handoff.md 未生成"
+    text = out_file.read_text(encoding="utf-8")
+    assert "当前目标" in text and "已完成" in text and "下一步" in text, text
+
+
+def test_handoff_compress_registered_in_manifest():
+    data = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
+    assert "scripts/acs_handoff_compress.py" in data["files"]

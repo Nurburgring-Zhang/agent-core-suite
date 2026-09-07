@@ -183,3 +183,59 @@ jobs:
           cp .acs/templates/task-state.example.json .acs/task-state.json
           echo hi2 > b.txt && git add b.txt
           git commit -q -m "with valid state"
+
+  # ---- 作业 5：多产品全局融合引擎。证明文档里的验收命令在干净 Linux runner 上逐字可用 ----
+  # 诚实边界：CI 没有真实产品资源目录，本作业构建的是「合成」home，验证的是引擎本身
+  # （正样本 STATIC_PASS / 负样本 STATIC_BLOCK，qoderwork 与 qwenworkcn 双产品），
+  # 不宣称任何真实机器的全局融合状态——那须在本机对真实 ~/.qoderwork 跑同一命令为证。
+  global-verify:
+    name: global-verify (multi-product)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 合成产品资源目录 + 文档验收命令（双产品正样本 PASS / 负样本 BLOCK）
+        working-directory: ${{ env.ACS_SUITE }}
+        run: |
+          python -X utf8 - <<'PY'
+          import json, shutil, subprocess, sys, tempfile
+          from pathlib import Path
+          SUITE = Path(".").resolve()
+          sys.path.insert(0, str(SUITE / "scripts"))
+          import acs_global_verify as agv   # 用引擎的 PRODUCTS 登记表解析契约路径，杜绝文件名拼接漂移
+
+          def build(product):
+              spec = json.loads(agv.default_spec_path(product).read_text(encoding="utf-8"))
+              p = spec["paths"]
+              home = Path(tempfile.mkdtemp()) / p["home_marker"]
+              aw = home / p["awareness_dir"]
+              aw.mkdir(parents=True)
+              for fn, anchors in spec["required_anchors"].items():
+                  (aw / fn).write_text("\n".join(anchors), encoding="utf-8")
+              shutil.copytree(SUITE, home / p["suite_dir"],
+                              ignore=shutil.ignore_patterns("__pycache__", ".git", ".acs"))
+              sk = home / p["skills_dir"]
+              sk.mkdir()
+              for name in spec["required_skills"]:
+                  shutil.copytree(SUITE / "skills" / name, sk / name)
+              return spec, home
+
+          def run(product, home, expect):
+              r = subprocess.run(
+                  [sys.executable, "-X", "utf8", "scripts/acs_global_verify.py",
+                   "--product", product, "--home", str(home), "--json"],
+                  capture_output=True, text=True)
+              assert r.returncode == expect, (product, r.returncode, r.stdout[-800:], r.stderr[-400:])
+              print("OK %s exit=%d (expect %d)" % (product, r.returncode, expect))
+
+          for product in ("qoderwork", "qwenworkcn"):
+              spec, home = build(product)
+              run(product, home, 0)                       # 正样本：合成 home 完整 -> STATIC_PASS
+              aw = home / spec["paths"]["awareness_dir"]  # 负样本：损坏锚点 -> STATIC_BLOCK
+              victim = sorted(spec["required_anchors"])[0]
+              (aw / victim).write_text("损坏：锚点全失", encoding="utf-8")
+              run(product, home, 1)
+          print("GLOBAL_VERIFY_CI_PASS")
+          PY

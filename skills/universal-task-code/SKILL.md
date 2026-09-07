@@ -3,7 +3,7 @@ name: universal-task-code
 description: 通用任务执行主入口（Agent Core Suite 能力增强层，叠加于终端原生能力之上而非替代它）。接到任何非闲聊任务时必用：先双向钢人论证，再按 T0-T3 分级触发 P0-P6 七道门流水线与 G0-G6 质量门禁，配合四道成本闸门（窄步/禁回灌/空转/思考预算）与有界重试控制 token 与时间，按需加载 loop-engineering、graph-engineering、self-verify-scaling、token-thrift 四个子技能。适用于软件工程、研究调研、文档写作、数据分析、设计、运维等全部任务形态的启动、推进、验证与交付；三重零容忍（零虚假、零模拟实现、零降级）。SKIP 边界：纯闲聊、单句寒暄、一次性事实问答、单文件只读查看属 T0，不触发本流水线，只需遵守诚实纪律；已在本技能流程内的后续步骤不重复加载入口。
 ---
 
-# 通用任务执行主入口（Agent Core Suite v1.2.0）
+# 通用任务执行主入口（Agent Core Suite v2.0.0）
 
 ## 第零步：看清定位——增强，不是替代
 
@@ -74,13 +74,18 @@ python -X utf8 <SUITE>/scripts/run_gates.py --state .acs/task-state.json --root 
 ```
 单门可独立调用：`gate_reality_scan.py`（真实性扫描）、`gate_state_validate.py`（状态契约）、`gate_loop_guard.py`（四闸门）、`gate_verify_rank.py`（候选排序）、`gate_checklist.py`（G0-G6 清单）。退出码：0=PASS，1=BLOCK，2=USAGE_ERROR（视为未验证=未完成）。
 
-在千问办公中还必须叠加原生能力：需求缺口用 `AskUserQuestion`，进度用 `TodoWrite`，并行节点和独立验证用 `Agent`，专业流程用 `Skill`，长期经验用 Memory，产品自身状态用 `QwenWork Connector`，文件交付用 `qwenwork_file_present_files`。全局融合任务或启动自检运行：
+在本终端中还必须叠加原生能力（映射随终端而变，纪律不变）：
+
+- **QoderWork**：需求缺口用 `AskUserQuestion`，进度用 `TaskCreate / TaskUpdate / TaskList`，并行节点和独立验证用 `Agent`，专业流程用 `Skill`，长期经验用 `memory / memory_search / memory_get`，产品自身状态用 QoderWork Connector `qw_query / qw_action`，懒加载 MCP 用 `qw_mcp_list / qw_mcp_get / qw_mcp_call`，定时任务用 `qoder_cron`，文件交付用 `present_files`。
+- **千问办公（QwenWorkCN）**：需求缺口用 `AskUserQuestion`，进度用 `TodoWrite`，并行节点和独立验证用 `Agent`，专业流程用 `Skill`，长期经验用 Memory，产品自身状态用 `QwenWork Connector`，文件交付用 `qwenwork_file_present_files`。
+
+全局融合任务或启动自检运行共用多产品引擎：
 
 ```
-python -X utf8 <SUITE>/scripts/qwenwork_global_verify.py --home ~/.qwenworkcn
+python -X utf8 <SUITE>/scripts/acs_global_verify.py --product qoderwork    # 或 --product qwenworkcn
 ```
 
-该探针只证明可配置的全局 SOUL/AGENTS、五个核心 Skill、门禁模板与终端映射一致；不宣称修改系统提示词、产品私有内核或存在未公开的全局任务 Hook。
+该探针只证明可配置的全局 SOUL/AGENTS、五个核心 Skill、门禁模板与终端映射一致（只读静态校验，0=STATIC_PASS）；不宣称修改系统提示词、产品私有内核或存在未公开的全局任务 Hook。
 
 ## 诚实纪律（不可协商）
 

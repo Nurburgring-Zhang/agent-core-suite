@@ -1,4 +1,4 @@
-# Agent Core Suite (ACS) v1.2.0 — 设计与标准（G2 规划门四件套）
+# Agent Core Suite (ACS) v2.0.0 — 设计与标准（G2 规划门四件套）
 
 > 面向 agent 终端的工作标准 SOP 套件：skill + harness + loop engineering + graph engineering。
 > 目标双约束：**能力上限抬高** 且 **token/时间成本下降**。
@@ -14,6 +14,23 @@
 | 只补三样 | 分级 SOP / 可机检退出码 / 量化成本阈值 | 不重建检索、不重建记忆、不重建编辑器；`scripts/` 只做判定，不做执行 |
 | 冲突裁决顺序 | 主人指令 > 终端原生安全/权限/审批 > 本套件硬门禁 > 软约束 | 门禁脚本只返回退出码，**无任何阻止或回滚动作**（不写文件、不杀进程、不改环境） |
 | 强制的对象 | 标准与证据，不是工具路径 | 验收均以「证据是否可机检」为准，不限定达成手段 |
+
+## v2.0 架构变更：多产品全局融合
+
+**问题（v1.2 的静默失效）**：全局融合层是 qwenworkcn 单产品硬编码——资源目录、awareness 落点、规则锚点、校验器全部写死千问办公路径。把套件装到 QoderWork 上时，门禁与技能照常生效，但**全局层一声不吭地什么都没做**：没有契约描述 QoderWork 的落点，没有校验器证明它的 SOUL/AGENTS 锚点在位。这是「装了但没生效」的典型盲区。
+
+**修复（不变量与变量分离）**：把「跨产品不变的纪律」（rules + 九道门禁，原样不动）与「随产品变的契约」（paths / anchors / native_routing / boundaries）彻底拆开。后者下沉为数据：每个产品一份 `spec/<product>-global.json`，引擎 `scripts/acs_global_verify.py` 只持有一张 `PRODUCTS` 登记表，**所有期望路径与 terminals 接线都从契约推导，引擎内零产品硬编码**。
+
+| 设计决策 | 含义 | 证据 / 可机检点 |
+| --- | --- | --- |
+| 契约数据驱动 | 产品的 home_marker / awareness_dir / soul_file / agents_file / skills_dir / suite_dir / 锚点 / 原生路由 / 边界全在 `spec/<product>-global.json` | `acs_global_verify.validate_spec` 强校验契约字段齐全、路径安全（无 `..`）、锚点精确覆盖 SOUL+AGENTS |
+| 多产品并存 | `qoderwork` 与 `qwenworkcn` 并列为一级全局融合终端 | `PRODUCTS` 登记两条；`terminals.json` detect_order 含两者且末项 generic；各自 global_verify 指向同一引擎 |
+| 加产品零特化 | 新增产品 = 一份契约 + 一条 `PRODUCTS` 登记，引擎与门禁不改 | `expected_terminals_wiring` 从契约派生接线，无产品分支 |
+| 向后兼容薄壳 | `qwenwork_global_verify.py` 退化为转发 `--product qwenworkcn` 的薄壳，单一实现 | 薄壳无独立校验逻辑；`test_qwenwork_global_verify_is_readonly` 扫其无写副作用 |
+| 只读静态完整性 | 引擎只证明：规则锚点在位、五个核心 Skill 套件源→用户目录字节一致、必需套件文件在位、terminals 接线与契约一致 | 退出码 0=STATIC_PASS / 1=STATIC_BLOCK / 2=USAGE_ERROR；`--json` 输出 sha256 证据 |
+| 诚实边界 | 不证明运行时真加载了规则；不改系统提示词或产品私有内核；**不打包任一产品运行时**（MCP / toolcall / 记忆索引 / 任务库 / Connector 后端 / 调度引擎），运行时一律映射到真实原生工具名 + native-first + fallback + 声明强制力等级 | `spec/qoderwork-global.json` 的 `boundaries` 五条；`capability-coverage.json` 把纯运行时域标 `in_pack=false` |
+
+**能力覆盖随之扩展**：`spec/capability-coverage.json` 从 19 域增至 **23 域（17 可打包 / 6 纯运行时不可打包）**，新增「全局融合契约」「bootstrap 注入层」「qoderwork connector 应用编排」「定时任务 scheduling/cron」四域；后两域诚实标注 `in_pack=false`（纯产品运行时，物理不可打包，只映射 + 降级）。
 
 ## 0. 证据基线（本套件的每条硬约束都必须可追溯到证据）
 

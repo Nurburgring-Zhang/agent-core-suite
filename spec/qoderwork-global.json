@@ -1,9 +1,9 @@
 {
   "spec_version": "2.0.0",
-  "product": "qwenworkcn",
-  "positioning": "可配置 Agent 行为层与 Harness 的全局融合契约；不代表系统提示词或产品私有内核可被修改",
+  "product": "qoderwork",
+  "positioning": "QoderWork 可配置 Agent 行为层与 Harness 的全局融合契约；不代表系统提示词或产品私有内核可被修改",
   "paths": {
-    "home_marker": ".qwenworkcn",
+    "home_marker": ".qoderwork",
     "awareness_dir": "awareness/main",
     "soul_file": "SOUL.md",
     "agents_file": "AGENTS.md",
@@ -37,7 +37,7 @@
     "spec/terminals.json",
     "spec/adapters.json",
     "spec/capability-coverage.json",
-    "spec/qwenwork-global.json"
+    "spec/qoderwork-global.json"
   ],
   "required_anchors": {
     "SOUL.md": [
@@ -50,23 +50,25 @@
       "Agent Core Suite v2.0.0",
       "通用任务执行守则（十八条）",
       "Harness Engineering 质量门禁",
-      "千问办公原生能力融合协议",
+      "QoderWork 原生能力融合协议",
       "0=PASS"
     ]
   },
   "native_routing": {
     "clarification": "AskUserQuestion",
-    "progress": "TodoWrite",
-    "parallelism": "Agent",
+    "progress": "TaskCreate / TaskUpdate / TaskList（等价 TodoWrite）",
+    "parallelism": "Agent（subagent_type=Explore/Plan/general-purpose，可并行/后台）",
     "skills": "Skill",
-    "memory": "memory tools",
-    "qwenwork_state": "QwenWork Connector",
-    "file_delivery": "qwenwork_file_present_files"
+    "memory": "memory / memory_search / memory_get（target=user|memory|daily）",
+    "qoderwork_state": "QoderWork Connector：qw_query / qw_action（含 qoderwork.tasks、cron、skills、connectors、MCP）",
+    "mcp_runtime": "qw_mcp_list / qw_mcp_get / qw_mcp_call（懒加载 MCP：builtin_browser、builtin_computer_use、tinyfish、ali-employee-assistant）",
+    "scheduling": "qoder_cron（定时任务，missedRunPolicy 显式）",
+    "file_delivery": "present_files（scratchpad 产物自动落到 outputs）+ file:// 绝对路径链接"
   },
   "enforcement": {
-    "L0": "千问办公原生安全、权限、审批与系统边界",
-    "L1": "SOUL.md 与 AGENTS.md 全局上下文约束",
-    "L2": "用户 Skills、状态契约与可机检门禁",
+    "L0": "QoderWork 原生安全、权限、审批与系统边界（含文件保护策略、目录授权、危险操作确认）",
+    "L1": "SOUL.md 与 AGENTS.md 全局上下文约束（awareness/main 常驻注入）",
+    "L2": "用户 Skills、task-state 状态契约与可机检门禁（scripts/run_gates.py）",
     "L3": "经用户授权的项目 Git Hook 与 CI；不属于产品全局 Hook"
   },
   "integrity_model": {
@@ -79,6 +81,6 @@
     "不绕过权限审批与安全限制",
     "不宣称存在未公开的全局任务前置或后置 Hook",
     "不自动向未授权项目安装 Git Hook 或 CI",
-    "不打包千问办公运行时（MCP 服务器 / toolcall 引擎 / 记忆索引 / 任务库 / Connector 后端）；只映射 + 降级 + 声明强制力等级"
+    "不打包 QoderWork 运行时（MCP 服务器 / toolcall 引擎 / 记忆索引 / 任务库 / Connector 后端）；只映射 + 降级 + 声明强制力等级"
   ]
 }

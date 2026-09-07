@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Agent Core Suite v1.1.0 —— Linux / macOS 安装脚本
+# Agent Core Suite v2.0.0 —— Linux / macOS 安装脚本
 #
 # 用法（在套件目录下执行）：
 #   ./install.sh --target /path/to/workspace

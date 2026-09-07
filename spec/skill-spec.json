@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.2.0",
+  "spec_version": "2.0.0",
   "_why": [
     "规则来源：anthropics/skills 的 skill-creator/scripts/quick_validate.py（官方 Agent Skills 规范）。",
     "官方明确 description 是唯一触发机制，且模型倾向欠触发；故描述必须写清触发条件。",

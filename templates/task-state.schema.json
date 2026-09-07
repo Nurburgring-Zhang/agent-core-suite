@@ -1,5 +1,5 @@
 {
-  "$comment": "Agent Core Suite v1.2.0 — task-state.json 契约（JSON Schema 子集，由 gate_state_validate.py 真实校验）；v1.1 新增字段均为可选属性=出现即校验，分级必填由门禁按 spec 判定",
+  "$comment": "Agent Core Suite v2.0.0 — task-state.json 契约（JSON Schema 子集，由 gate_state_validate.py 真实校验）；v1.1 新增字段均为可选属性=出现即校验，分级必填由门禁按 spec 判定",
   "type": "object",
   "required": [
     "task_id",
@@ -500,6 +500,30 @@
           "delta_from_last": {
             "$comment": "本轮重试与上轮的打法差异：同一打法原样重跑即空转（loop-until-dry 收敛条件）",
             "type": "string"
+          },
+          "handoff": {
+            "$comment": "v2.0 每轮压缩+保留目标防跑偏：每步 ≤1000 字交接（current_goal 防跑偏锚点/completed/next_step），由 gate_loop_guard 机检",
+            "type": "object",
+            "required": [
+              "current_goal",
+              "completed",
+              "next_step"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "current_goal": {
+                "type": "string",
+                "minLength": 4
+              },
+              "completed": {
+                "type": "string",
+                "minLength": 4
+              },
+              "next_step": {
+                "type": "string",
+                "minLength": 4
+              }
+            }
           }
         }
       }

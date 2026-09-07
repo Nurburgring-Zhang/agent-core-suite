@@ -1,5 +1,5 @@
 ---
-description: Agent Core Suite v1.2.0 工作标准 SOP（能力增强层，叠加于终端原生能力之上而非替代它）。接到任何非闲聊任务时始终生效：先定级（T0-T3）、跑七道门（P0-P6）、守四道成本闸门与有界重试，能跑硬门禁脚本就必须跑。
+description: Agent Core Suite v2.0.0 工作标准 SOP（能力增强层，叠加于终端原生能力之上而非替代它）。接到任何非闲聊任务时始终生效：先定级（T0-T3）、跑七道门（P0-P6）、守四道成本闸门与有界重试，能跑硬门禁脚本就必须跑。
 alwaysApply: true
 ---
 
@@ -77,11 +77,16 @@ python -X utf8 <SUITE>/scripts/run_gates.py --state .acs/task-state.json --root 
 - 未做的说未做，拿不到的数据说拿不到，失败与不确定性主动上报。
 - 跳过任何门禁需主人明确批准，并写入 `.acs/task-state.json` 的 `approved_by` 与交付报告。
 
-## 6 千问办公原生能力映射
+## 6 原生能力映射（多产品：QoderWork / 千问办公）
 
-在千问办公中，本套件必须叠加到原生能力而不是另起平行体系：需求决策用 `AskUserQuestion`，进度用 `TodoWrite`，并行与独立验证用 `Agent`，专业能力用 `Skill`，长期经验用 Memory，产品设置与任务状态用 `QwenWork Connector`，最终文件用 `qwenwork_file_present_files`。所有操作继续服从原生权限、审批与文件保护规则。
+本套件必须叠加到当前终端的原生能力而不是另起平行体系。映射随终端而变，纪律不变：
 
-全局融合以 `~/.qwenworkcn/awareness/main/SOUL.md`、`AGENTS.md` 和用户 Skills 为 L1/L2；运行 `scripts/qwenwork_global_verify.py` 证明全局锚点、五个核心 Skill、门禁、模板与 QwenWorkCN 终端映射一致。Git Hook/CI 只在主人授权的具体项目启用，属于 L3 项目外部强制，不得宣称为千问办公产品级全局 Hook。
+- **QoderWork**：需求决策用 `AskUserQuestion`，进度用 `TaskCreate / TaskUpdate / TaskList`，并行与独立验证用 `Agent`（subagent_type=Explore/Plan/general-purpose，可并行/后台），专业能力用 `Skill`，长期经验用 `memory / memory_search / memory_get`，产品设置与任务状态用 QoderWork Connector `qw_query / qw_action`（含 qoderwork.tasks、cron、skills、connectors、MCP），懒加载 MCP 用 `qw_mcp_list / qw_mcp_get / qw_mcp_call`（builtin_browser、builtin_computer_use、tinyfish、ali-employee-assistant），定时任务用 `qoder_cron`，最终文件用 `present_files` + `file://` 绝对路径链接。
+- **千问办公（QwenWorkCN）**：需求决策用 `AskUserQuestion`，进度用 `TodoWrite`，并行与独立验证用 `Agent`，专业能力用 `Skill`，长期经验用 Memory，产品设置与任务状态用 `QwenWork Connector`，最终文件用 `qwenwork_file_present_files`。
+
+所有操作继续服从原生权限、审批与文件保护规则。
+
+全局融合以各产品的 `~/.<home>/awareness/main/SOUL.md`、`AGENTS.md` 和用户 Skills 为 L1/L2；运行共用引擎 `scripts/acs_global_verify.py --product <qoderwork|qwenworkcn>` 证明该产品的全局锚点、五个核心 Skill、门禁、模板与终端映射一致（只读静态校验，退出码 0=STATIC_PASS）。Git Hook/CI 只在主人授权的具体项目启用，属于 L3 项目外部强制，不得宣称为任一产品的产品级全局 Hook。
 
 ## 7 高频违规（自查）
 

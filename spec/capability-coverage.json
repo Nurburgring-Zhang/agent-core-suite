@@ -1,5 +1,5 @@
 {
-  "spec_version": "1.2.0",
+  "spec_version": "2.0.0",
   "_why": [
     "「能不能把 qoder/qoderwork/qwenwork 的全部能力打包进来」必须可核查，否则就是夸大。",
     "诚实结论：一个便携包在物理上无法打包另一个产品的运行时（MCP 服务器、toolcall 引擎、编排引擎、SQLite 记忆索引、agents.db 任务库、长期记忆工具）——塞进来会变成「装了但没有后端支撑」的假能力，违反三重零容忍。",
@@ -16,13 +16,13 @@
     {"domain": "harness 约束层", "portable_layer": "scripts/ 门禁 + rules + AGENTS.md 常驻边界", "runtime_layer": "无（纯脚本，自带运行时=Python）", "in_pack": true, "fallback": "无 shell 则降 soft_only 并声明"},
     {"domain": "loop 执行层", "portable_layer": "loop-engineering 纪律 + gate_loop_guard（四闸门/有界重试/安全阀）", "runtime_layer": "无", "in_pack": true, "fallback": "按 task-state.json steps 手工记录闸门"},
     {"domain": "门禁 gates/block", "portable_layer": "9 道 gate 脚本 + run_gates 编排 + 退出码 0/1/2", "runtime_layer": "无", "in_pack": true, "fallback": "无 Python 时仅软约束，显式 soft_only"},
-    {"domain": "spec 真相源", "portable_layer": "thresholds/terminals/rule-consistency/skill-spec/adapters/capability-coverage", "runtime_layer": "无", "in_pack": true, "fallback": "缺 spec 即 USAGE_ERROR，不回退默认值"},
+    {"domain": "spec 真相源", "portable_layer": "thresholds/terminals/rule-consistency/skill-spec/adapters/capability-coverage/qoderwork-global/qwenwork-global", "runtime_layer": "无", "in_pack": true, "fallback": "缺 spec 即 USAGE_ERROR，不回退默认值"},
     {"domain": "soul 守则层", "portable_layer": "十八条守则 reference-creed.md + 终端 SOUL 副本，由 gate_rule_consistency 锁一致", "runtime_layer": "终端的常驻上下文注入机制", "in_pack": true, "fallback": "写入终端可读的 AGENTS.md/SOUL.md 落点"},
     {"domain": "任务分析 task analysis", "portable_layer": "G1 认知门（goal/boundary/dependencies/impact/acceptance/risks）机检字段", "runtime_layer": "无", "in_pack": true, "fallback": "在 task-state.gates.G1.cognition 手工填写"},
     {"domain": "任务拆解 decomposition", "portable_layer": "graph-engineering DAG 契约（nodes/edges/barriers/policy）+ gate_state_validate", "runtime_layer": "终端的子代理派发运行时", "in_pack": true, "fallback": "串行执行并显式声明未并行"},
     {"domain": "智能体编排 agent orchestration", "portable_layer": "graph 纪律：节点契约/owner≠verifier/并行组/汇聚语义", "runtime_layer": "Agent/Task 子代理运行时（不可打包）", "in_pack": true, "fallback": "单线程分阶段 + builder/verifier 角色分离记录"},
     {"domain": "工具编排 tool orchestration", "portable_layer": "adapters.json capability_adapters 能力→工具映射", "runtime_layer": "toolcall 引擎（不可打包）", "in_pack": true, "fallback": "按 capability fallback 手工调用等价工具"},
-    {"domain": "mcp 连接器", "portable_layer": "adapters 把 MCP 支撑的能力映射到 fallback（不含服务器本体）", "runtime_layer": "MCP 服务器 browser/computer_use/ali-employee-assistant（不可打包）", "in_pack": false, "fallback": "能力缺口显式列出，按各 capability 的 fallback 走"},
+    {"domain": "mcp 连接器", "portable_layer": "adapters 把 MCP 支撑的能力映射到 fallback + native_routing.mcp_runtime 记录懒加载三件套真名（不含服务器本体）", "runtime_layer": "QoderWork MCP 服务器 builtin_browser/builtin_computer_use/tinyfish/ali-employee-assistant + qw_mcp_list/qw_mcp_get/qw_mcp_call 懒加载运行时（不可打包）", "in_pack": false, "fallback": "能力缺口显式列出，按各 capability 的 fallback 走；浏览器/桌面自动化缺位时改走 WebFetch/curl 或人工"},
     {"domain": "cli 命令行", "portable_layer": "gate 脚本即纯 stdlib CLI（python -X utf8 …）", "runtime_layer": "终端自有 CLI 二进制（如连接器 CLI，不可打包）", "in_pack": true, "fallback": "无 Python 时 Node 镜像覆盖 4/9 门，其余显式 USAGE_ERROR"},
     {"domain": "toolcall 工具调用", "portable_layer": "守则 4/7 + adapters 工具映射纪律", "runtime_layer": "toolcall 执行引擎（不可打包）", "in_pack": false, "fallback": "正文声明所用工具与退出码证据"},
     {"domain": "跨对话记忆 cross-conversation memory", "portable_layer": "守则 17 RSI 沉淀纪律 + docs/lessons.md 降级载体", "runtime_layer": "SQLite 记忆索引 + memory 工具（不可打包）", "in_pack": false, "fallback": "写入仓库内 docs/lessons.md 或 task-state.gates.G6.rsi"},
@@ -30,13 +30,17 @@
     {"domain": "任务保持 task persistence", "portable_layer": "task-state.json 契约 + .acs 状态外置 + schema", "runtime_layer": "agents.db 任务库（不可打包）", "in_pack": true, "fallback": "跨步只传 ≤400 字摘要 + 状态文件指针"},
     {"domain": "多轮纠偏 multi-turn correction", "portable_layer": "守则 10 + gate_verify_rank progress_trend（连续不升即空转）", "runtime_layer": "无", "in_pack": true, "fallback": "每轮回填 actual 并与认知摘要比对"},
     {"domain": "审核 review", "portable_layer": "self-verify 双盲终审纪律 + gate_checklist（G5 blind_reviews/adversarial_reviews）", "runtime_layer": "无", "in_pack": true, "fallback": "人工双盲记录写入 task-state.gates.G5"},
-    {"domain": "测试 testing", "portable_layer": "tests/test_gates.py 全量自证 + 各 gate 正负样本", "runtime_layer": "pytest（第三方，CI 显式安装）", "in_pack": true, "fallback": "直接 python 运行单门脚本取得退出码"}
+    {"domain": "测试 testing", "portable_layer": "tests/test_gates.py 全量自证 + 各 gate 正负样本", "runtime_layer": "pytest（第三方，CI 显式安装）", "in_pack": true, "fallback": "直接 python 运行单门脚本取得退出码"},
+    {"domain": "全局融合契约 global fusion contract", "portable_layer": "spec/qoderwork-global.json + spec/qwenwork-global.json + scripts/acs_global_verify.py（机检规则锚点、必需文件哈希、套件源→用户 Skill 字节一致、终端映射一致）", "runtime_layer": "终端 awareness/main 常驻上下文注入机制（不可打包）", "in_pack": true, "fallback": "手工保强三方合并 SOUL.md/AGENTS.md 后跑 acs_global_verify.py --product <id> 取退出码为证"},
+    {"domain": "bootstrap 注入层", "portable_layer": "scripts/acs_bootstrap.py 按 adapters profile 生成 BANNER 注入载荷（含强制力等级与能力缺口清单）", "runtime_layer": "终端 SessionStart / hook 注入通道（不可打包）", "in_pack": true, "fallback": "人工把 --format text 载荷粘贴进终端常驻上下文入口"},
+    {"domain": "qoderwork connector 应用编排", "portable_layer": "native_routing.qoderwork_state 记录 qw_query/qw_action 真名 + adapters profile.connector 映射纪律", "runtime_layer": "QoderWork Connector 后端（qoderwork.tasks/cron/skills/connectors/MCP/usage，不可打包）", "in_pack": false, "fallback": "无 Connector 时按各 capability fallback 手工查询与动作，正文声明所用入口与退出码"},
+    {"domain": "定时任务 scheduling/cron", "portable_layer": "守则纪律：cron payload 用自然语言投递、missedRunPolicy 显式声明、at 排期前先取真实时间", "runtime_layer": "qoder_cron 调度后端（不可打包）", "in_pack": false, "fallback": "无调度运行时则人工触发或改用系统级计划任务，并显式声明未自动调度"}
   ],
   "summary": {
-    "total_domains": 19,
-    "in_pack_true": 15,
-    "in_pack_false": 4,
-    "_note": "in_pack=false 的 4 项均为纯运行时能力（mcp/toolcall/跨对话记忆/长期记忆），物理不可打包；其可移植纪律与降级载体已在包内（见各自 fallback 与 G6/adapters）。",
-    "forbidden_claim": "禁止宣称本包自足包含另一产品的 MCP/toolcall/记忆/任务运行时；缺位一律走 fallback 并声明强制力等级。"
+    "total_domains": 23,
+    "in_pack_true": 17,
+    "in_pack_false": 6,
+    "_note": "in_pack=false 的 6 项均为纯运行时能力（mcp 连接器 / toolcall / 跨对话记忆 / 长期记忆 / qoderwork connector / 定时任务 cron），物理不可打包；其可移植纪律与降级载体已在包内（见各自 portable_layer、fallback 与 G6/adapters/native_routing）。v2.0 新增的 QoderWork 能力面（Connector、cron、browser/computer-use MCP）按同一诚实口径登记，不塞运行时桩。",
+    "forbidden_claim": "禁止宣称本包自足包含另一产品的 MCP/toolcall/记忆/任务/Connector/调度运行时；缺位一律走 fallback 并声明强制力等级。"
   }
 }

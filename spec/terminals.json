@@ -7,9 +7,9 @@
     "探测不到就落到 generic：显式降到最通用的 AGENTS.md 路径，而不是假装识别成某个终端。"
   ],
   "detect_order": [
+    "qoderwork",
     "qwenworkcn",
     "qoder",
-    "qoderwork",
     "claude",
     "cursor",
     "windsurf",
@@ -29,8 +29,9 @@
       "global_awareness_dir": "~/.qwenworkcn/awareness/main",
       "global_soul_target": "~/.qwenworkcn/awareness/main/SOUL.md",
       "global_agents_target": "~/.qwenworkcn/awareness/main/AGENTS.md",
-      "global_verify": "scripts/qwenwork_global_verify.py",
-      "post_install_note": "技能装完新开会话即被千问办公加载；机器级常驻规则由全局 SOUL.md/AGENTS.md 承载，写入前必须备份并做保强三方合并；运行 qwenwork_global_verify.py 验证规则锚点、Skill 同步和终端映射。安装器仍不自动覆盖全局行为文件。"
+      "global_verify": "scripts/acs_global_verify.py",
+      "global_verify_args": "--product qwenworkcn",
+      "post_install_note": "技能装完新开会话即被千问办公加载；机器级常驻规则由全局 SOUL.md/AGENTS.md 承载，写入前必须备份并做保强三方合并；运行 acs_global_verify.py --product qwenworkcn 验证规则锚点、Skill 同步和终端映射。安装器仍不自动覆盖全局行为文件。"
     },
     "qoder": {
       "label": "Qoder",
@@ -54,7 +55,12 @@
       "skills_dir": "~/.qoderwork/skills",
       "rules_source": "rules/agent-core-suite.md",
       "rules_target": "<workspace>/AGENTS.md",
-      "post_install_note": "技能装完新开会话即被 QoderWork 加载；若需机器级常驻规则，请把规则手工合并进 ~/.qoderwork/awareness/main/AGENTS.md（QoderWork 的全局工作手册），安装器不代劳此步。"
+      "global_awareness_dir": "~/.qoderwork/awareness/main",
+      "global_soul_target": "~/.qoderwork/awareness/main/SOUL.md",
+      "global_agents_target": "~/.qoderwork/awareness/main/AGENTS.md",
+      "global_verify": "scripts/acs_global_verify.py",
+      "global_verify_args": "--product qoderwork",
+      "post_install_note": "技能装完新开会话即被 QoderWork 加载；机器级常驻规则由全局 ~/.qoderwork/awareness/main/SOUL.md、AGENTS.md 承载，写入前必须备份并做保强三方合并（保留主人既有人格/项目约定，只升级守则与锚点）；运行 acs_global_verify.py --product qoderwork 验证规则锚点、Skill 同步和终端映射。安装器不自动覆盖全局行为文件。"
     },
     "claude": {
       "label": "Claude Code",

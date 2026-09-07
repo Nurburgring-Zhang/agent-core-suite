@@ -2,7 +2,7 @@
   "task_id": "acs-demo-001",
   "tier": "T2",
   "tier_reason": "涉及 3 个文件与一个可执行脚本，有持久状态且需要真实运行测试，故定为 T2（拿不准时取高一级）",
-  "contract_version": "1.2.0",
+  "contract_version": "2.0.0",
   "known_gaps": [
     "目标运行环境的 CI 版本未确认，已按本机 Python 3.12 验证"
   ],
@@ -179,7 +179,12 @@
       "think_ratio": 0.28,
       "evidence_delta": 1,
       "builder": "builder-A",
-      "verifier": "verifier-B"
+      "verifier": "verifier-B",
+      "handoff": {
+        "current_goal": "产出契约 schema 文件",
+        "completed": "已写出 out/schema.json",
+        "next_step": "按 schema 实现解析器"
+      }
     },
     {
       "id": "s2",
@@ -204,7 +209,12 @@
       "think_ratio": 0.31,
       "evidence_delta": 8,
       "builder": "builder-A",
-      "verifier": "verifier-B"
+      "verifier": "verifier-B",
+      "handoff": {
+        "current_goal": "按契约实现解析器并通过单测",
+        "completed": "src/parser.py 实现，pytest 7 passed",
+        "next_step": "统计字段数写报告"
+      }
     },
     {
       "id": "s3",
@@ -232,7 +242,12 @@
       "think_ratio": 0.05,
       "evidence_delta": 1,
       "builder": "builder-C",
-      "verifier": "verifier-B"
+      "verifier": "verifier-B",
+      "handoff": {
+        "current_goal": "统计契约字段数并写报告",
+        "completed": "out/field-count.txt 已生成 fields=18",
+        "next_step": "进入 G4 验证门"
+      }
     }
   ],
   "gates": {
