@@ -58,7 +58,7 @@ function loadSpec() {
     process.stderr.write(`[USAGE_ERROR] 阈值真相源不是合法 JSON：${SPEC_PATH}（${e.message}）\n`);
     process.exit(EXIT_USAGE);
   }
-  for (const key of ["spec_version", "exit_codes", "tiers", "loop", "checklist", "vague_phrases"]) {
+  for (const key of ["spec_version", "exit_codes", "tiers", "loop", "checklist", "vague_phrases", "handoff", "per_step_review"]) {
     if (!(key in data)) {
       process.stderr.write(`[USAGE_ERROR] 阈值真相源缺顶层字段 ${key}：${SPEC_PATH}\n`);
       process.exit(EXIT_USAGE);
@@ -93,6 +93,21 @@ const CT = SPEC.contract || {};
 const MT = SPEC.model_tier || {};
 const RETRY = SPEC.retry || {};
 const DB = SPEC.double_blind || {};
+
+// v2.1.0 新增：每步压缩交接（handoff）与每步双 AI 自对抗审核（per_step_review）
+// 与 Python gate_checklist.py 的 _HO/_PSR 逐项对齐；缺节时 loadSpec 已 usage_exit。
+const HO = SPEC.handoff;
+const HO_MAX_CHARS = HO.max_chars_hard;
+const HO_TOL = HO.chars_tolerance;
+const HO_MIN_GOAL = HO.min_goal_anchor_chars;
+const HO_MIN_NEXT = HO.min_next_chars;
+const HO_REQUIRE_DRIFT = HO.require_drift_checked;
+
+const PSR = SPEC.per_step_review;
+const PSR_VERDICTS = PSR.verdict_values;
+const PSR_NE_BUILDER = PSR.require_verifier_ne_builder;
+const PSR_MIN_SELF_CHECK = PSR.min_self_check_chars;
+const PSR_T3_MIN_ROUNDS = PSR.t3_min_rounds;
 
 const BANNED_INPUT_PHRASES = [
   "上文", "前文", "之前的讨论", "相关背景", "历史对话", "如前所述",
@@ -1029,6 +1044,8 @@ const HARDENED_LABELS = {
   G5_report: "G5 交付报告四要素",
   G5_blind_reviews: `G5 双盲审查（独立审查者 ≥${DB.min_reviewers} 人 + 非建造者 + 分歧仲裁）`,
   G6_rsi: "G6 RSI 闭环（问题→根因→动作→验证→沉淀位置）",
+  STEP_handoff: `每步压缩交接（≤${HO_MAX_CHARS}字 + 三要素无损 + 目标锚点防跑偏）`,
+  STEP_self_review: "每步双AI自对抗审核 + 自查自检（builder≠verifier + 发现→修复→复验闭环）",
 };
 
 const VAGUE_EVIDENCE_LOWER = VAGUE_EVIDENCE.map((p) => p.toLowerCase());
@@ -1255,6 +1272,114 @@ function checkAcceptanceActual(state, report) {
   });
 }
 
+function checkStepHandoff(state, tier, report) {
+  const steps = arr(G(state, "steps"));
+  if (!steps.length) {
+    report.error("steps", "没有任何步骤记录，无法核验每步压缩交接");
+    return;
+  }
+  steps.forEach((step, idx) => {
+    if (!isDict(step)) return;
+    const at = `steps[${idx}].handoff`;
+    const ho = G(step, "handoff");
+    if (!isDict(ho)) {
+      report.error(at, "缺每步压缩交接（当前目标/已完成项/下一步三要素）：跨步无载体=被迫回灌历史");
+      return;
+    }
+    const anchor = str0(G(ho, "goal_anchor")).trim();
+    if ([...anchor].length < HO_MIN_GOAL) {
+      report.error(`${at}.goal_anchor`,
+        `当前目标锚点过短（${[...anchor].length} 字 < ${HO_MIN_GOAL}）：压缩丢了目标就会跑偏`);
+    } else if (isVague(anchor)) {
+      report.error(`${at}.goal_anchor`, `目标锚点是空话 ${pyr(anchor)}，须写唯一可辨识目标`);
+    }
+    const done = nonemptyStrings(G(ho, "done"));
+    if (done === null || !done.length) {
+      report.error(`${at}.done`, "已完成项为空：交接三要素缺一即有损压缩");
+    }
+    const nxt = str0(G(ho, "next")).trim();
+    if ([...nxt].length < HO_MIN_NEXT) {
+      report.error(`${at}.next`, `下一步过短（${[...nxt].length} 字 < ${HO_MIN_NEXT}）`);
+    } else if (isVague(nxt)) {
+      report.error(`${at}.next`, `下一步是空话 ${pyr(nxt)}，须写唯一可执行动作`);
+    }
+    const chars = G(ho, "chars");
+    if (!pyIsIntStrict(chars)) {
+      report.error(`${at}.chars`, "缺字数字段 chars（无法核对压缩上限，等于没计量）");
+    } else if (chars > HO_MAX_CHARS + HO_TOL) {
+      report.error(`${at}.chars`,
+        `交接 ${chars} 字 > 硬上限 ${HO_MAX_CHARS}（+${HO_TOL} 容差）：总结膨胀成第二份历史，回灌禁令失效`);
+    }
+    if (HO_REQUIRE_DRIFT && G(ho, "drift_checked") !== true) {
+      report.error(`${at}.drift_checked`,
+        "未做方向偏离自检（drift_checked 必须为 true）：这是压缩不跑偏的机检底座");
+    }
+  });
+}
+
+function checkStepSelfReview(state, tier, report) {
+  const steps = arr(G(state, "steps"));
+  if (!steps.length) {
+    report.error("steps", "没有任何步骤记录，无法核验每步自对抗审核");
+    return;
+  }
+  steps.forEach((step, idx) => {
+    if (!isDict(step)) return;
+    const at = `steps[${idx}].review`;
+    const rv = G(step, "review");
+    if (!isDict(rv)) {
+      report.error(at, "缺每步双AI自对抗审核记录（reviewer/verdict/issues/self_check）：错误会累积到门才暴露");
+      return;
+    }
+    const reviewer = str0(G(rv, "reviewer")).trim();
+    const builder = str0(G(step, "builder")).trim();
+    if (!reviewer) {
+      report.error(`${at}.reviewer`, "缺审核者代号：无署名等于无责任人");
+    } else if (PSR_NE_BUILDER && builder && reviewer === builder) {
+      report.error(`${at}.reviewer`, `reviewer == builder == ${pyr(reviewer)}：自对抗退化成自评，不算双AI互审`);
+    }
+    const verdict = str0(G(rv, "verdict")).trim();
+    if (PSR_VERDICTS.indexOf(verdict) < 0) {
+      report.error(`${at}.verdict`, `verdict=${pyr(verdict)} 非法（${PSR_VERDICTS.join("/")}）`);
+    } else if (verdict === "fail") {
+      report.error(`${at}.verdict`, "该步自审 verdict=fail：未过自对抗审核禁止进入下一步");
+    }
+    const selfCheck = str0(G(rv, "self_check")).trim();
+    if ([...selfCheck].length < PSR_MIN_SELF_CHECK) {
+      report.error(`${at}.self_check`, `自查自检结论过短（${[...selfCheck].length} 字 < ${PSR_MIN_SELF_CHECK}）`);
+    } else if (isVague(selfCheck)) {
+      report.error(`${at}.self_check`, `自查结论是空话 ${pyr(selfCheck)}，须写核对了什么 + 结论`);
+    }
+    if (!has(rv, "issues_found") || !has(rv, "issues_closed")) {
+      report.error(at, "缺 issues_found/issues_closed 字段（无问题写空数组，字段不得缺）");
+    } else {
+      const foundRaw = nonemptyStrings(G(rv, "issues_found"));
+      const found = foundRaw === null ? [] : foundRaw;
+      const closedRaw = nonemptyStrings(G(rv, "issues_closed"));
+      const closed = closedRaw === null ? [] : closedRaw;
+      if (found.length) {
+        if (closed.length < found.length) {
+          report.error(`${at}.issues_closed`,
+            `发现 ${found.length} 项但只闭环 ${closed.length} 项（发现→修复必须等量闭环）`);
+        }
+        const recheck = str0(G(rv, "recheck")).trim();
+        if (!recheck) {
+          report.error(`${at}.recheck`, "有问题被修复却无复验记录（未复验 = 未闭环）");
+        } else if (isVague(recheck)) {
+          report.error(`${at}.recheck`, `复验记录是空话 ${pyr(recheck)}，须写命令与真实输出`);
+        }
+      }
+    }
+    if (tier === "T3") {
+      const rounds = G(rv, "rounds");
+      if (!pyIsIntStrict(rounds) || rounds < PSR_T3_MIN_ROUNDS) {
+        report.error(`${at}.rounds`,
+          `T3 每步自对抗审核须 ≥${PSR_T3_MIN_ROUNDS} 轮，实际 ${pyr(rounds)}`);
+      }
+    }
+  });
+}
+
 function checkReport(entry, report) {
   const where = "gates.G5.report";
   const rp = G(entry, "report");
@@ -1367,6 +1492,14 @@ function checkHardened(state, gates, tier, report) {
     const label = HARDENED_LABELS[item] || item;
     if (item === "G4_acceptance_actual") {
       checkAcceptanceActual(state, report);
+      continue;
+    }
+    if (item === "STEP_handoff") {
+      checkStepHandoff(state, tier, report);
+      continue;
+    }
+    if (item === "STEP_self_review") {
+      checkStepSelfReview(state, tier, report);
       continue;
     }
     if (item === "G5_blind_reviews") {

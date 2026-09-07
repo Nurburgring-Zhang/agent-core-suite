@@ -1,5 +1,5 @@
 {
-  "spec_version": "2.0.0",
+  "spec_version": "2.1.0",
   "product": "qwenworkcn",
   "positioning": "可配置 Agent 行为层与 Harness 的全局融合契约；不代表系统提示词或产品私有内核可被修改",
   "paths": {
@@ -37,6 +37,15 @@
     "spec/terminals.json",
     "spec/adapters.json",
     "spec/capability-coverage.json",
+    "spec/skill-inventory.json",
+    "scripts/acs_compress_handoff.py",
+    "scripts/acs_wire_hooks.py",
+    "scripts/acs_build_skill_inventory.py",
+    "scripts/node/acs_gates.mjs",
+    "hooks/acs-stop.sh",
+    "hooks/acs-prompt.sh",
+    "bundled-skills/superpowers-systematic-debugging/SKILL.md",
+    "bundled-skills/world-class-executive-deck/SKILL.md",
     "spec/qwenwork-global.json"
   ],
   "required_anchors": {
@@ -47,7 +56,7 @@
       "自我学习与 RSI 递归自我改进"
     ],
     "AGENTS.md": [
-      "Agent Core Suite v2.0.0",
+      "Agent Core Suite v2.1.0",
       "通用任务执行守则（十八条）",
       "Harness Engineering 质量门禁",
       "千问办公原生能力融合协议",
@@ -57,6 +66,7 @@
   "native_routing": {
     "clarification": "AskUserQuestion",
     "progress": "TodoWrite",
+    "handoff": "每步压缩交接以单文件 .acs/handoff.md 为跨步载体（scripts/acs_compress_handoff.py 渲染/校验，steps[].handoff 为结构化镜像）；hooks/acs-stop.sh + hooks/acs-prompt.sh 为 best-effort 加速（千问办公 hook 行为预期支持但未实测=known_gap）；强制点回落到 gate_checklist 的 STEP_handoff / STEP_self_review 机检",
     "parallelism": "Agent",
     "skills": "Skill",
     "memory": "memory tools",
@@ -77,7 +87,7 @@
   "boundaries": [
     "不修改或披露系统提示词",
     "不绕过权限审批与安全限制",
-    "不宣称存在未公开的全局任务前置或后置 Hook",
+    "不宣称千问办公的 hook 行为已实测——其 settings.json hook 事件集为预期兼容但未在本终端逐条验证（UNVERIFIED known_gap）；每步交接/自审的强制点回落到可机检门禁（gate_checklist STEP_handoff / STEP_self_review），hook 仅为 best-effort 加速",
     "不自动向未授权项目安装 Git Hook 或 CI",
     "不打包千问办公运行时（MCP 服务器 / toolcall 引擎 / 记忆索引 / 任务库 / Connector 后端）；只映射 + 降级 + 声明强制力等级"
   ]

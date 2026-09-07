@@ -1,4 +1,4 @@
-# Agent Core Suite (ACS) v2.0.0 — 设计与标准（G2 规划门四件套）
+# Agent Core Suite (ACS) v2.1.0 — 设计与标准（G2 规划门四件套）
 
 > 面向 agent 终端的工作标准 SOP 套件：skill + harness + loop engineering + graph engineering。
 > 目标双约束：**能力上限抬高** 且 **token/时间成本下降**。
@@ -14,6 +14,36 @@
 | 只补三样 | 分级 SOP / 可机检退出码 / 量化成本阈值 | 不重建检索、不重建记忆、不重建编辑器；`scripts/` 只做判定，不做执行 |
 | 冲突裁决顺序 | 主人指令 > 终端原生安全/权限/审批 > 本套件硬门禁 > 软约束 | 门禁脚本只返回退出码，**无任何阻止或回滚动作**（不写文件、不杀进程、不改环境） |
 | 强制的对象 | 标准与证据，不是工具路径 | 验收均以「证据是否可机检」为准，不限定达成手段 |
+
+## v2.1 架构变更：把交接与自审下沉到每一步
+
+**问题（v2.0 的粒度断层）**：回灌禁令与双 AI 对抗审核都只在 **gate/tier 级**生效——`gate_loop_guard` 拦「总结超 400 字」，`gate_checklist` 拦「对抗审核 <2 轮」，判定都发生在门上。步骤与步骤之间没有强制载体，跨步上下文只能靠重述对话历史（=回灌）；错误也要一路累积到 G3/G5 才暴露，返工成本按步数放大。这正是 E7-E11 那笔账的成因，只是当时只在门的层面堵了一半。
+
+**修复（纪律下沉到每步收尾）**：交接与自审都变成**每步必填的结构化字段**，由 `gate_checklist.py` 两个新硬化项机检（Python + Node 双实现同批落地），阈值只存 `spec/thresholds.json` 的 `handoff` / `per_step_review` 节，脚本内不自带数字。
+
+| 设计决策 | 含义 | 证据 / 可机检点 |
+| --- | --- | --- |
+| 单文件外部交接载体 | 跨步唯一载体是 `.acs/handoff.md`，六段固定形状：`0` 当前目标（锚点）/ `1` 已确认事实 / `2` 已完成产出 / `3` 未解决 / `4` 下一步入口 / `5` 状态指针。禁止回灌历史 | `handoff.handoff_path` + `single_file_handoff`；模板 `templates/handoff-summary.md` |
+| 压缩有硬上限 | 正文 ≤1000 字硬上限，目标 400 字，容差 50；超限即「总结膨胀成第二份历史」，回灌禁令失效 | `handoff.target_chars / max_chars_hard / chars_tolerance`；`steps[].handoff.chars` |
+| 目标锚点防跑偏 | 每步必须复述唯一「当前目标」并置 `drift_checked=true`；锚点过短 / 空话 / 未自检一律 BLOCK | `handoff.require_goal_anchor / require_drift_checked`；`gate_checklist.STEP_handoff` |
+| 三要素无损 | `goal_anchor / done / next` 缺一即视为有损压缩 | 同上；T1-T3 全级生效（`handoff.apply_tiers`） |
+| 每步 builder≠verifier 自审 | 双 AI 对抗从 gate/tier 级下沉到每步收尾：`steps[].review` 记 reviewer / verdict / issues / self_check；`verdict` ∈ {pass, pass_with_fixes, fail}，**fail 禁止进入下一步** | `gate_checklist.STEP_self_review`；`per_step_review.require_verifier_ne_builder / verdict_values` |
+| 问题等量闭环 | `issues_found` 非空则 `issues_closed` 必须等量，且 `recheck` 非空话（写命令与真实输出）；T3 每步 ≥2 轮 | `per_step_review.t3_min_rounds`；空话口径与 `spec.vague_phrases` 同一真相源 |
+| 机械渲染 ≠ 语义压缩 | `scripts/acs_compress_handoff.py` 只做两件事：`--render` 从最后一步的 handoff 镜像确定性、幂等地渲染载体（**无镜像则 exit=2，绝不编造内容**）；`--validate` 机械校验字数上限 / 三要素 / 锚点非空话 / `drift_checked`。**语义级 LLM 压缩永远是 agent 的原生职责，纯 stdlib 脚本不假装能做** | 退出码 0/1/2；与 `STEP_handoff` 同一阈值真相源 |
+| hook 是加速器不是强制点 | `hooks/acs-stop.sh`（Stop：尽力渲染+校验载体）与 `hooks/acs-prompt.sh`（UserPromptSubmit：载体存在时提醒先读它）**恒 exit 0**；`scripts/acs_wire_hooks.py` 负责保强并入 `settings.json` | 见下「hook 诚实边界」 |
+| 技能可迁移性只按证据分类 | `scripts/acs_build_skill_inventory.py` 扫三终端技能目录（qoder / qoderwork / qwenworkcn）→ `spec/skill-inventory.json`，按 junk > already_in_acs > internal_proprietary > env_bound > portable_doc 优先级分类；只有 portable_doc 的 `.md` verbatim 拷入 `bundled-skills/`（sha256 回读），env-bound 与内部专有只清单化，**不打任何二进制 blob** | 确定性输出（无时间戳、已排序）；最近实跑见下 |
+
+**hook 诚实边界（VERIFIED 与 UNVERIFIED 分列，不得混写）**：QoderWork 的 `settings.json` 支持 **8 个 hook 事件**（UserPromptSubmit / PreToolUse / PostToolUse / Stop / SessionStart / SessionEnd / PostToolUseFailure / Notification）。
+
+- **VERIFIED**：做副作用 + `exit 0` 的钩子不打断当前 turn（QoderWork 实测）。
+- **UNVERIFIED known_gap**：① hook 的 stdout 是否被注入模型上下文；② 非零退出 / decision JSON 能否阻断或改写 turn。
+- 结论：两个 ACS hook 一律 `exit 0`，**真正的强制点回落到 `gate_checklist` 的 `STEP_handoff` / `STEP_self_review` 机检门**，hook 只是 best-effort 加速器。qwenworkcn 的 hook 行为属「预期存在但未实测」，同样登记为 known_gap，不得当作已生效。
+
+`acs_wire_hooks.py` 的保强（PRESERVE-STRONG）三条硬线：① 只**追加**新 matcher-group，绝不删除 / 重排 / 改写任何既存条目——包括每个事件上都并存的企业托管 `_yunke_managed` hook_entry.exe；② 原子写（tempfile + `os.replace` + fsync）后 READ-BACK 再解析，逐事件复验「既有条目按原序原样在前缀」且「ACS 条目已在位」；③ 幂等——某事件已含 `acs-stop.sh` / `acs-prompt.sh` 则报 already wired。支持 `--dry-run`。退出码 0=成功/空操作/dry-run，1=读回校验失败，2=USAGE_ERROR。
+
+**能力覆盖随之扩展**：`spec/capability-coverage.json` 从 23 域增至 **24 域（18 可打包 / 6 纯运行时不可打包）**，新增「每步交接压缩 handoff / post-turn hook」一域并标 `in_pack=true`（文档 + 可机检门 + 压缩/接线脚本 + 产品无关 hook 都在包内）；终端 hook 的**执行语义**（stdout 注入 / 非零退出阻断）仍属产品运行时，本平台未验证，如实登记为 known_gap。两份全局融合契约（`spec/qoderwork-global.json`、`spec/qwenwork-global.json`）的 `native_routing` 各增一条 `handoff` 路由——新增的门 / 脚本 / hook 全部产品无关，无任何产品特化分支。
+
+**技能清单最近一次实跑**（`spec/skill-inventory.json`，`spec_version=2.1.0`）：total_skills 116 / portable_doc 2 / already_in_acs 5 / env_bound 68 / internal_proprietary 40 / junk 1；bundled_files 2，bundled_bytes 17331。「可迁移只有 2 个」这个数字本身就是结论：绝大多数终端技能绑死在运行时或内部系统上，把它们打进来等于打假包。
 
 ## v2.0 架构变更：多产品全局融合
 

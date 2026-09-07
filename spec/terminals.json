@@ -146,8 +146,10 @@
     }
   },
   "external_enforcement": {
-    "_why": "软约束靠自觉、硬门禁靠模型主动调用；只有外部强制点不依赖模型配合。",
+    "_why": "软约束靠自觉、硬门禁靠模型主动调用；只有外部强制点不依赖模型配合。除 pre-commit / CI 外，v2.1 增加终端 hook 通道（post-turn 刷新交接载体 + prompt 提醒先读交接）作为第三条外部接线点，但 hook 只是 exit-0 加速器，真正强制点仍是机检门。",
     "pre_commit": "hooks/pre-commit（提交时跑门禁，失败即拒绝提交）",
-    "ci": ".github/workflows/acs-gates.yml（PR 上跑门禁，失败即红）"
+    "ci": ".github/workflows/acs-gates.yml（PR 上跑门禁，失败即红）",
+    "post_turn_hook": "hooks/acs-stop.sh（Stop=post-turn 事件尽力刷新/校验 .acs/handoff.md；接线用 scripts/acs_wire_hooks.py 保强并入 settings.json；qoderwork 实测 exit-0 副作用不打断 turn，stdout 注入/非零退出阻断语义 UNVERIFIED=known_gap，故恒 exit 0，强制点回落 gate_checklist STEP_handoff）",
+    "prompt_hook": "hooks/acs-prompt.sh（UserPromptSubmit 事件提醒先读 .acs/handoff.md 再定点读取、禁回灌历史；best-effort，stdout 是否入模型上下文未验证，恒 exit 0）"
   }
 }

@@ -1,8 +1,8 @@
 {
   "name": "agent-core-suite",
-  "version": "2.0.0",
-  "spec_version": "2.0.0",
-  "description": "Agent 能力增强套件：skill + harness + loop engineering + graph engineering，叠加在 agent 终端原生能力之上，用于强化其底层执行能力并压降 token 与时间成本。v2.0：把全局融合从 qwenworkcn 单产品硬编码泛化为多产品数据驱动（qoderwork 与 qwenworkcn 并列为一级全局融合终端），新增 acs_global_verify.py 多产品静态校验引擎。",
+  "version": "2.2.0",
+  "spec_version": "2.2.0",
+  "description": "Agent 能力增强套件：skill + harness + loop engineering + graph engineering，叠加在 agent 终端原生能力之上，用于强化其底层执行能力并压降 token 与时间成本。v2.0：把全局融合从 qwenworkcn 单产品硬编码泛化为多产品数据驱动（qoderwork 与 qwenworkcn 并列为一级全局融合终端），新增 acs_global_verify.py 多产品静态校验引擎。v2.1：把「每步压缩交接（.acs/handoff.md 单文件跨步载体 + 目标锚点防跑偏）」与「每步双 AI 自对抗审核 + 自查自检自监督」下沉为 gate_checklist 的 STEP_handoff / STEP_self_review 机检硬化项（Python + Node 双实现），配套 acs_compress_handoff.py（渲染/校验，仅机械渲染不做语义压缩）与 best-effort post-turn hooks（acs-stop.sh / acs-prompt.sh / acs_wire_hooks.py，恒 exit 0，强制点仍回落到门禁）；并新增 acs_build_skill_inventory.py + spec/skill-inventory.json 把三终端技能清单化、纯文档技能 verbatim 打包、env-bound 技能只登记不打 blob。",
   "language": "zh-CN",
   "positioning": {
     "kind": "augmentation-layer",
@@ -170,7 +170,7 @@
     {
       "id": "checklist",
       "script": "scripts/gate_checklist.py",
-      "checks": "G0-G6 分级必填、证据非空话、对抗审核与上线测试轮次；v1.1：T3 双盲审查（≥2 独立审查者、禁建造者/重复、分歧仲裁留痕）"
+      "checks": "G0-G6 分级必填、证据非空话、对抗审核与上线测试轮次；v1.1：T3 双盲审查（≥2 独立审查者、禁建造者/重复、分歧仲裁留痕）；v2.1：每步压缩交接 STEP_handoff（≤1000字硬上限 + 三要素无损 + goal_anchor 防跑偏 + drift_checked）与每步双AI自对抗审核 STEP_self_review（builder≠verifier + verdict + 发现→修复→复验等量闭环 + T3≥2轮），Python 与 Node 双实现"
     },
     {
       "id": "rule",
@@ -190,7 +190,7 @@
     {
       "id": "capability",
       "script": "scripts/gate_capability_registry.py",
-      "checks": "能力治理清单：portable 域必须在包内且有真实载体、runtime 域禁止谎称打包(in_pack=false/carrier=null)、每域必须有 governed_by+discipline、runtime 必须有 fallback、与 capability-coverage 经 coverage_domain_map 语义一致（v2.0 新增）"
+      "checks": "能力治理清单：portable 域必须在包内且有真实载体、runtime 域禁止谎称打包(in_pack=false/carrier=null)、每域必须有 governed_by+discipline、runtime 必须有 fallback、与 capability-coverage 经 coverage_domain_map 语义一致（v2.2 merge：与每步双动作共存，治静态能力面诚实性）"
     }
   ],
   "exit_codes": {
@@ -241,6 +241,10 @@
     "LICENSE",
     "README.md",
     "VERSION",
+    "bundled-skills/superpowers-systematic-debugging/SKILL.md",
+    "bundled-skills/world-class-executive-deck/SKILL.md",
+    "hooks/acs-prompt.sh",
+    "hooks/acs-stop.sh",
     "hooks/pre-commit",
     "install.ps1",
     "install.sh",
@@ -249,9 +253,11 @@
     "rules/agent-core-suite.md",
     "scripts/_acs_common.py",
     "scripts/acs_bootstrap.py",
+    "scripts/acs_build_skill_inventory.py",
+    "scripts/acs_compress_handoff.py",
     "scripts/acs_doctor.py",
     "scripts/acs_global_verify.py",
-    "scripts/acs_handoff_compress.py",
+    "scripts/acs_wire_hooks.py",
     "scripts/gate_capability_registry.py",
     "scripts/gate_checklist.py",
     "scripts/gate_honesty_ledger.py",
@@ -279,6 +285,7 @@
     "spec/qoderwork-global.json",
     "spec/qwenwork-global.json",
     "spec/rule-consistency.json",
+    "spec/skill-inventory.json",
     "spec/skill-spec.json",
     "spec/terminals.json",
     "spec/thresholds.json",
@@ -355,8 +362,7 @@
     "honesty": "python -X utf8 scripts/gate_honesty_ledger.py --state templates/task-state.example.json --tier T2",
     "bootstrap": "python -X utf8 scripts/acs_bootstrap.py --root . --profile qwenworkcn --verify",
     "global_verify": "python -X utf8 scripts/acs_global_verify.py --product qoderwork --json（qwenworkcn 侧：--product qwenworkcn；须对本机真实资源目录跑，STATIC_PASS 才算全局融合生效）",
-    "capability_registry": "python -X utf8 scripts/gate_capability_registry.py --root .",
-    "handoff_compress": "python -X utf8 scripts/acs_handoff_compress.py --state templates/task-state.example.json --out .acs/handoff.md"
+    "capability_registry": "python -X utf8 scripts/gate_capability_registry.py --root ."
   },
   "global_integration": {
     "_why": "v1.2 的全局融合层是 qwenworkcn 单产品硬编码；v2.0 泛化为多产品数据驱动，qoderwork 与 qwenworkcn 并列为一级全局融合终端。新增产品只需加一个 spec/<id>-global.json 契约与 acs_global_verify.py 里 PRODUCTS 的一条登记，其余代码零产品特化。",
@@ -389,6 +395,7 @@
     "boundary": "仅强化可配置 Agent 行为层、Skills、Harness 与公开设置；不修改系统提示词、产品私有内核或原生安全权限；不打包任一产品的运行时（MCP/toolcall/记忆索引/任务库/调度引擎），运行时缺位一律走 native-first + fallback 并如实声明强制力等级。"
   },
   "known_limitations": [
+    "[v2.1 交接/hook 边界] 每步压缩交接的强制点是 gate_checklist 的 STEP_handoff / STEP_self_review 机检（Python + Node 双实现）；hooks/acs-stop.sh + acs-prompt.sh 只是 best-effort 加速，恒 exit 0，本机仅实测『exit-0 副作用透传安全』，其 stdout 是否注入模型上下文、非零退出/decision 是否能阻断均为 UNVERIFIED known_gap，千问办公侧 hook 行为预期兼容但未逐条实测。acs_compress_handoff.py 只做机械渲染/校验（无镜像则 exit 2，绝不伪造内容），不做语义级 LLM 压缩，语义压缩质量仍属原生能力。三个新工具脚本（acs_compress_handoff / acs_wire_hooks / acs_build_skill_inventory）按设计需要写文件，故以显式 allowlist 排除于『scripts/ 全只读』门禁不变量之外，并另有元测试保证 gate_*.py / run_gates / *global_verify 永不被豁免。",
     "[v2.0 全局融合边界] acs_global_verify.py 是静态配置完整性校验（规则锚点在位、5 个 Skill 与套件源字节一致、必需套件文件在位、terminals.json 映射与契约一致），只读、不写文件、不联网、不改终端配置；它不证明产品在运行时真的加载了规则，不修改系统提示词或产品私有内核，也不打包任一产品的运行时（MCP/toolcall/记忆索引/任务库/Connector/调度引擎）。校验只对调用方 --home 指向的资源目录负责；产品若无公开全局 Hook，「规则确被加载」仍需该终端自行验证。多产品泛化后新增产品只加 spec/<id>-global.json + PRODUCTS 一条登记，引擎零产品特化。",
     "[v1.2 覆盖边界] 新增三门（rule/skillspec/honesty）仅 Python 实现，无 Node 镜像；且 rule/skillspec 只在被检查树自带对应 spec 时参与，业务工作区跑 run_gates 会显式打印「跳过（非通过）」而不是假装检查过。",
     "[v1.2 借鉴来源] 三门机制分别来自 ponytail（规则副本漂移、judge selftest、债务注释）、anthropics/skills（SKILL.md 规范与 with/without 基线）、caveman（七档证据分级、子代理契约、三臂评测）、superpowers（description 写法纪律、ledger 抗压缩）。均为方法学迁移与本地重实现，非代码搬运；各上游的收益数字未在本机复现，不作为本套件主张。",
@@ -425,7 +432,7 @@
       "partial（仅 Node，4 门）",
       "soft_only（无运行时，强制力归零，显式声明）"
     ],
-    "capability_coverage": "spec/capability-coverage.json 机检覆盖完整性：23 域，17 可打包 / 6 纯运行时不可打包"
+    "capability_coverage": "spec/capability-coverage.json 机检覆盖完整性：24 域，18 可打包 / 6 纯运行时不可打包"
   },
   "capability_coverage_spec": {
     "path": "spec/capability-coverage.json",

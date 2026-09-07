@@ -1,5 +1,5 @@
 {
-  "spec_version": "2.0.0",
+  "spec_version": "2.1.0",
   "_why": [
     "通用增强包必须能装到任意 agent 终端、接任意大模型；但落点、上下文注入方式、可用工具名各终端不同。",
     "故把「不变的部分」与「随终端变的部分」彻底分开：规则与门禁不变，落点与工具映射走适配层。",
@@ -8,7 +8,10 @@
   ],
   "portable_core": {
     "_note": "与终端、模型完全无关，任何环境按原样安装即生效（能跑 Python 即为硬约束，不能跑则显式降为软约束）。",
-    "rules": ["AGENTS.md", "rules/agent-core-suite.md"],
+    "rules": [
+      "AGENTS.md",
+      "rules/agent-core-suite.md"
+    ],
     "skills": [
       "skills/universal-task-code",
       "skills/loop-engineering",
@@ -35,10 +38,27 @@
       "spec/skill-spec.json",
       "spec/adapters.json",
       "spec/capability-coverage.json",
+      "spec/skill-inventory.json",
       "spec/qoderwork-global.json",
       "spec/qwenwork-global.json"
     ],
-    "contracts": ["templates/task-state.schema.json", "templates/verify-record.schema.json"]
+    "tools": [
+      "scripts/acs_compress_handoff.py",
+      "scripts/acs_wire_hooks.py",
+      "scripts/acs_build_skill_inventory.py"
+    ],
+    "hooks": [
+      "hooks/acs-stop.sh",
+      "hooks/acs-prompt.sh"
+    ],
+    "bundled_skills": [
+      "bundled-skills/superpowers-systematic-debugging/SKILL.md",
+      "bundled-skills/world-class-executive-deck/SKILL.md"
+    ],
+    "contracts": [
+      "templates/task-state.schema.json",
+      "templates/verify-record.schema.json"
+    ]
   },
   "model_agnostic": {
     "_why": "包内不含任何模型 API 调用、不含 provider base URL、不含 token 计价表；故换模型不需要改包。",
@@ -52,19 +72,57 @@
   "capability_adapters": {
     "_why": "门禁强制的是「标准与证据」，不是具体工具名。各终端把自己的等价能力填进来即可，缺失项必须显式写 null 并说明影响。",
     "required_capabilities": [
-      {"id": "clarify", "purpose": "向主人收敛关键决策（守则 2）", "fallback": "在正文提问并等待答复"},
-      {"id": "progress", "purpose": "任务清单与进度可见（守则 9/11）", "fallback": "写入 .acs/task-state.json 的 steps"},
-      {"id": "parallel", "purpose": "派发独立子代理并分离 builder/verifier（守则 8/12）", "fallback": "串行执行并显式声明未做并行"},
-      {"id": "skill_load", "purpose": "按需加载子技能（守则 7）", "fallback": "人工粘贴对应 SKILL.md"},
-      {"id": "memory", "purpose": "跨会话沉淀经验（守则 17）", "fallback": "写入仓库内 docs/lessons.md"},
-      {"id": "file_delivery", "purpose": "把产物交付给主人（守则 16）", "fallback": "打印绝对路径"},
-      {"id": "shell", "purpose": "运行硬门禁脚本（全部机检的前提）", "fallback": "无 shell 则强制力降为 soft_only 并显式声明"}
+      {
+        "id": "clarify",
+        "purpose": "向主人收敛关键决策（守则 2）",
+        "fallback": "在正文提问并等待答复"
+      },
+      {
+        "id": "progress",
+        "purpose": "任务清单与进度可见（守则 9/11）",
+        "fallback": "写入 .acs/task-state.json 的 steps"
+      },
+      {
+        "id": "handoff",
+        "purpose": "每步 ≤1000 字压缩交接载体 .acs/handoff.md + 防跑偏目标锚点（守则 9/回灌禁令）",
+        "fallback": "无 post-turn hook 引擎或其高级语义未验证时，强制点回落到 gate_checklist STEP_handoff 机检门；agent 每步手工写 handoff 镜像 + 载体"
+      },
+      {
+        "id": "parallel",
+        "purpose": "派发独立子代理并分离 builder/verifier（守则 8/12）",
+        "fallback": "串行执行并显式声明未做并行"
+      },
+      {
+        "id": "skill_load",
+        "purpose": "按需加载子技能（守则 7）",
+        "fallback": "人工粘贴对应 SKILL.md"
+      },
+      {
+        "id": "memory",
+        "purpose": "跨会话沉淀经验（守则 17）",
+        "fallback": "写入仓库内 docs/lessons.md"
+      },
+      {
+        "id": "file_delivery",
+        "purpose": "把产物交付给主人（守则 16）",
+        "fallback": "打印绝对路径"
+      },
+      {
+        "id": "shell",
+        "purpose": "运行硬门禁脚本（全部机检的前提）",
+        "fallback": "无 shell 则强制力降为 soft_only 并显式声明"
+      }
     ],
     "profiles": {
       "generic": {
         "label": "通用（未识别终端）",
-        "clarify": null, "progress": null, "parallel": null,
-        "skill_load": null, "memory": null, "file_delivery": null, "shell": "bash|cmd",
+        "clarify": null,
+        "progress": null,
+        "parallel": null,
+        "skill_load": null,
+        "memory": null,
+        "file_delivery": null,
+        "shell": "bash|cmd",
         "note": "未识别终端：能力映射全空即按 fallback 执行，并在交付报告写明哪些守则是以降级方式满足的。"
       },
       "qwenworkcn": {
@@ -76,10 +134,13 @@
         "memory": "memory",
         "file_delivery": "qwenwork_file_present_files",
         "shell": "Bash",
+        "handoff": ".acs/handoff.md 单文件载体 + steps[].handoff 镜像；强制点=gate_checklist STEP_handoff（与终端无关）",
+        "hooks": "预期同 Claude-Code 兼容 settings.json hooks（~/.qwenworkcn/settings.json）；ACS hook 脚本与 acs_wire_hooks.py 均产品无关、可直接接线，但 hook 引擎在 qwenworkcn 上的实际行为尚未实测（known_gap），故不承诺 post-turn 自动刷新，强制点仍回落到机检门",
         "global_rules": "~/.qwenworkcn/awareness/main/AGENTS.md",
         "global_creed": "~/.qwenworkcn/awareness/main/SOUL.md",
         "skills_dir": "~/.qwenworkcn/skills",
-        "note": "产品未公开全局任务前置/后置 Hook，故 L3 只覆盖获授权项目的 Git Hook/CI，不覆盖聊天入口。"
+        "settings_path": "~/.qwenworkcn/settings.json",
+        "note": "handoff/交接压缩纪律与机检门产品无关，装到 qwenworkcn 即生效；post-turn hook 引擎行为在本终端未实测（known_gap），hook 仅作可选加速器，缺位不影响 gate_checklist STEP_handoff 的强制力。"
       },
       "qoderwork": {
         "label": "QoderWork",
@@ -90,13 +151,16 @@
         "memory": "memory / memory_search / memory_get（target=user|memory|daily）",
         "file_delivery": "present_files（scratchpad 产物自动落 outputs）+ file:// 绝对路径",
         "shell": "Bash",
+        "handoff": ".acs/handoff.md 单文件载体 + steps[].handoff 镜像；post-turn 由 hooks/acs-stop.sh 尽力刷新，强制点=gate_checklist STEP_handoff",
+        "hooks": "settings.json hooks 对象（Claude-Code 兼容，8 事件：UserPromptSubmit/PreToolUse/PostToolUse/Stop=post-turn/SessionStart/SessionEnd/PostToolUseFailure/Notification）；接线用 scripts/acs_wire_hooks.py --settings ~/.qoderwork/settings.json --suite <ACS根>（保强幂等，企业托管 hook_entry.exe 零删改）；Stop→acs-stop.sh、UserPromptSubmit→acs-prompt.sh",
         "connector": "QoderWork Connector：qw_query / qw_action（qoderwork.tasks、cron、skills、connectors、MCP、usage）",
         "mcp_runtime": "qw_mcp_list / qw_mcp_get / qw_mcp_call（懒加载：builtin_browser、builtin_computer_use、tinyfish、ali-employee-assistant）",
         "scheduling": "qoder_cron（定时任务，missedRunPolicy 显式声明）",
         "global_rules": "~/.qoderwork/awareness/main/AGENTS.md",
         "global_creed": "~/.qoderwork/awareness/main/SOUL.md",
         "skills_dir": "~/.qoderwork/skills",
-        "note": "awareness/main 常驻注入 SOUL.md+AGENTS.md（L1）；产品未公开全局任务前置/后置 Hook，故 L3 只覆盖获授权项目的 Git Hook/CI，不覆盖聊天入口。MCP/Connector/记忆索引/任务库属运行时，不可打包，只用真名映射，缺位走 fallback 并声明强制力等级。"
+        "settings_path": "~/.qoderwork/settings.json",
+        "note": "awareness/main 常驻注入 SOUL.md+AGENTS.md（L1）。v2.1 已实测：QoderWork 支持 settings.json 全局 hooks（含 Stop=post-turn），exit-0 副作用钩子不打断当前 turn（VERIFIED）；但『stdout 是否注入模型上下文』『非零退出/decision 能否阻断或改写 turn』仍 UNVERIFIED（known_gap），故 ACS hook 一律 exit 0 只做加速/提醒，真正强制点是 gate_checklist STEP_handoff 机检门，不假装靠退出码执法。MCP/Connector/记忆索引/任务库/hook 执行引擎属运行时，不可打包，只用真名映射，缺位走 fallback 并声明强制力等级。"
       },
       "claude": {
         "label": "Claude Code",
@@ -113,17 +177,47 @@
       },
       "cursor": {
         "label": "Cursor",
-        "clarify": null, "progress": null, "parallel": null,
-        "skill_load": null, "memory": null, "file_delivery": null, "shell": "terminal",
+        "clarify": null,
+        "progress": null,
+        "parallel": null,
+        "skill_load": null,
+        "memory": null,
+        "file_delivery": null,
+        "shell": "terminal",
         "rules_target": "<workspace>/.cursor/rules/agent-core-suite.mdc",
         "note": ".mdc 需自行补 frontmatter（如 alwaysApply: true）才会常驻；本套件不代写，避免假装已生效。"
       },
       "codex": {
         "label": "Codex CLI / 读 AGENTS.md 的终端",
-        "clarify": null, "progress": null, "parallel": null,
-        "skill_load": null, "memory": null, "file_delivery": null, "shell": "shell",
+        "clarify": null,
+        "progress": null,
+        "parallel": null,
+        "skill_load": null,
+        "memory": null,
+        "file_delivery": null,
+        "shell": "shell",
         "rules_target": "<workspace>/AGENTS.md",
         "note": "靠 AGENTS.md 常驻；无 hook 则规则是否真的到了模型面前需自行验证。"
+      },
+      "qoder": {
+        "label": "Qoder",
+        "clarify": "AskUserQuestion",
+        "progress": "TaskCreate / TaskUpdate / TaskList（等价 TodoWrite）",
+        "parallel": "Agent（Explore / Plan / general-purpose，可并行与后台）",
+        "skill_load": "Skill",
+        "memory": "memory / memory_search / memory_get（target=user|memory|daily）",
+        "file_delivery": "present_files（scratchpad 产物自动落 outputs）+ file:// 绝对路径",
+        "shell": "Bash",
+        "handoff": ".acs/handoff.md 单文件载体 + steps[].handoff 镜像；强制点=gate_checklist STEP_handoff",
+        "hooks": "settings.json hooks 对象（Claude-Code 兼容）；接线用 scripts/acs_wire_hooks.py；真正强制点是 gate_checklist STEP_handoff 机检门",
+        "connector": "Qoder Connector：qw_query / qw_action",
+        "mcp_runtime": "mcp_list / mcp_get / mcp_call（懒加载三件套，缺一不可）",
+        "scheduling": "qoder_cron（定时任务）",
+        "global_rules": "~/.qoder/awareness/main/AGENTS.md",
+        "global_creed": "~/.qoder/awareness/main/SOUL.md",
+        "skills_dir": "~/.qoder/skills",
+        "settings_path": "~/.qoder/settings.json",
+        "note": "Qoder 终端（区别于 QoderWork）。awareness/main 常驻注入 SOUL.md+AGENTS.md（L1）。MCP/Connector/记忆索引/任务库/hook 执行引擎属运行时，不可打包，只用真名映射，缺位走 fallback 并声明强制力等级。"
       }
     }
   },
@@ -136,7 +230,8 @@
     },
     "must_declare_in_delivery_report": true,
     "forbidden_claims": [
-      "宣称包能覆盖终端未公开的全局 Hook",
+      "宣称某终端有 hook 引擎却未在该终端实测（qwenworkcn 的 hook 行为仍是 known_gap，不得当作已生效）",
+      "宣称 ACS hook 能靠非零退出/stdout 注入执法（本平台仅实测 exit-0 副作用不打断 turn，阻断/注入语义 UNVERIFIED，强制点始终是 gate_checklist STEP_handoff）",
       "宣称软约束等价于硬门禁",
       "把上游项目的收益数字当作本包已复现的结论"
     ]

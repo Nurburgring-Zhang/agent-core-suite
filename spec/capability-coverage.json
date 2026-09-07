@@ -1,5 +1,5 @@
 {
-  "spec_version": "2.0.0",
+  "spec_version": "2.1.0",
   "_why": [
     "「能不能把 qoder/qoderwork/qwenwork 的全部能力打包进来」必须可核查，否则就是夸大。",
     "诚实结论：一个便携包在物理上无法打包另一个产品的运行时（MCP 服务器、toolcall 引擎、编排引擎、SQLite 记忆索引、agents.db 任务库、长期记忆工具）——塞进来会变成「装了但没有后端支撑」的假能力，违反三重零容忍。",
@@ -12,9 +12,10 @@
     "handling": "native-first：终端有等价运行时就用它；缺位走 fallback；强制力等级 full/partial/soft_only 如实声明，禁止把软约束说成硬门禁"
   },
   "capabilities": [
-    {"domain": "skill 技能", "portable_layer": "5 个 SKILL.md + reference（universal-task-code/loop/graph/self-verify/token-thrift）", "runtime_layer": "终端的 Skill 加载器", "in_pack": true, "fallback": "人工粘贴对应 SKILL.md 正文"},
+    {"domain": "skill 技能", "portable_layer": "5 个 SKILL.md + reference（universal-task-code/loop/graph/self-verify/token-thrift）+ v2.1 多终端技能清单 spec/skill-inventory.json（scripts/acs_build_skill_inventory.py 生成，116 技能分类：portable_doc 2 / already_in_acs 5 / env_bound 68 / internal_proprietary 40 / junk 1）+ bundled-skills/ 内 2 个真·可迁移纯文档技能的逐字节副本", "runtime_layer": "终端的 Skill 加载器", "in_pack": true, "fallback": "人工粘贴对应 SKILL.md 正文；env_bound/internal_proprietary 技能不带 blob，按 skill-inventory.json 的 install_guidance/fallback 在授权源终端安装或显式降级告知"},
     {"domain": "harness 约束层", "portable_layer": "scripts/ 门禁 + rules + AGENTS.md 常驻边界", "runtime_layer": "无（纯脚本，自带运行时=Python）", "in_pack": true, "fallback": "无 shell 则降 soft_only 并声明"},
     {"domain": "loop 执行层", "portable_layer": "loop-engineering 纪律 + gate_loop_guard（四闸门/有界重试/安全阀）", "runtime_layer": "无", "in_pack": true, "fallback": "按 task-state.json steps 手工记录闸门"},
+    {"domain": "每步交接压缩 handoff / post-turn hook", "portable_layer": "loop-engineering §7/§7.5 每步 ≤1000 字压缩总结纪律（.acs/handoff.md 单文件六段：当前目标锚点/已确认事实/已完成产出/未解决/下一步入口/状态指针 + 防跑偏 goal_anchor+drift_checked）+ gate_checklist STEP_handoff 机检门（阈值取自 spec/thresholds.json handoff 节）+ scripts/acs_compress_handoff.py 机械渲染/校验（幂等、缺镜像 exit2 不编造、超限 exit1）+ hooks/acs-stop.sh + hooks/acs-prompt.sh（产品无关，恒 exit 0）+ scripts/acs_wire_hooks.py（保强幂等并入 settings.json，既存企业托管钩子零删改）+ steps[].handoff 结构化镜像", "runtime_layer": "终端的 hook 执行引擎（Stop=UserPromptSubmit 事件触发 + stdout 是否注入模型上下文，不可打包；本平台已实测 exit-0 副作用不打断 turn，但 stdout 注入 / 非零退出 / decision 阻断语义均 UNVERIFIED，已登记 known_gap）", "in_pack": true, "fallback": "无 hook 引擎、或高级 hook 语义未验证时，强制点回落到 gate_checklist STEP_handoff 机检门；hook 仅作 audit-safe exit-0 加速/提醒器，绝不假装靠退出码执法。语义级无损压缩与跑偏判定始终是 agent 原生职责，脚本只做机械渲染/形状校验。"},
     {"domain": "门禁 gates/block", "portable_layer": "9 道 gate 脚本 + run_gates 编排 + 退出码 0/1/2", "runtime_layer": "无", "in_pack": true, "fallback": "无 Python 时仅软约束，显式 soft_only"},
     {"domain": "spec 真相源", "portable_layer": "thresholds/terminals/rule-consistency/skill-spec/adapters/capability-coverage/qoderwork-global/qwenwork-global", "runtime_layer": "无", "in_pack": true, "fallback": "缺 spec 即 USAGE_ERROR，不回退默认值"},
     {"domain": "soul 守则层", "portable_layer": "十八条守则 reference-creed.md + 终端 SOUL 副本，由 gate_rule_consistency 锁一致", "runtime_layer": "终端的常驻上下文注入机制", "in_pack": true, "fallback": "写入终端可读的 AGENTS.md/SOUL.md 落点"},
@@ -37,10 +38,10 @@
     {"domain": "定时任务 scheduling/cron", "portable_layer": "守则纪律：cron payload 用自然语言投递、missedRunPolicy 显式声明、at 排期前先取真实时间", "runtime_layer": "qoder_cron 调度后端（不可打包）", "in_pack": false, "fallback": "无调度运行时则人工触发或改用系统级计划任务，并显式声明未自动调度"}
   ],
   "summary": {
-    "total_domains": 23,
-    "in_pack_true": 17,
+    "total_domains": 24,
+    "in_pack_true": 18,
     "in_pack_false": 6,
-    "_note": "in_pack=false 的 6 项均为纯运行时能力（mcp 连接器 / toolcall / 跨对话记忆 / 长期记忆 / qoderwork connector / 定时任务 cron），物理不可打包；其可移植纪律与降级载体已在包内（见各自 portable_layer、fallback 与 G6/adapters/native_routing）。v2.0 新增的 QoderWork 能力面（Connector、cron、browser/computer-use MCP）按同一诚实口径登记，不塞运行时桩。",
-    "forbidden_claim": "禁止宣称本包自足包含另一产品的 MCP/toolcall/记忆/任务/Connector/调度运行时；缺位一律走 fallback 并声明强制力等级。"
+    "_note": "in_pack=false 的 6 项均为纯运行时能力（mcp 连接器 / toolcall / 跨对话记忆 / 长期记忆 / qoderwork connector / 定时任务 cron），物理不可打包；其可移植纪律与降级载体已在包内（见各自 portable_layer、fallback 与 G6/adapters/native_routing）。v2.0 新增的 QoderWork 能力面（Connector、cron、browser/computer-use MCP）按同一诚实口径登记，不塞运行时桩。v2.1 新增『每步交接压缩 handoff / post-turn hook』域：纪律文本 + gate_checklist STEP_handoff 机检门 + acs_compress_handoff.py + 两个产品无关 hook + acs_wire_hooks.py 均在包内（in_pack=true），终端 hook 执行引擎属运行时不可打包，且其 stdout 注入 / 非零退出阻断语义在本平台未验证（known_gap），故 hook 仅 exit-0 加速器、强制点回落到机检门。",
+    "forbidden_claim": "禁止宣称本包自足包含另一产品的 MCP/toolcall/记忆/任务/Connector/调度运行时，亦禁止宣称 hook 能靠退出码/stdout 执法（本平台未验证）；缺位一律走 fallback 并声明强制力等级。"
   }
 }

@@ -1,0 +1,3815 @@
+{
+  "spec_version": "2.1.0",
+  "_why": [
+    "portable vs env_bound：纯 .md 不等于可迁移。实测 .qoderwork/skills 110 技能/12223 文件/190MB，仅 14 个纯 .md（0.31MB），96 个 env-bound（189.7MB，qoderwork-ppt 的 node_modules 就 124MB/10757 文件）。",
+    "prose 绑定：.md-only 也可能在正文里绑死运行时（qw_query/qw_action/tinyfish/dingtalk/dws/odps/aone/阿里，以及 qoder/qwenwork/mcp_list 等终端自有工具前缀），命中即降级 env_bound，记录 dep_signals。",
+    "pack.py 约束：ACS 只打 manifest.files 里逐个列出的文件（无 glob/目录）并拒绝清单外条目，故不能整体塞入万级文件；只 verbatim 打包 portable_doc 小集合，其余仅清单化。",
+    "no blobs/binaries：本清单不含任何二进制/依赖树；file_count 与 size_bytes 均排除 vendored (node_modules/.git/venv/__pycache__/dist/build)，size_excludes_vendored=true 标记该剪枝。",
+    "internal proprietary：阿里内部专有/合规敏感技能（recruit/qingbaoju/price360/dws/dingtalk 等）分类为 internal_proprietary，永不 verbatim 分发，只能在授权源终端安装或走 fallback。",
+    "counts 以合并后代表终端为准（同名技能跨终端合成一条，source_terminals 列全部来源）；输出无时间戳、全排序，重复运行 byte-stable。"
+  ],
+  "generated_by": "scripts/acs_build_skill_inventory.py",
+  "scanned_dirs": [
+    "C:/Users/Nurburgring/.qoderwork/skills",
+    "C:/Users/Nurburgring/.qwenworkcn/skills",
+    "C:/Users/Nurburgring/.qoder/skills"
+  ],
+  "summary": {
+    "total_skills": 116,
+    "portable_doc": 2,
+    "already_in_acs": 5,
+    "env_bound": 68,
+    "internal_proprietary": 40,
+    "junk": 1,
+    "bundled_files": 2,
+    "bundled_bytes": 17331
+  },
+  "skills": [
+    {
+      "name": ".temp",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "junk",
+      "file_count": 0,
+      "size_bytes": 0,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [],
+      "md_files": [],
+      "bundle_path": null,
+      "install_guidance": "空目录/零文件（如 .temp 垃圾），不打包。",
+      "fallback": "无内容可迁移；可安全忽略。"
+    },
+    {
+      "name": "a1",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 6,
+      "size_bytes": 48223,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aliyun",
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/app-commands.md",
+        "references/ci-commands.md",
+        "references/project-commands.md",
+        "references/repo-commands.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "ai-design-toolkit",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 331,
+      "size_bytes": 35138992,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "README.md",
+        "SKILL.md",
+        "brands/INDEX.md",
+        "brands/airbnb/DESIGN.md",
+        "brands/airbnb/README.md",
+        "brands/airtable/DESIGN.md",
+        "brands/airtable/README.md",
+        "brands/apple/DESIGN.md",
+        "brands/apple/README.md",
+        "brands/binance/DESIGN.md",
+        "brands/binance/README.md",
+        "brands/bmw-m/DESIGN.md",
+        "brands/bmw-m/README.md",
+        "brands/bmw/DESIGN.md",
+        "brands/bmw/README.md",
+        "brands/bugatti/DESIGN.md",
+        "brands/bugatti/README.md",
+        "brands/cal/DESIGN.md",
+        "brands/cal/README.md",
+        "brands/claude/DESIGN.md",
+        "brands/claude/README.md",
+        "brands/clay/DESIGN.md",
+        "brands/clay/README.md",
+        "brands/clickhouse/DESIGN.md",
+        "brands/clickhouse/README.md",
+        "brands/cohere/DESIGN.md",
+        "brands/cohere/README.md",
+        "brands/coinbase/DESIGN.md",
+        "brands/coinbase/README.md",
+        "brands/composio/DESIGN.md",
+        "brands/composio/README.md",
+        "brands/cursor/DESIGN.md",
+        "brands/cursor/README.md",
+        "brands/dell-1996/DESIGN.md",
+        "brands/dell-1996/README.md",
+        "brands/elevenlabs/DESIGN.md",
+        "brands/elevenlabs/README.md",
+        "brands/expo/DESIGN.md",
+        "brands/expo/README.md",
+        "brands/ferrari/DESIGN.md",
+        "brands/ferrari/README.md",
+        "brands/figma/DESIGN.md",
+        "brands/figma/README.md",
+        "brands/framer/DESIGN.md",
+        "brands/framer/README.md",
+        "brands/hashicorp/DESIGN.md",
+        "brands/hashicorp/README.md",
+        "brands/hp/DESIGN.md",
+        "brands/hp/README.md",
+        "brands/ibm/DESIGN.md",
+        "brands/ibm/README.md",
+        "brands/intercom/DESIGN.md",
+        "brands/intercom/README.md",
+        "brands/kraken/DESIGN.md",
+        "brands/kraken/README.md",
+        "brands/lamborghini/DESIGN.md",
+        "brands/lamborghini/README.md",
+        "brands/linear.app/DESIGN.md",
+        "brands/linear.app/README.md",
+        "brands/lovable/DESIGN.md",
+        "brands/lovable/README.md",
+        "brands/mastercard/DESIGN.md",
+        "brands/mastercard/README.md",
+        "brands/meta/DESIGN.md",
+        "brands/meta/README.md",
+        "brands/minimax/DESIGN.md",
+        "brands/minimax/README.md",
+        "brands/mintlify/DESIGN.md",
+        "brands/mintlify/README.md",
+        "brands/miro/DESIGN.md",
+        "brands/miro/README.md",
+        "brands/mistral.ai/DESIGN.md",
+        "brands/mistral.ai/README.md",
+        "brands/mongodb/DESIGN.md",
+        "brands/mongodb/README.md",
+        "brands/nike/DESIGN.md",
+        "brands/nike/README.md",
+        "brands/nintendo-2001/DESIGN.md",
+        "brands/nintendo-2001/README.md",
+        "brands/notion/DESIGN.md",
+        "brands/notion/README.md",
+        "brands/nvidia/DESIGN.md",
+        "brands/nvidia/README.md",
+        "brands/ollama/DESIGN.md",
+        "brands/ollama/README.md",
+        "brands/opencode.ai/DESIGN.md",
+        "brands/opencode.ai/README.md",
+        "brands/pinterest/DESIGN.md",
+        "brands/pinterest/README.md",
+        "brands/playstation/DESIGN.md",
+        "brands/playstation/README.md",
+        "brands/posthog/DESIGN.md",
+        "brands/posthog/README.md",
+        "brands/raycast/DESIGN.md",
+        "brands/raycast/README.md",
+        "brands/renault/DESIGN.md",
+        "brands/renault/README.md",
+        "brands/replicate/DESIGN.md",
+        "brands/replicate/README.md",
+        "brands/resend/DESIGN.md",
+        "brands/resend/README.md",
+        "brands/revolut/DESIGN.md",
+        "brands/revolut/README.md",
+        "brands/runwayml/DESIGN.md",
+        "brands/runwayml/README.md",
+        "brands/sanity/DESIGN.md",
+        "brands/sanity/README.md",
+        "brands/sentry/DESIGN.md",
+        "brands/sentry/README.md",
+        "brands/shopify/DESIGN.md",
+        "brands/shopify/README.md",
+        "brands/slack/DESIGN.md",
+        "brands/spacex/DESIGN.md",
+        "brands/spacex/README.md",
+        "brands/spotify/DESIGN.md",
+        "brands/spotify/README.md",
+        "brands/starbucks/DESIGN.md",
+        "brands/starbucks/README.md",
+        "brands/stripe/DESIGN.md",
+        "brands/stripe/README.md",
+        "brands/supabase/DESIGN.md",
+        "brands/supabase/README.md",
+        "brands/superhuman/DESIGN.md",
+        "brands/superhuman/README.md",
+        "brands/tesla/DESIGN.md",
+        "brands/tesla/README.md",
+        "brands/theverge/DESIGN.md",
+        "brands/theverge/README.md",
+        "brands/together.ai/DESIGN.md",
+        "brands/together.ai/README.md",
+        "brands/uber/DESIGN.md",
+        "brands/uber/README.md",
+        "brands/vercel/DESIGN.md",
+        "brands/vercel/README.md",
+        "brands/vodafone/DESIGN.md",
+        "brands/vodafone/README.md",
+        "brands/voltagent/DESIGN.md",
+        "brands/voltagent/README.md",
+        "brands/warp/DESIGN.md",
+        "brands/warp/README.md",
+        "brands/webflow/DESIGN.md",
+        "brands/webflow/README.md",
+        "brands/wired/DESIGN.md",
+        "brands/wired/README.md",
+        "brands/wise/DESIGN.md",
+        "brands/wise/README.md",
+        "brands/x.ai/DESIGN.md",
+        "brands/x.ai/README.md",
+        "brands/zapier/DESIGN.md",
+        "brands/zapier/README.md",
+        "core/README.en.md",
+        "core/README.md",
+        "core/SKILL.md",
+        "core/assets/director-notes-samples/launch-film-30s-sample.md",
+        "core/assets/showcases/INDEX.md",
+        "core/demos/md-html-narration/script.md",
+        "core/demos/voiceover-demo/script.md",
+        "core/references/animation-best-practices.md",
+        "core/references/animation-pitfalls.md",
+        "core/references/animations.md",
+        "core/references/apple-gallery-showcase.md",
+        "core/references/audio-design-rules.md",
+        "core/references/brand-asset-protocol.md",
+        "core/references/cinematic-patterns.md",
+        "core/references/content-guidelines.md",
+        "core/references/critique-guide.md",
+        "core/references/design-context.md",
+        "core/references/design-styles.md",
+        "core/references/editable-pptx.md",
+        "core/references/hero-animation-case-study.md",
+        "core/references/launch-film-director-notes.md",
+        "core/references/multi-perspective-parallel-case-study.md",
+        "core/references/react-setup.md",
+        "core/references/scene-templates.md",
+        "core/references/sfx-library.md",
+        "core/references/slide-decks.md",
+        "core/references/tweaks-system.md",
+        "core/references/verification.md",
+        "core/references/video-export.md",
+        "core/references/voiceover-pipeline.md",
+        "core/references/workflow.md",
+        "guides/anti-ai-slop.md",
+        "guides/combo-playbook.md",
+        "guides/iteration-method.md",
+        "guides/scene-brand-map.md",
+        "templates/prompt-cheatsheet.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "ai-video-prompt-master",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 5,
+      "size_bytes": 18211,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/dubbing-guide.md",
+        "references/prompt_optimize.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "ale-file-parser",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 12379,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "aliren",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 12,
+      "size_bytes": 46168,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "bpms",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "reference/acl.md",
+        "reference/bpms.md",
+        "reference/doctor.md",
+        "reference/login.md",
+        "reference/meeting.md",
+        "reference/work.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "aliyun-odps-runner",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 15,
+      "size_bytes": 227644,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aliyun",
+        "aone",
+        "odps",
+        "qoder"
+      ],
+      "md_files": [
+        "README.md",
+        "SKILL.md",
+        "references/odps_utils.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "analytics-data-analysis",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 5049,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "apply-vacation",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 18,
+      "size_bytes": 335341,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dws"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "asserts/team-template.md",
+        "references/intent-guide.md",
+        "references/request-status.md",
+        "references/shared/scripts-guide.md",
+        "references/subskills/apply.md",
+        "references/subskills/cancel.md",
+        "references/subskills/plan.md",
+        "references/subskills/query-balance.md",
+        "references/subskills/query-request.md",
+        "references/subskills/team.md",
+        "references/vacation_calendar_2026.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "ata-all",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 37,
+      "size_bytes": 126345,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "钉钉",
+        "阿里"
+      ],
+      "md_files": [
+        "README.md",
+        "SKILL.md",
+        "references/domains/article/README.md",
+        "references/domains/category/README.md",
+        "references/domains/comment/README.md",
+        "references/domains/mark/README.md",
+        "references/domains/message/README.md",
+        "references/domains/url/README.md",
+        "references/domains/user/README.md",
+        "references/domains/vote/README.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "baoyu-slide-deck",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 33,
+      "size_bytes": 122059,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/analysis-framework.md",
+        "references/base-prompt.md",
+        "references/config/preferences-schema.md",
+        "references/content-rules.md",
+        "references/design-guidelines.md",
+        "references/dimensions/density.md",
+        "references/dimensions/mood.md",
+        "references/dimensions/presets.md",
+        "references/dimensions/texture.md",
+        "references/dimensions/typography.md",
+        "references/layouts.md",
+        "references/modification-guide.md",
+        "references/outline-template.md",
+        "references/styles/blueprint.md",
+        "references/styles/bold-editorial.md",
+        "references/styles/chalkboard.md",
+        "references/styles/corporate.md",
+        "references/styles/dark-atmospheric.md",
+        "references/styles/editorial-infographic.md",
+        "references/styles/fantasy-animation.md",
+        "references/styles/intuition-machine.md",
+        "references/styles/minimal.md",
+        "references/styles/notion.md",
+        "references/styles/pixel-art.md",
+        "references/styles/scientific.md",
+        "references/styles/sketch-notes.md",
+        "references/styles/vector-illustration.md",
+        "references/styles/vintage.md",
+        "references/styles/watercolor.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "baoyu-xhs-images",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 22,
+      "size_bytes": 83313,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/config/first-time-setup.md",
+        "references/config/preferences-schema.md",
+        "references/config/watermark-guide.md",
+        "references/elements/canvas.md",
+        "references/elements/decorations.md",
+        "references/elements/image-effects.md",
+        "references/elements/typography.md",
+        "references/presets/bold.md",
+        "references/presets/chalkboard.md",
+        "references/presets/cute.md",
+        "references/presets/fresh.md",
+        "references/presets/minimal.md",
+        "references/presets/notion.md",
+        "references/presets/pop.md",
+        "references/presets/retro.md",
+        "references/presets/study-notes.md",
+        "references/presets/warm.md",
+        "references/workflows/analysis-framework.md",
+        "references/workflows/outline-template.md",
+        "references/workflows/prompt-assembly.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "blog-watcher",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 2686,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "business-value-chain",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 8,
+      "size_bytes": 231024,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "钉钉",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/excel_builder.md",
+        "references/interview_extraction_tips.md",
+        "references/lessons_learned.md",
+        "references/reference_samples.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "comparative-deep-research",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 17,
+      "size_bytes": 172853,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "mcp__",
+        "钉钉",
+        "阿里"
+      ],
+      "md_files": [
+        "README.md",
+        "SKILL.md",
+        "corpus/failure_patterns.md",
+        "corpus/glossary.md",
+        "corpus/source_blacklist.md",
+        "corpus/source_whitelist.md",
+        "examples/Apple_AI_þ+ôµ×äµǺÕø¦զÇ_ջ¦þàºþáöþ®µèÑÕæè.md",
+        "examples/զÅþ¦¦µ¦¢ޢªþ½×õ¦ëÕÄïÕèøõ©ĵêþòÑþ¬üþá¦-µÀ¦զªþáöµèÑ.md",
+        "templates/citation-audit.md",
+        "templates/memory-protocol.md",
+        "templates/phase1-subagent.md",
+        "templates/phase1.5-coverage-check.md",
+        "templates/phase2-subagent.md",
+        "templates/phase6-polish.md",
+        "templates/quality-scorecard.md",
+        "templates/report-outline.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "computer-use-guidance-windows",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 28331,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "mcp_call",
+        "mcp_get",
+        "mcp_list",
+        "qw_mcp"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "content-research-writer",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 15003,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "content-summary",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 7439,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dingtalk"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "copywriting",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 4,
+      "size_bytes": 21719,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/copy-frameworks.md",
+        "references/natural-transitions.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "create-skill",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 3,
+      "size_bytes": 32445,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "qoder",
+        "qwenwork"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "metadata-reference.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "daily-report",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 3,
+      "size_bytes": 9500,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dws",
+        "钉钉"
+      ],
+      "md_files": [
+        "DINGTALK.md",
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "deep-research-internal",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 9,
+      "size_bytes": 54489,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "钉钉",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "deep-research-report",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 13,
+      "size_bytes": 92670,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "qoder",
+        "阿里"
+      ],
+      "md_files": [
+        "AONE-FINAL-PUBLISH.md",
+        "AONE-PUBLISH-CONTENT.md",
+        "AONE-PUBLISH-FIX.md",
+        "AONE-TROUBLESHOOTING.md",
+        "HTML-REPORT-FEATURES.md",
+        "RELEASE-NOTES-v1.1.0.md",
+        "SKILL.md",
+        "UPLOAD-SUMMARY.md",
+        "references/search-strategies.md",
+        "references/source-evaluation.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "design-taste-frontend",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 87751,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "dingtalk-doc-rw",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 4,
+      "size_bytes": 21945,
+      "size_excludes_vendored": true,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dingtalk",
+        "qoder",
+        "钉钉"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "dingtalk-meeting",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 19,
+      "size_bytes": 115848,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dingtalk",
+        "dws",
+        "钉钉",
+        "阿里"
+      ],
+      "md_files": [
+        "INSTALLATION.md",
+        "OPTIMIZATION_COMPLETE.md",
+        "SKILL.md",
+        "TESTING_SUMMARY.md",
+        "references/best_practices.md",
+        "tests/README.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "dingtalk-message",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 4,
+      "size_bytes": 93250,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dingtalk",
+        "钉钉"
+      ],
+      "md_files": [
+        "README.md",
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "dingtalk-msg-review",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 4,
+      "size_bytes": 6637,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dingtalk",
+        "dws",
+        "钉钉"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/action-item-framework.md",
+        "references/workflow.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "doc-to-a4-html-redesign",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoderwork/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 26344,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dingtalk",
+        "dws",
+        "mcp__",
+        "mcp_call",
+        "mcp_get",
+        "qw_mcp",
+        "钉钉",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "docx",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 69,
+      "size_bytes": 1185796,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [],
+      "md_files": [
+        "SKILL.md",
+        "reference/pipeline.md",
+        "reference/templates.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "doneai",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 13,
+      "size_bytes": 63371,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "钉钉"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/core/polling-and-errors.md",
+        "references/core/routing-and-tools.md",
+        "references/core/scenes.md",
+        "references/core/workflow.md",
+        "references/scenes/announcement.md",
+        "references/scenes/banner.md",
+        "references/scenes/data-showcase.md",
+        "references/scenes/event.md",
+        "references/scenes/generic-image.md",
+        "references/scenes/infographic.md",
+        "references/scenes/social-quick.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "drafter",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 33908,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "dws",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 607,
+      "size_bytes": 7081287,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aliyun",
+        "dingtalk",
+        "dws",
+        "qoder",
+        "钉钉",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "mono/SKILL.md",
+        "mono/references/best_practices/01-messaging.md",
+        "mono/references/best_practices/02-task.md",
+        "mono/references/best_practices/03-meeting.md",
+        "mono/references/best_practices/04-document.md",
+        "mono/references/best_practices/05-reporting.md",
+        "mono/references/best_practices/06-data-analytics.md",
+        "mono/references/best_practices/07-minutes.md",
+        "mono/references/best_practices/08-directory.md",
+        "mono/references/best_practices/09-mail.md",
+        "mono/references/best_practices/10-minutes-speaker-match.md",
+        "mono/references/best_practices/11-minutes-speaker-correct.md",
+        "mono/references/best_practices/_common/conventions.md",
+        "mono/references/best_practices/_common/recipe-conventions.md",
+        "mono/references/best_practices/lite-recipes.md",
+        "mono/references/capability-limits.md",
+        "mono/references/channel-login.md",
+        "mono/references/error-codes.md",
+        "mono/references/field-rules.md",
+        "mono/references/global-reference.md",
+        "mono/references/intent-guide.md",
+        "mono/references/products/agoal.md",
+        "mono/references/products/aisearch.md",
+        "mono/references/products/aitable-record-ops.md",
+        "mono/references/products/aitable.md",
+        "mono/references/products/aitable/aitable-advperm.md",
+        "mono/references/products/aitable/aitable-attachment.md",
+        "mono/references/products/aitable/aitable-best-practices.md",
+        "mono/references/products/aitable/aitable-cell-value.md",
+        "mono/references/products/aitable/aitable-dashboard-chart.md",
+        "mono/references/products/aitable/aitable-data-analysis-sop.md",
+        "mono/references/products/aitable/aitable-error-recovery.md",
+        "mono/references/products/aitable/aitable-export-import.md",
+        "mono/references/products/aitable/aitable-field-properties.md",
+        "mono/references/products/aitable/aitable-field.md",
+        "mono/references/products/aitable/aitable-filter-sort.md",
+        "mono/references/products/aitable/aitable-form.md",
+        "mono/references/products/aitable/aitable-formula-guide.md",
+        "mono/references/products/aitable/aitable-primary-doc.md",
+        "mono/references/products/aitable/aitable-record-create.md",
+        "mono/references/products/aitable/aitable-record-delete.md",
+        "mono/references/products/aitable/aitable-record-history.md",
+        "mono/references/products/aitable/aitable-record-name-key.md",
+        "mono/references/products/aitable/aitable-record-query.md",
+        "mono/references/products/aitable/aitable-record-share.md",
+        "mono/references/products/aitable/aitable-record-stats.md",
+        "mono/references/products/aitable/aitable-record-update.md",
+        "mono/references/products/aitable/aitable-record-upsert.md",
+        "mono/references/products/aitable/aitable-view-config.md",
+        "mono/references/products/aitable/aitable-view-extras.md",
+        "mono/references/products/aitable/aitable-workflow.md",
+        "mono/references/products/attendance-report.md",
+        "mono/references/products/attendance-schedule.md",
+        "mono/references/products/attendance-vacation.md",
+        "mono/references/products/attendance.md",
+        "mono/references/products/calendar.md",
+        "mono/references/products/chat-emoji-list.md",
+        "mono/references/products/chat.md",
+        "mono/references/products/contact.md",
+        "mono/references/products/dev.md",
+        "mono/references/products/devdoc.md",
+        "mono/references/products/ding.md",
+        "mono/references/products/doc.md",
+        "mono/references/products/doc/doc-block.md",
+        "mono/references/products/doc/doc-comment.md",
+        "mono/references/products/doc/doc-create.md",
+        "mono/references/products/doc/doc-export.md",
+        "mono/references/products/doc/doc-file-ops.md",
+        "mono/references/products/doc/doc-import.md",
+        "mono/references/products/doc/doc-info.md",
+        "mono/references/products/doc/doc-list.md",
+        "mono/references/products/doc/doc-media.md",
+        "mono/references/products/doc/doc-permission.md",
+        "mono/references/products/doc/doc-read.md",
+        "mono/references/products/doc/doc-search.md",
+        "mono/references/products/doc/doc-update.md",
+        "mono/references/products/doc/doc-whiteboard.md",
+        "mono/references/products/doc/format/doc-jsonml-cookbook.md",
+        "mono/references/products/doc/format/doc-jsonml-schema.md",
+        "mono/references/products/doc/style/doc-create-workflow.md",
+        "mono/references/products/doc/style/doc-style-guideline.md",
+        "mono/references/products/doc/style/doc-update-workflow.md",
+        "mono/references/products/drive.md",
+        "mono/references/products/drive/drive-export.md",
+        "mono/references/products/drive/drive-storage.md",
+        "mono/references/products/drive/drive-task.md",
+        "mono/references/products/event.md",
+        "mono/references/products/hrbrain.md",
+        "mono/references/products/mail.md",
+        "mono/references/products/markdown.md",
+        "mono/references/products/minutes.md",
+        "mono/references/products/oa.md",
+        "mono/references/products/oa/oa-form-components.md",
+        "mono/references/products/oa/oa-process-nodes.md",
+        "mono/references/products/openapi-explorer.md",
+        "mono/references/products/pat.md",
+        "mono/references/products/recruit.md",
+        "mono/references/products/report.md",
+        "mono/references/products/sheet.md",
+        "mono/references/products/sheet/sheet-batch-operations.md",
+        "mono/references/products/sheet/sheet-chart.md",
+        "mono/references/products/sheet/sheet-comment.md",
+        "mono/references/products/sheet/sheet-conditional-format.md",
+        "mono/references/products/sheet/sheet-dimension-operations.md",
+        "mono/references/products/sheet/sheet-dropdown.md",
+        "mono/references/products/sheet/sheet-export.md",
+        "mono/references/products/sheet/sheet-filter-view.md",
+        "mono/references/products/sheet/sheet-filter.md",
+        "mono/references/products/sheet/sheet-formula.md",
+        "mono/references/products/sheet/sheet-import.md",
+        "mono/references/products/sheet/sheet-media-image.md",
+        "mono/references/products/sheet/sheet-pivot-table.md",
+        "mono/references/products/sheet/sheet-range-operations.md",
+        "mono/references/products/sheet/sheet-read-data.md",
+        "mono/references/products/sheet/sheet-revision-changeset.md",
+        "mono/references/products/sheet/sheet-search-replace.md",
+        "mono/references/products/sheet/sheet-style-format.md",
+        "mono/references/products/sheet/sheet-version.md",
+        "mono/references/products/sheet/sheet-workbook.md",
+        "mono/references/products/sheet/sheet-write-data.md",
+        "mono/references/products/simple.md",
+        "mono/references/products/todo.md",
+        "mono/references/products/whiteboard.md",
+        "mono/references/products/whiteboard/open-nodes-v1.md",
+        "mono/references/products/whiteboard/open-nodes-v1/01-overview.md",
+        "mono/references/products/whiteboard/open-nodes-v1/02-query.md",
+        "mono/references/products/whiteboard/open-nodes-v1/03-update.md",
+        "mono/references/products/whiteboard/open-nodes-v1/04-text-style.md",
+        "mono/references/products/whiteboard/open-nodes-v1/05-shape-frame-group-connector.md",
+        "mono/references/products/whiteboard/open-nodes-v1/06-vector-icon-path.md",
+        "mono/references/products/whiteboard/open-nodes-v1/07-examples-errors-write-support.md",
+        "mono/references/products/whiteboard/open-nodes-v1/08-catalogs.md",
+        "mono/references/products/whiteboard/recipes.md",
+        "mono/references/products/wiki.md",
+        "mono/references/url-patterns.md",
+        "multi/dingtalk-aisearch/SKILL.md",
+        "multi/dingtalk-aisearch/references/aisearch.md",
+        "multi/dingtalk-aisearch/references/intent-guide.md",
+        "multi/dingtalk-aisearch/references/lite-recipes.md",
+        "multi/dingtalk-aitable/SKILL.md",
+        "multi/dingtalk-aitable/references/06-data-analytics.md",
+        "multi/dingtalk-aitable/references/aitable-record-ops.md",
+        "multi/dingtalk-aitable/references/aitable-section.md",
+        "multi/dingtalk-aitable/references/aitable.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-advperm.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-attachment.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-best-practices.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-cell-value.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-dashboard-chart.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-data-analysis-sop.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-datasource.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-error-recovery.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-export-import.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-field-properties.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-field.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-filter-sort.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-form.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-formula-guide.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-primary-doc.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-record-create.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-record-delete.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-record-history.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-record-name-key.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-record-query.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-record-share.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-record-stats.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-record-update.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-record-upsert.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-view-config.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-view-extras.md",
+        "multi/dingtalk-aitable/references/aitable/aitable-workflow.md",
+        "multi/dingtalk-aitable/references/field-rules.md",
+        "multi/dingtalk-aitable/references/intent-guide.md",
+        "multi/dingtalk-aitable/references/recipes/conventions.md",
+        "multi/dingtalk-aitable/references/url-patterns.md",
+        "multi/dingtalk-calendar/SKILL.md",
+        "multi/dingtalk-calendar/references/03-meeting.md",
+        "multi/dingtalk-calendar/references/calendar.md",
+        "multi/dingtalk-calendar/references/intent-guide.md",
+        "multi/dingtalk-calendar/references/lite-recipes.md",
+        "multi/dingtalk-chat/SKILL.md",
+        "multi/dingtalk-chat/references/01-messaging.md",
+        "multi/dingtalk-chat/references/card/callback.md",
+        "multi/dingtalk-chat/references/card/create.md",
+        "multi/dingtalk-chat/references/card/schema.md",
+        "multi/dingtalk-chat/references/card/update.md",
+        "multi/dingtalk-chat/references/chat-emoji-list.md",
+        "multi/dingtalk-chat/references/chat.md",
+        "multi/dingtalk-chat/references/chat/chat-bot.md",
+        "multi/dingtalk-chat/references/chat/chat-conversation.md",
+        "multi/dingtalk-chat/references/chat/group-admin.md",
+        "multi/dingtalk-chat/references/chat/group-discovery.md",
+        "multi/dingtalk-chat/references/chat/message-actions.md",
+        "multi/dingtalk-chat/references/chat/message-media.md",
+        "multi/dingtalk-chat/references/chat/message-query.md",
+        "multi/dingtalk-chat/references/chat/thread.md",
+        "multi/dingtalk-chat/references/contracts.md",
+        "multi/dingtalk-chat/references/intent-guide.md",
+        "multi/dingtalk-contact/SKILL.md",
+        "multi/dingtalk-contact/references/08-directory.md",
+        "multi/dingtalk-contact/references/contact.md",
+        "multi/dingtalk-contact/references/intent-guide.md",
+        "multi/dingtalk-contact/references/lite-recipes.md",
+        "multi/dingtalk-contact/references/recipes/conventions.md",
+        "multi/dingtalk-doc/SKILL.md",
+        "multi/dingtalk-doc/references/04-document.md",
+        "multi/dingtalk-doc/references/contracts.md",
+        "multi/dingtalk-doc/references/doc.md",
+        "multi/dingtalk-doc/references/doc/doc-block.md",
+        "multi/dingtalk-doc/references/doc/doc-comment.md",
+        "multi/dingtalk-doc/references/doc/doc-create.md",
+        "multi/dingtalk-doc/references/doc/doc-export.md",
+        "multi/dingtalk-doc/references/doc/doc-import.md",
+        "multi/dingtalk-doc/references/doc/doc-info.md",
+        "multi/dingtalk-doc/references/doc/doc-media.md",
+        "multi/dingtalk-doc/references/doc/doc-read.md",
+        "multi/dingtalk-doc/references/doc/doc-update.md",
+        "multi/dingtalk-doc/references/doc/format/doc-jsonml-cookbook.md",
+        "multi/dingtalk-doc/references/doc/format/doc-jsonml-schema.md",
+        "multi/dingtalk-doc/references/doc/style/doc-create-workflow.md",
+        "multi/dingtalk-doc/references/doc/style/doc-style-guideline.md",
+        "multi/dingtalk-doc/references/doc/style/doc-update-workflow.md",
+        "multi/dingtalk-doc/references/intent-guide.md",
+        "multi/dingtalk-drive/SKILL.md",
+        "multi/dingtalk-drive/references/drive.md",
+        "multi/dingtalk-drive/references/folder-sync.md",
+        "multi/dingtalk-drive/references/intent-guide.md",
+        "multi/dingtalk-drive/references/lite-recipes.md",
+        "multi/dingtalk-event/SKILL.md",
+        "multi/dingtalk-event/references/event-im-keys.md",
+        "multi/dingtalk-event/references/event-im-lifecycle.md",
+        "multi/dingtalk-event/references/event-im-operations.md",
+        "multi/dingtalk-event/references/event-im-output.md",
+        "multi/dingtalk-event/references/event-im.md",
+        "multi/dingtalk-event/references/event-oa.md",
+        "multi/dingtalk-mail/SKILL.md",
+        "multi/dingtalk-mail/references/09-mail.md",
+        "multi/dingtalk-mail/references/intent-guide.md",
+        "multi/dingtalk-mail/references/lite-recipes.md",
+        "multi/dingtalk-mail/references/mail.md",
+        "multi/dingtalk-mail/references/recipes/conventions.md",
+        "multi/dingtalk-minutes/SKILL.md",
+        "multi/dingtalk-minutes/references/07-minutes.md",
+        "multi/dingtalk-minutes/references/10-minutes-speaker-match.md",
+        "multi/dingtalk-minutes/references/11-minutes-speaker-correct.md",
+        "multi/dingtalk-minutes/references/intent-guide.md",
+        "multi/dingtalk-minutes/references/lite-recipes.md",
+        "multi/dingtalk-minutes/references/minutes.md",
+        "multi/dingtalk-minutes/references/recipes/conventions.md",
+        "multi/dingtalk-misc/SKILL.md",
+        "multi/dingtalk-misc/references/05-reporting.md",
+        "multi/dingtalk-misc/references/agoal.md",
+        "multi/dingtalk-misc/references/attendance-intent-guide.md",
+        "multi/dingtalk-misc/references/attendance-report.md",
+        "multi/dingtalk-misc/references/attendance-schedule.md",
+        "multi/dingtalk-misc/references/attendance-vacation.md",
+        "multi/dingtalk-misc/references/attendance.md",
+        "multi/dingtalk-misc/references/dev/app.md",
+        "multi/dingtalk-misc/references/dev/connect.md",
+        "multi/dingtalk-misc/references/dev/credentials.md",
+        "multi/dingtalk-misc/references/dev/dev-index.md",
+        "multi/dingtalk-misc/references/dev/event.md",
+        "multi/dingtalk-misc/references/dev/member.md",
+        "multi/dingtalk-misc/references/dev/permission.md",
+        "multi/dingtalk-misc/references/dev/recipes.md",
+        "multi/dingtalk-misc/references/dev/robot.md",
+        "multi/dingtalk-misc/references/dev/security.md",
+        "multi/dingtalk-misc/references/dev/version.md",
+        "multi/dingtalk-misc/references/dev/webapp.md",
+        "multi/dingtalk-misc/references/devapp.md",
+        "multi/dingtalk-misc/references/devdoc-intent-guide.md",
+        "multi/dingtalk-misc/references/devdoc.md",
+        "multi/dingtalk-misc/references/ding-intent-guide.md",
+        "multi/dingtalk-misc/references/ding-lite-recipes.md",
+        "multi/dingtalk-misc/references/ding.md",
+        "multi/dingtalk-misc/references/hrbrain.md",
+        "multi/dingtalk-misc/references/live.md",
+        "multi/dingtalk-misc/references/markdown.md",
+        "multi/dingtalk-misc/references/oa.md",
+        "multi/dingtalk-misc/references/oa/oa-form-components.md",
+        "multi/dingtalk-misc/references/oa/oa-process-nodes.md",
+        "multi/dingtalk-misc/references/openapi-explorer.md",
+        "multi/dingtalk-misc/references/pat.md",
+        "multi/dingtalk-misc/references/profile.md",
+        "multi/dingtalk-misc/references/recruit.md",
+        "multi/dingtalk-misc/references/report-conventions.md",
+        "multi/dingtalk-misc/references/report-intent-guide.md",
+        "multi/dingtalk-misc/references/report-lite-recipes.md",
+        "multi/dingtalk-misc/references/report.md",
+        "multi/dingtalk-misc/references/sheet-conventions.md",
+        "multi/dingtalk-misc/references/sheet-intent-guide.md",
+        "multi/dingtalk-misc/references/sheet.md",
+        "multi/dingtalk-misc/references/sheet/sheet-batch-operations.md",
+        "multi/dingtalk-misc/references/sheet/sheet-chart.md",
+        "multi/dingtalk-misc/references/sheet/sheet-comment.md",
+        "multi/dingtalk-misc/references/sheet/sheet-conditional-format.md",
+        "multi/dingtalk-misc/references/sheet/sheet-dimension-operations.md",
+        "multi/dingtalk-misc/references/sheet/sheet-dropdown.md",
+        "multi/dingtalk-misc/references/sheet/sheet-export.md",
+        "multi/dingtalk-misc/references/sheet/sheet-filter-view.md",
+        "multi/dingtalk-misc/references/sheet/sheet-filter.md",
+        "multi/dingtalk-misc/references/sheet/sheet-formula.md",
+        "multi/dingtalk-misc/references/sheet/sheet-import.md",
+        "multi/dingtalk-misc/references/sheet/sheet-media-image.md",
+        "multi/dingtalk-misc/references/sheet/sheet-pivot-table.md",
+        "multi/dingtalk-misc/references/sheet/sheet-range-operations.md",
+        "multi/dingtalk-misc/references/sheet/sheet-read-data.md",
+        "multi/dingtalk-misc/references/sheet/sheet-revision-changeset.md",
+        "multi/dingtalk-misc/references/sheet/sheet-search-replace.md",
+        "multi/dingtalk-misc/references/sheet/sheet-style-format.md",
+        "multi/dingtalk-misc/references/sheet/sheet-version.md",
+        "multi/dingtalk-misc/references/sheet/sheet-workbook.md",
+        "multi/dingtalk-misc/references/sheet/sheet-write-data.md",
+        "multi/dingtalk-misc/references/skill.md",
+        "multi/dingtalk-misc/references/unsupported-scripts.md",
+        "multi/dingtalk-misc/references/url-patterns.md",
+        "multi/dingtalk-misc/references/whiteboard.md",
+        "multi/dingtalk-misc/references/whiteboard/open-nodes-v1.md",
+        "multi/dingtalk-misc/references/whiteboard/open-nodes-v1/01-overview.md",
+        "multi/dingtalk-misc/references/whiteboard/open-nodes-v1/02-query.md",
+        "multi/dingtalk-misc/references/whiteboard/open-nodes-v1/03-update.md",
+        "multi/dingtalk-misc/references/whiteboard/open-nodes-v1/04-text-style.md",
+        "multi/dingtalk-misc/references/whiteboard/open-nodes-v1/05-shape-frame-group-connector.md",
+        "multi/dingtalk-misc/references/whiteboard/open-nodes-v1/06-vector-icon-path.md",
+        "multi/dingtalk-misc/references/whiteboard/open-nodes-v1/07-examples-errors-write-support.md",
+        "multi/dingtalk-misc/references/whiteboard/open-nodes-v1/08-catalogs.md",
+        "multi/dingtalk-misc/references/whiteboard/recipes.md",
+        "multi/dingtalk-shared/SKILL.md",
+        "multi/dingtalk-shared/references/capability-limits.md",
+        "multi/dingtalk-shared/references/channel-login.md",
+        "multi/dingtalk-shared/references/confirmation.md",
+        "multi/dingtalk-shared/references/error-codes.md",
+        "multi/dingtalk-shared/references/global-reference.md",
+        "multi/dingtalk-shared/references/intent-guide.md",
+        "multi/dingtalk-shared/references/recipes/conventions.md",
+        "multi/dingtalk-shared/references/recipes/lite-catalog.md",
+        "multi/dingtalk-shared/references/recipes/meta.md",
+        "multi/dingtalk-shared/references/routing.md",
+        "multi/dingtalk-shared/references/runtime-contract.md",
+        "multi/dingtalk-shared/references/schema-usage.md",
+        "multi/dingtalk-shared/references/url-patterns.md",
+        "multi/dingtalk-shared/references/workflow-routing.md",
+        "multi/dingtalk-todo/SKILL.md",
+        "multi/dingtalk-todo/references/02-task.md",
+        "multi/dingtalk-todo/references/intent-guide.md",
+        "multi/dingtalk-todo/references/lite-recipes.md",
+        "multi/dingtalk-todo/references/recipes/conventions.md",
+        "multi/dingtalk-todo/references/todo.md",
+        "multi/dingtalk-wiki/SKILL.md",
+        "multi/dingtalk-wiki/references/intent-guide.md",
+        "multi/dingtalk-wiki/references/lite-recipes.md",
+        "multi/dingtalk-wiki/references/wiki-members.md",
+        "multi/dingtalk-wiki/references/wiki-node-ops.md",
+        "multi/dingtalk-wiki/references/wiki.md",
+        "references/best_practices/01-messaging.md",
+        "references/best_practices/02-task.md",
+        "references/best_practices/03-meeting.md",
+        "references/best_practices/04-document.md",
+        "references/best_practices/05-reporting.md",
+        "references/best_practices/06-data-analytics.md",
+        "references/best_practices/07-minutes.md",
+        "references/best_practices/08-directory.md",
+        "references/best_practices/09-mail.md",
+        "references/best_practices/10-minutes-speaker-match.md",
+        "references/best_practices/11-minutes-speaker-correct.md",
+        "references/best_practices/_common/conventions.md",
+        "references/best_practices/_common/recipe-conventions.md",
+        "references/best_practices/lite-recipes.md",
+        "references/capability-limits.md",
+        "references/channel-login.md",
+        "references/error-codes.md",
+        "references/field-rules.md",
+        "references/global-reference.md",
+        "references/intent-guide.md",
+        "references/products/agoal.md",
+        "references/products/aisearch.md",
+        "references/products/aitable-record-ops.md",
+        "references/products/aitable.md",
+        "references/products/aitable/aitable-advperm.md",
+        "references/products/aitable/aitable-attachment.md",
+        "references/products/aitable/aitable-best-practices.md",
+        "references/products/aitable/aitable-cell-value.md",
+        "references/products/aitable/aitable-dashboard-chart.md",
+        "references/products/aitable/aitable-data-analysis-sop.md",
+        "references/products/aitable/aitable-error-recovery.md",
+        "references/products/aitable/aitable-export-import.md",
+        "references/products/aitable/aitable-field-properties.md",
+        "references/products/aitable/aitable-field.md",
+        "references/products/aitable/aitable-filter-sort.md",
+        "references/products/aitable/aitable-form.md",
+        "references/products/aitable/aitable-formula-guide.md",
+        "references/products/aitable/aitable-primary-doc.md",
+        "references/products/aitable/aitable-record-create.md",
+        "references/products/aitable/aitable-record-delete.md",
+        "references/products/aitable/aitable-record-history.md",
+        "references/products/aitable/aitable-record-name-key.md",
+        "references/products/aitable/aitable-record-query.md",
+        "references/products/aitable/aitable-record-share.md",
+        "references/products/aitable/aitable-record-stats.md",
+        "references/products/aitable/aitable-record-update.md",
+        "references/products/aitable/aitable-record-upsert.md",
+        "references/products/aitable/aitable-view-config.md",
+        "references/products/aitable/aitable-view-extras.md",
+        "references/products/aitable/aitable-workflow.md",
+        "references/products/attendance-report.md",
+        "references/products/attendance-schedule.md",
+        "references/products/attendance-vacation.md",
+        "references/products/attendance.md",
+        "references/products/calendar.md",
+        "references/products/chat-emoji-list.md",
+        "references/products/chat.md",
+        "references/products/contact.md",
+        "references/products/dev.md",
+        "references/products/devdoc.md",
+        "references/products/ding.md",
+        "references/products/doc.md",
+        "references/products/doc/doc-block.md",
+        "references/products/doc/doc-comment.md",
+        "references/products/doc/doc-create.md",
+        "references/products/doc/doc-export.md",
+        "references/products/doc/doc-file-ops.md",
+        "references/products/doc/doc-import.md",
+        "references/products/doc/doc-info.md",
+        "references/products/doc/doc-list.md",
+        "references/products/doc/doc-media.md",
+        "references/products/doc/doc-permission.md",
+        "references/products/doc/doc-read.md",
+        "references/products/doc/doc-search.md",
+        "references/products/doc/doc-update.md",
+        "references/products/doc/doc-whiteboard.md",
+        "references/products/doc/format/doc-jsonml-cookbook.md",
+        "references/products/doc/format/doc-jsonml-schema.md",
+        "references/products/doc/style/doc-create-workflow.md",
+        "references/products/doc/style/doc-style-guideline.md",
+        "references/products/doc/style/doc-update-workflow.md",
+        "references/products/drive.md",
+        "references/products/drive/drive-export.md",
+        "references/products/drive/drive-storage.md",
+        "references/products/drive/drive-task.md",
+        "references/products/event.md",
+        "references/products/hrbrain.md",
+        "references/products/mail.md",
+        "references/products/markdown.md",
+        "references/products/minutes.md",
+        "references/products/oa.md",
+        "references/products/oa/oa-form-components.md",
+        "references/products/oa/oa-process-nodes.md",
+        "references/products/openapi-explorer.md",
+        "references/products/pat.md",
+        "references/products/recruit.md",
+        "references/products/report.md",
+        "references/products/sheet.md",
+        "references/products/sheet/sheet-batch-operations.md",
+        "references/products/sheet/sheet-chart.md",
+        "references/products/sheet/sheet-comment.md",
+        "references/products/sheet/sheet-conditional-format.md",
+        "references/products/sheet/sheet-dimension-operations.md",
+        "references/products/sheet/sheet-dropdown.md",
+        "references/products/sheet/sheet-export.md",
+        "references/products/sheet/sheet-filter-view.md",
+        "references/products/sheet/sheet-filter.md",
+        "references/products/sheet/sheet-formula.md",
+        "references/products/sheet/sheet-import.md",
+        "references/products/sheet/sheet-media-image.md",
+        "references/products/sheet/sheet-pivot-table.md",
+        "references/products/sheet/sheet-range-operations.md",
+        "references/products/sheet/sheet-read-data.md",
+        "references/products/sheet/sheet-revision-changeset.md",
+        "references/products/sheet/sheet-search-replace.md",
+        "references/products/sheet/sheet-style-format.md",
+        "references/products/sheet/sheet-version.md",
+        "references/products/sheet/sheet-workbook.md",
+        "references/products/sheet/sheet-write-data.md",
+        "references/products/simple.md",
+        "references/products/todo.md",
+        "references/products/whiteboard.md",
+        "references/products/whiteboard/open-nodes-v1.md",
+        "references/products/whiteboard/open-nodes-v1/01-overview.md",
+        "references/products/whiteboard/open-nodes-v1/02-query.md",
+        "references/products/whiteboard/open-nodes-v1/03-update.md",
+        "references/products/whiteboard/open-nodes-v1/04-text-style.md",
+        "references/products/whiteboard/open-nodes-v1/05-shape-frame-group-connector.md",
+        "references/products/whiteboard/open-nodes-v1/06-vector-icon-path.md",
+        "references/products/whiteboard/open-nodes-v1/07-examples-errors-write-support.md",
+        "references/products/whiteboard/open-nodes-v1/08-catalogs.md",
+        "references/products/whiteboard/recipes.md",
+        "references/products/wiki.md",
+        "references/url-patterns.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "ei-internal-doc-template",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 8,
+      "size_bytes": 34198,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "钉钉"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "templates/general.md",
+        "templates/monthly-report.md",
+        "templates/release-note.md",
+        "templates/retrospective.md",
+        "templates/tech-design.md",
+        "templates/weekly-report.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "ei-internal-doc-writer",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 11,
+      "size_bytes": 107359,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dingtalk",
+        "dws",
+        "钉钉"
+      ],
+      "md_files": [
+        "QUICK_REFERENCE.md",
+        "SKILL.md",
+        "templates/general.md",
+        "templates/monthly-report.md",
+        "templates/release-note.md",
+        "templates/retrospective.md",
+        "templates/tech-design.md",
+        "templates/weekly-report.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "ei-internal-search",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 2,
+      "size_bytes": 21145,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "钉钉",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "ei-internal-search-application-skill",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 2,
+      "size_bytes": 5333,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "fbi-skill",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 21,
+      "size_bytes": 126767,
+      "size_excludes_vendored": true,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "odps"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/daily_report.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "file-organizer",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 12453,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "find-skills",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 4,
+      "size_bytes": 44392,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "mcp__",
+        "mcp_get",
+        "mcp_list",
+        "qoder",
+        "qw_action",
+        "qw_mcp",
+        "qw_query",
+        "qwenwork"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "frontend-animation",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 17,
+      "size_bytes": 125132,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "qoder"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/animation-library-selection.md",
+        "references/animejs/animejs-baseline.md",
+        "references/animejs/api-reference.md",
+        "references/animejs/examples.md",
+        "references/animejs/validation-checklist.md",
+        "references/gsap/gsap-core-baseline.md",
+        "references/gsap/gsap-frameworks-baseline.md",
+        "references/gsap/gsap-performance-baseline.md",
+        "references/gsap/gsap-plugins-baseline.md",
+        "references/gsap/gsap-react-baseline.md",
+        "references/gsap/gsap-scrolltrigger-baseline.md",
+        "references/gsap/gsap-timeline-baseline.md",
+        "references/gsap/gsap-utils-baseline.md",
+        "references/local-preview-workflow.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "frontend-design",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 3,
+      "size_bytes": 15228,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "general-pptx",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 61,
+      "size_bytes": 1150163,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "crafting.md",
+        "editing.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "graph-engineering",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "already_in_acs",
+      "file_count": 1,
+      "size_bytes": 10205,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "ACS 已自带该技能（套件 skills/ 内），无需从终端再打包。",
+      "fallback": "随 ACS 安装即生效；不与终端同名技能重复分发。"
+    },
+    {
+      "name": "grill-me",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 965,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "html-prototype",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 5,
+      "size_bytes": 25371,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "qoder"
+      ],
+      "md_files": [
+        "README.md",
+        "SKILL.md",
+        "references/components.md",
+        "references/html-boilerplate.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "html-report-generator",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 11721,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "human-core",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 11,
+      "size_bytes": 64734,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/examples-en.md",
+        "references/examples-zh.md",
+        "references/phrases-en.md",
+        "references/phrases-zh.md",
+        "references/structures-en.md",
+        "references/structures-zh.md",
+        "references/write-mode.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "human-writing-style",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 6600,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "image-enhancer",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 3185,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "image-style-prompt",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 5386,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "install-skill-dependency",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 11921,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "internal-background-check",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 2,
+      "size_bytes": 6151,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "internal-comms",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 7,
+      "size_bytes": 23246,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "examples/3p-updates.md",
+        "examples/company-newsletter.md",
+        "examples/faq-answers.md",
+        "examples/general-comms.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "it-asset-consumables-query",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 2,
+      "size_bytes": 11278,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "qoder"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "lineage-analysis-skill",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 24,
+      "size_bytes": 231792,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dataworks",
+        "odps"
+      ],
+      "md_files": [
+        "README.md",
+        "SKILL.md",
+        "api-reference.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "loop-engineering",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "already_in_acs",
+      "file_count": 1,
+      "size_bytes": 8455,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "ACS 已自带该技能（套件 skills/ 内），无需从终端再打包。",
+      "fallback": "随 ACS 安装即生效；不与终端同名技能重复分发。"
+    },
+    {
+      "name": "market-research-reports",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 9,
+      "size_bytes": 204592,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "assets/FORMATTING_GUIDE.md",
+        "references/data_analysis_patterns.md",
+        "references/report_structure_guide.md",
+        "references/visual_generation_guide.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "material-search",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 7,
+      "size_bytes": 32588,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "mcp__",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/error-handling.md",
+        "references/examples.md",
+        "references/output-templates.md",
+        "references/tool-parameters.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "media-generation",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 1,
+      "size_bytes": 10239,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "qwenwork"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "multi-style-infographic",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 10770,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "narrative-report-html",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoderwork/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 11176,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "钉钉"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "notion-infographic",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 3,
+      "size_bytes": 11346,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "ocr-skill",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 3,
+      "size_bytes": 10833,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "qoder"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "odps-skill",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 7,
+      "size_bytes": 71704,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aliyun",
+        "aone",
+        "odps",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/install.md",
+        "references/maxcompute-sql-notes.md",
+        "references/pyodps-quick-reference.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "okr-report-writer",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 3,
+      "size_bytes": 30549,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dws",
+        "钉钉"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "organizational-normative-diagnosis",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 6,
+      "size_bytes": 20187,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "assignment.md",
+        "dept-master.md",
+        "redundant-org.md",
+        "report-line.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "paper-search-read-download",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 7,
+      "size_bytes": 36559,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "reference.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "pdf",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 53,
+      "size_bytes": 477482,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "qwenwork"
+      ],
+      "md_files": [
+        "ATTRIBUTION.md",
+        "SKILL.md",
+        "mdx2pdf.md",
+        "mdx2pdf/references/components.md",
+        "mdx2pdf/references/styling-tokens.md",
+        "references/advanced-libraries.md",
+        "references/extraction-guide.md",
+        "references/forms-guide.md",
+        "references/generation-guide.md",
+        "references/security-guide.md",
+        "references/troubleshooting.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "plugin-creator",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 1,
+      "size_bytes": 41166,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "dingtalk",
+        "mcp__",
+        "qoder",
+        "qw_query",
+        "qwenwork",
+        "钉钉"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "ppt-beautify",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 4,
+      "size_bytes": 19139,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "dingtalk",
+        "dws",
+        "qoder",
+        "钉钉"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "design-system.md",
+        "toc-templates.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "ppt-marketing-pro",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 50,
+      "size_bytes": 17348036,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "odps",
+        "qoder",
+        "钉钉",
+        "阿里"
+      ],
+      "md_files": [
+        "CHANGELOG.md",
+        "SKILL.md",
+        "assets/marketing-layouts.md",
+        "assets/mode-a-parallel.md",
+        "assets/mode-b-converge.md",
+        "assets/mode-c-cycle.md",
+        "assets/mode-d-compare.md",
+        "assets/mode-e-hierarchy.md",
+        "assets/mode-f-timeline.md",
+        "assets/mode-g-flow.md",
+        "assets/mode-h-data.md",
+        "assets/mode-minimal.md",
+        "catalog-logic-diagrams.md",
+        "content-rules/annual-report.md",
+        "content-rules/ko-launch.md",
+        "content-rules/sharing.md",
+        "editable-runtime/runtime-integration.md",
+        "marketing-integration.md",
+        "path-a-questions.md",
+        "qwen-template/design.md",
+        "references/alibaba-brand-templates.md",
+        "references/color-palettes.md",
+        "references/constraints-notes.md",
+        "references/motion-best-practices.md",
+        "references/motion-cinematic.md",
+        "references/motion-gallery-case.md",
+        "references/motion-pitfalls.md",
+        "references/render-fallback.md",
+        "references/visual-spec.md",
+        "speech-script-guide.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "ppt-master",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 7,
+      "size_bytes": 48008,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "qoder",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/structure-patterns.md",
+        "references/style-presets.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "ppt-replicator",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 22,
+      "size_bytes": 194602,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/catalog_schema.md",
+        "references/content_schema.md",
+        "references/content_traits.md",
+        "references/outline_schema.md",
+        "references/refinements_schema.md",
+        "references/reports_schema.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "pptx",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 103,
+      "size_bytes": 1542509,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "qwenwork"
+      ],
+      "md_files": [
+        "ATTRIBUTION.md",
+        "SKILL.md",
+        "authoring.md",
+        "components.md",
+        "editing.md",
+        "from_scratch.md",
+        "layouts.md",
+        "pptxgenjs.md",
+        "references/bounded-foreground-fork-join.md",
+        "references/legacy-ppt.md",
+        "visual-directions.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "pptx-advanced",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 59,
+      "size_bytes": 1142174,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "editing.md",
+        "pptxgenjs.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "price360-item-compare",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 5,
+      "size_bytes": 18449,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "qingbaoju-ai-sale-info",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 2,
+      "size_bytes": 4894,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "qoder-native-integration",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 1,
+      "size_bytes": 3597,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "mcp_call",
+        "mcp_get",
+        "mcp_list",
+        "qoder"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "qoderwork-guidance",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 7,
+      "size_bytes": 80011,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "computer_use",
+        "dingtalk",
+        "dws",
+        "mcp__",
+        "qoder",
+        "qw_action",
+        "qw_query"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "guide-channels.md",
+        "guide-connectors.md",
+        "guide-cron.md",
+        "guide-mcp.md",
+        "guide-skills.md",
+        "guide-tasks.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "qoderwork-ppt",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 27,
+      "size_bytes": 146426,
+      "size_excludes_vendored": true,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "qoder"
+      ],
+      "md_files": [
+        "README.md",
+        "SKILL.md",
+        "rules/content-rules.md",
+        "rules/template-matching.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "qoderwork-to-qwenworkcn-migration",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 2,
+      "size_bytes": 14656,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "qoder",
+        "qw_query",
+        "qwenwork"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/merge-scripts.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "query-my-packet",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 2,
+      "size_bytes": 4968,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "query-okr",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 2,
+      "size_bytes": 8870,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "quickbi-smartq-chat",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 46,
+      "size_bytes": 1549723,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aliyun",
+        "aone",
+        "qoder",
+        "quickbi",
+        "smartq",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/chat/module-chat-dataset.zh.md",
+        "references/chat/module-chat-file.zh.md",
+        "references/common/error_messages.zh.md",
+        "references/dashboard/module-dashboard-reference.zh.md",
+        "references/dashboard/module-dashboard.zh.md",
+        "references/dashboard/templates/output_skill_template.zh.md",
+        "references/document/document_classification.zh.md",
+        "references/document/module-document-parser.zh.md",
+        "references/insight/module-data-insight.zh.md",
+        "references/report/module-data-report.zh.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "qw-pages",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 1,
+      "size_bytes": 6459,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "mcp__",
+        "qwenwork"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "qw-pages-supabase",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 1,
+      "size_bytes": 2029,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "qwenwork"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "qwenwork-guidance",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 7,
+      "size_bytes": 84246,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "computer_use",
+        "dingtalk",
+        "dws",
+        "mcp__",
+        "qoder",
+        "qw_action",
+        "qw_query",
+        "qwenwork"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "guide-channels.md",
+        "guide-connectors.md",
+        "guide-cron.md",
+        "guide-mcp.md",
+        "guide-skills.md",
+        "guide-tasks.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "recruit-campus",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 3,
+      "size_bytes": 6581,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/subskills/query-invitation-task.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "recruit-campus-search",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 6,
+      "size_bytes": 60999,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "采蜜库",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/subskills/query-candidate-interview-history.md",
+        "references/subskills/search-no-position.md",
+        "references/subskills/search-with-position.md",
+        "references/subskills/start-application.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "resume-search",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 5,
+      "size_bytes": 70954,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone",
+        "采蜜库",
+        "阿里"
+      ],
+      "md_files": [
+        "README.md",
+        "SKILL.md",
+        "examples.md",
+        "reference.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "self-improving-agent-skill",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 6,
+      "size_bytes": 33592,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/appendix.md",
+        "templates/correction-template.md",
+        "templates/pattern-template.md",
+        "templates/validation-template.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "self-verify-scaling",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "already_in_acs",
+      "file_count": 2,
+      "size_bytes": 13050,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [],
+      "md_files": [
+        "SKILL.md",
+        "reference-rubric.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "ACS 已自带该技能（套件 skills/ 内），无需从终端再打包。",
+      "fallback": "随 ACS 安装即生效；不与终端同名技能重复分发。"
+    },
+    {
+      "name": "sketch-infographic",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 4,
+      "size_bytes": 12529,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "STYLE_GUIDE.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "sls-query-multi",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 6,
+      "size_bytes": 41517,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aliyun",
+        "aone",
+        "qoder",
+        "阿里"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "examples.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "software-engineering",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 4,
+      "size_bytes": 77397,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "qoder"
+      ],
+      "md_files": [
+        "REFERENCE.md",
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "sql-performance-analysis",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 6,
+      "size_bytes": 14524,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "agents/sql-analyzer.md",
+        "agents/visualizer.md",
+        "references/mysql-optimization-patterns.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "summarize",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 3,
+      "size_bytes": 1889,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "superpowers-systematic-debugging",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "portable_doc",
+      "file_count": 1,
+      "size_bytes": 9885,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": "bundled-skills/superpowers-systematic-debugging",
+      "install_guidance": "已 verbatim 打包于 bundled-skills/superpowers-systematic-debugging/，任意终端拷入其 skills 目录即用",
+      "fallback": "纯文档技能，拷入即用；若目标终端已有同名技能，以终端自带版本为准，勿覆盖其运行时。"
+    },
+    {
+      "name": "system-screenshot",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 3,
+      "size_bytes": 25074,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "tailored-resume-generator",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 3,
+      "size_bytes": 17374,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "talent-evaluation-insight",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 18,
+      "size_bytes": 175248,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/core-concepts.md",
+        "references/error-handling.md",
+        "references/few-shot-examples.md",
+        "references/security-rules.md",
+        "references/subskills/ai-summarize.md",
+        "references/subskills/data-pipeline.md",
+        "references/subskills/generate-report.md",
+        "references/subskills/resolve-target.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "team-monthly-assessment",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 1,
+      "size_bytes": 11023,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "dingtalk",
+        "dws",
+        "odps",
+        "qoder",
+        "钉钉"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "techmigo",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 2,
+      "size_bytes": 4109,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "tinyfish-web-automation",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 1,
+      "size_bytes": 6415,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "mcp__",
+        "mcp_call",
+        "mcp_get",
+        "qoder",
+        "qw_mcp",
+        "tinyfish"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "token-thrift",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "already_in_acs",
+      "file_count": 1,
+      "size_bytes": 8160,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "ACS 已自带该技能（套件 skills/ 内），无需从终端再打包。",
+      "fallback": "随 ACS 安装即生效；不与终端同名技能重复分发。"
+    },
+    {
+      "name": "travel",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 11,
+      "size_bytes": 133329,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/ai-search.md",
+        "references/keyword-search.md",
+        "references/search-flight.md",
+        "references/search-hotel.md",
+        "references/search-marriott-hotel.md",
+        "references/search-marriott-package.md",
+        "references/search-poi.md",
+        "references/search-train.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "ui-designer",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 4,
+      "size_bytes": 23368,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "universal-task-code",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "already_in_acs",
+      "file_count": 3,
+      "size_bytes": 26929,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "mcp_call",
+        "mcp_get",
+        "mcp_list",
+        "qoder",
+        "qw_action",
+        "qw_mcp",
+        "qw_query",
+        "qwenwork"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "reference-creed.md",
+        "reference-gates.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "ACS 已自带该技能（套件 skills/ 内），无需从终端再打包。",
+      "fallback": "随 ACS 安装即生效；不与终端同名技能重复分发。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "vm-error-recovery",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 1,
+      "size_bytes": 12385,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "mcp__",
+        "qoder"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "website-promo-video",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 3,
+      "size_bytes": 46352,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "weekly-report",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 3,
+      "size_bytes": 60551,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [
+        "dingtalk",
+        "dws",
+        "qoder",
+        "钉钉"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "reference_example.md",
+        "reference_example_w2.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    },
+    {
+      "name": "world-class-executive-deck",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "portable_doc",
+      "file_count": 1,
+      "size_bytes": 7446,
+      "size_excludes_vendored": false,
+      "has_non_md": false,
+      "dep_signals": [],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": "bundled-skills/world-class-executive-deck",
+      "install_guidance": "已 verbatim 打包于 bundled-skills/world-class-executive-deck/，任意终端拷入其 skills 目录即用",
+      "fallback": "纯文档技能，拷入即用；若目标终端已有同名技能，以终端自带版本为准，勿覆盖其运行时。"
+    },
+    {
+      "name": "xiaohongshu",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 6,
+      "size_bytes": 22759,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "README.md",
+        "README_CN.md",
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "xlsx",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "env_bound",
+      "file_count": 54,
+      "size_bytes": 1112214,
+      "size_excludes_vendored": true,
+      "has_non_md": true,
+      "dep_signals": [],
+      "md_files": [
+        "SKILL.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "绑定终端 MCP/运行时或含二进制依赖，不打包；无该环境时该能力不可用，应显式降级并告知，不静默假装完成。"
+    },
+    {
+      "name": "yoho-yuque",
+      "source_terminals": [
+        "C:/Users/Nurburgring/.qoder/skills",
+        "C:/Users/Nurburgring/.qoderwork/skills",
+        "C:/Users/Nurburgring/.qwenworkcn/skills"
+      ],
+      "classification": "internal_proprietary",
+      "file_count": 6,
+      "size_bytes": 68892,
+      "size_excludes_vendored": false,
+      "has_non_md": true,
+      "dep_signals": [
+        "aone"
+      ],
+      "md_files": [
+        "SKILL.md",
+        "references/api_reference.md",
+        "references/workflows.md"
+      ],
+      "bundle_path": null,
+      "install_guidance": "运行时/内部依赖，不打包；需在源终端按其 SKILL.md 的依赖说明安装，或走该能力 fallback",
+      "fallback": "阿里内部专有/合规敏感，绝不 verbatim 分发；仅在授权源终端按其 SKILL.md 依赖安装，无该环境时走通用能力 fallback 或明确告知不可用。",
+      "also": [
+        "env_bound"
+      ]
+    }
+  ]
+}

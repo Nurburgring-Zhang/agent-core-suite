@@ -51,13 +51,6 @@ RT_MAX_RETRIES = _RETRY["max_retries"]
 RT_MIN_REASON_CHARS = _RETRY["min_reason_chars"]
 RT_MIN_DELTA_CHARS = _RETRY["min_delta_chars"]
 
-# handoff（v2.0）：每轮压缩 + 保留目标防跑偏。每步写 ≤1000 字交接（目标/已完成/下一步），
-# 下一步只读它不重放历史；目标锚点每轮复述以防长程跑偏。无损=只压过程不压结论/证据/目标。
-_HANDOFF = spec_section("handoff")
-HO_MAX_CHARS = _HANDOFF["max_handoff_chars"]
-HO_REQUIRED_SECTIONS = tuple(_HANDOFF["required_sections"])
-HO_MIN_SECTION_CHARS = _HANDOFF["min_section_chars"]
-
 
 def _is_int(v):
     return isinstance(v, int) and not isinstance(v, bool)
@@ -223,26 +216,6 @@ def check_step(idx, step, tier, report):
     # Builder / Verifier 分离
     if tier in ("T2", "T3") and step.get("builder") and step.get("builder") == step.get("verifier"):
         report.error(where, "builder == verifier == %r，禁止自评签字" % step.get("builder"))
-
-    # handoff（v2.0）：每步必须写 ≤1000 字交接（目标/已完成/下一步），目标锚点防跑偏。
-    # 缺 handoff = 下一步只能重放历史或凭空续跑 = 跑偏风险；故每步强制。
-    handoff = step.get("handoff")
-    if not isinstance(handoff, dict):
-        report.error(where, "缺 handoff 交接：每步结束必须写目标/已完成/下一步，下一步只读它防跑偏")
-    else:
-        total = 0
-        for sec in HO_REQUIRED_SECTIONS:
-            val = handoff.get(sec)
-            if not isinstance(val, str) or len(val.strip()) < HO_MIN_SECTION_CHARS:
-                report.error("%s.handoff" % where,
-                             "缺 %s 段或过短（≥%d 字）：current_goal 是防跑偏锚点，completed/next_step 是无损交接"
-                             % (sec, HO_MIN_SECTION_CHARS))
-            elif isinstance(val, str):
-                total += len(val)
-        if total > HO_MAX_CHARS:
-            report.error("%s.handoff" % where,
-                         "handoff 三段合计 %d 字 > %d：压缩只压过程不压结论/证据/目标，超长说明没压缩"
-                         % (total, HO_MAX_CHARS))
 
 
 def check_spin(steps, report):

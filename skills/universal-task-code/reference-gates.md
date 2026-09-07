@@ -1,4 +1,4 @@
-# G0-G6 质量门禁完整准出条件（harness 层 · Agent Core Suite v2.0.0）
+# G0-G6 质量门禁完整准出条件（harness 层 · Agent Core Suite v2.1.0）
 
 与 P0-P6 一一对应。任一门未过即阻断进入下一阶段；微小任务可压缩单门耗时，但不得跳门。跳门必须主人明确批准并写入交付报告。
 
@@ -13,6 +13,8 @@
 | `G2_plan` | `gates.G2.plan` | T2+ |
 | `G3_review_closure` | `gates.G3.reviews` | T2+ |
 | `G4_acceptance_actual` | `steps[].acceptance[].actual` | T1+ |
+| `STEP_handoff`（v2.1） | `steps[].handoff` + 单文件 `.acs/handoff.md` | T1+ |
+| `STEP_self_review`（v2.1） | `steps[].review` | T1+ |
 | `G5_report` | `gates.G5.report` | T2+ |
 | `G5_blind_reviews` | `gates.G5.blind_reviews` | T3 |
 | `G6_rsi` | `gates.G6.rsi` | T3 |
@@ -53,6 +55,8 @@ v1.1 新增的 T3 状态契约项（边门、汇聚语义、工件谱系、契�
 - [硬] **有界重试**：同一步重试必须登记 `retries`（≤ `spec.retry.max_retries`），且 `retries > 0` 时必须写 `retry_reason`（为什么重试）与 `delta_from_last`（这次和上次差在哪）——同法重试就是空转的另一种形态 → `gate_loop_guard.py`
 - [硬] **T3 调模型节点必须声明档位**：`calls_model=true` 的节点必须写 `model_tier ∈ {cheap, standard, heavy}`（计量字段，让「贵模型干杂活」的浪费可见，不拦你用强模型）→ `gate_state_validate.py`
 - [硬] 双 AI 互审记录完整：Builder / Verifier **双身份分离**交叉签字，问题闭环（发现→修复→复验）→ `gates.G3.reviews[{round,builder,verifier,findings,fixed,recheck}]`；`gate_checklist.py` 校验签字人不同、且 `findings` 非空时 `fixed` 逐项对应、`recheck` 非空非空话
+- [硬] **STEP_handoff（v2.1，每步收尾，T1+）**：每个 `steps[].handoff` 必须齐备且无损——① `goal_anchor` 当前目标锚点（≥ `spec.handoff.min_goal_anchor_chars` 字、非空话，防跑偏）② `done[]` 已完成项非空 ③ `next` 下一步（≥ `min_next_chars` 字、非空话）④ `chars` 字数字段（缺失=没计量）且 ≤ `max_chars_hard`（+`chars_tolerance` 容差）⑤ `drift_checked=true` 方向偏离自检。跨步唯一载体是单文件 `.acs/handoff.md`，由 `scripts/acs_compress_handoff.py` 机械渲染（幂等）/校验（形状与字数上限）；**语义压缩是 agent 原生职责，脚本不代劳、无镜像则 exit 2 绝不伪造** → `gate_checklist.py`
+- [硬] **STEP_self_review（v2.1，每步收尾，T1+）**：每个 `steps[].review` 必须做一次 builder≠verifier 的双 AI 自对抗审核 + 自查自检——`reviewer` 非空且 ≠ 该步 `builder`（自签=自评不算数）、`verdict ∈ spec.per_step_review.verdict_values`（`verdict=fail` 禁止进入下一步）、`self_check` 自查结论非空非空话、`issues_found`/`issues_closed` 字段必在（无问题写空数组），有问题时 `issues_closed` 必须**等量闭环**且写 `recheck` 复验记录；T3 每步 `rounds ≥ spec.per_step_review.t3_min_rounds` → `gate_checklist.py`（Node 侧同口径）
 - [软] 每阶段诚实审核记录：是否真实实现、有无模板式或低质量实现，结论与证据
 - [软] 卡点处理记录：深搜来源 + 尝试过的方案 + 结果证据；禁止静默绕过
 

@@ -1,16 +1,18 @@
-"""ACS v2.0.0 新增双向验证（DESIGN.md 5.4 验收标准 A19-A23）。
+"""ACS v2.2.0 新增双向验证（merge 版：能力治理门 + 每步双动作 + qoder profile）。
 
 正样本 PASS / 负样本 BLOCK 双向覆盖：
 - A19 qoder profile 能力映射（非空 + 与实证工具名一致）
-- A20 creed_evidence 门禁（存在/非空/指针可达/分级豁免）
 - A21 新技能 qoder-native-integration 过 gate_skill_spec
 - A22 capability-coverage 新增域与 summary 计数一致
-- A23 契约向后兼容（schema 可选字段 + run_gates 转发 --root）
+- A23 契约向后兼容（run_gates 转发 --root）+ 版本 2.2.0
+- A24 能力治理门（v2.2 merge 核心，与每步双动作共存）
+
+注：原 v2.0.0 的 creed_evidence 逐条守则留痕门已被 v2.1 的 STEP_handoff/STEP_self_review
+（每步压缩交接 + 双 AI 自对抗审核，gate_checklist 机检）取代，故移除 creed_evidence 陈旧断言；
+每步双动作的正/负样本验证在 test_gates.py（handoff 系列）。
 """
 
-import importlib.util
 import io
-import contextlib
 import json
 import os
 import subprocess
@@ -33,35 +35,6 @@ def _run_gate(script, args):
     return p.returncode, p.stdout + p.stderr
 
 
-def _load_checklist():
-    path = os.path.join(ROOT, "scripts", "gate_checklist.py")
-    spec = importlib.util.spec_from_file_location("gate_checklist_v2", path)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
-
-
-def _creed_exit(mod, entries, tier):
-    state = {} if entries is None else {"creed_evidence": entries}
-    report = mod.Report("v2-smoke")
-    mod.check_creed_evidence(state, tier, ROOT, report)
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
-        return report.finish()
-
-
-def _entry(article, ref, note="证明对应守则已执行并留痕"):
-    return {"article": article, "evidence_ref": ref, "note": note}
-
-
-GOOD10 = [
-    _entry(1, "DESIGN.md"), _entry(2, "AGENTS.md"), _entry(3, "README.md"),
-    _entry(4, "VERSION"), _entry(5, "manifest.json"), _entry(6, "pack.py"),
-    _entry(7, "LICENSE"), _entry(8, "install.sh"),
-    _entry(9, "https://example.com/plan-review"),
-    _entry(10, "cmd:python -X utf8 scripts/run_gates.py --state s --tier T3"),
-]
-
 # ---------------------------------------------------------------- A19 qoder profile
 
 REQUIRED_CAPS = ["clarify", "progress", "parallel", "skill_load",
@@ -71,7 +44,7 @@ REQUIRED_CAPS = ["clarify", "progress", "parallel", "skill_load",
 def test_a19_qoder_profile_exists_and_required_caps_nonempty():
     adapters = _read_json("spec/adapters.json")
     profiles = adapters["capability_adapters"]["profiles"]
-    assert "qoder" in profiles, "adapters profiles 独缺 qoder 是 v1.2 最大缺口，v2.0 必须补上"
+    assert "qoder" in profiles, "adapters profiles 独缺 qoder 是缺口，v2.2 必须补上"
     q = profiles["qoder"]
     for cap in REQUIRED_CAPS:
         v = q.get(cap)
@@ -85,63 +58,9 @@ def test_a19_qoder_profile_mappings_match_field_proven_tools():
     assert "Agent" in q["parallel"]
     assert "Skill" in q["skill_load"]
     assert "Bash" in q["shell"]
-    mcp = q.get("mcp", "")
+    mcp = q.get("mcp_runtime", "")
     assert "mcp_list" in mcp and "mcp_get" in mcp and "mcp_call" in mcp, \
-        "MCP 惰性加载三件套顺序是 Qoder 实证机制（E32），缺一不可"
-
-
-# ---------------------------------------------------------------- A20 creed_evidence
-
-
-@pytest.fixture(scope="module")
-def checklist_mod():
-    return _load_checklist()
-
-
-def test_a20_t3_positive_ten_reachable_entries(checklist_mod):
-    assert _creed_exit(checklist_mod, GOOD10, "T3") == 0
-
-
-def test_a20_t3_missing_field_blocks(checklist_mod):
-    assert _creed_exit(checklist_mod, None, "T3") == 1
-
-
-def test_a20_t3_insufficient_count_blocks(checklist_mod):
-    assert _creed_exit(checklist_mod, GOOD10[:9], "T3") == 1
-
-
-def test_a20_t3_unreachable_pointer_blocks(checklist_mod):
-    assert _creed_exit(checklist_mod, [_entry(1, "no/such/file.md")] + GOOD10[1:], "T3") == 1
-
-
-def test_a20_t3_duplicate_article_blocks(checklist_mod):
-    assert _creed_exit(checklist_mod, [_entry(1, "DESIGN.md"), _entry(1, "AGENTS.md")] + GOOD10[2:], "T3") == 1
-
-
-def test_a20_t3_article_out_of_range_blocks(checklist_mod):
-    assert _creed_exit(checklist_mod, [_entry(19, "DESIGN.md")] + GOOD10[1:], "T3") == 1
-
-
-def test_a20_t3_empty_note_blocks(checklist_mod):
-    bad = {"article": 1, "evidence_ref": "DESIGN.md", "note": "   "}
-    assert _creed_exit(checklist_mod, [bad] + GOOD10[1:], "T3") == 1
-
-
-def test_a20_t3_bad_url_scheme_blocks(checklist_mod):
-    assert _creed_exit(checklist_mod, [_entry(1, "ftp://x/y")] + GOOD10[1:], "T3") == 1
-
-
-def test_a20_t2_missing_field_blocks(checklist_mod):
-    assert _creed_exit(checklist_mod, None, "T2") == 1, "T2 不豁免（阈值 T2≥6），豁免仅限 T0/T1"
-
-
-def test_a20_t2_positive_six_entries(checklist_mod):
-    assert _creed_exit(checklist_mod, GOOD10[:6], "T2") == 0
-
-
-def test_a20_t1_t0_exempt_when_field_absent(checklist_mod):
-    assert _creed_exit(checklist_mod, None, "T1") == 0
-    assert _creed_exit(checklist_mod, None, "T0") == 0
+        "MCP 惰性加载三件套顺序是 Qoder 实证机制，缺一不可"
 
 
 # ---------------------------------------------------------------- A21 新技能
@@ -149,7 +68,7 @@ def test_a20_t1_t0_exempt_when_field_absent(checklist_mod):
 
 def test_a21_qoder_native_skill_present_and_passes_skill_spec():
     skill = os.path.join(ROOT, "skills", "qoder-native-integration", "SKILL.md")
-    assert os.path.isfile(skill), "v2.0 必须新增 qoder-native-integration 技能"
+    assert os.path.isfile(skill), "必须存在 qoder-native-integration 技能"
     rc, out = _run_gate("gate_skill_spec.py", ["--root", ROOT])
     assert rc == 0, "gate_skill_spec 必须全绿：\n%s" % out
 
@@ -167,32 +86,50 @@ def test_a22_capability_coverage_includes_qoder_domain():
     assert cov["summary"]["in_pack_true"] == in_pack, "summary.in_pack_true 计数漂移"
 
 
-# ---------------------------------------------------------------- A23 向后兼容
-
-
-def test_a23_schema_creed_evidence_is_optional():
-    schema = _read_json("templates/task-state.schema.json")
-    assert "creed_evidence" in schema["properties"], "v2.0 必须在 schema 登记 creed_evidence"
-    assert "creed_evidence" not in schema.get("required", []), \
-        "creed_evidence 必须是可选字段（旧 state 不填不报错，向后兼容）"
-
-
-def test_a23_thresholds_creed_evidence_section():
-    th = _read_json("spec/thresholds.json")
-    ce = th["creed_evidence"]
-    assert ce["min_articles"] == {"T2": 6, "T3": 10}
-    assert ce["article_range"] == [1, 18]
+# ---------------------------------------------------------------- A23 向后兼容 + 版本
 
 
 def test_a23_run_gates_forwards_root_to_checklist():
     with open(os.path.join(ROOT, "scripts", "run_gates.py"), encoding="utf-8") as f:
         src = f.read()
     assert '"--root", root' in src and "gate_checklist.py" in src, \
-        "run_gates 必须把 --root 转发给 gate_checklist（creed_evidence 指针可达性依赖它）"
+        "run_gates 必须把 --root 转发给 gate_checklist"
 
 
-def test_a23_version_bumped_to_2_0_0():
+def test_a23_version_bumped_to_2_2_0():
     with open(os.path.join(ROOT, "VERSION"), encoding="utf-8") as f:
-        assert f.read().strip() == "2.0.0"
+        assert f.read().strip() == "2.2.0"
     manifest = _read_json("manifest.json")
-    assert manifest["version"] == "2.0.0"
+    assert manifest["version"] == "2.2.0"
+
+
+# ---------------------------------------------------------------- A24 能力治理门（v2.2 merge 核心）
+
+
+def test_a24_capability_gate_wired_and_passes():
+    """v2.2 merge：能力治理门接入 run_gates 且正样本 PASS。"""
+    rc, out = _run_gate("gate_capability_registry.py", ["--root", ROOT])
+    assert rc == 0, "能力治理门正样本必须 PASS：\n%s" % out
+    with open(os.path.join(ROOT, "scripts", "run_gates.py"), encoding="utf-8") as f:
+        src = f.read()
+    assert "gate_capability_registry.py" in src, "能力治理门必须接入 run_gates"
+
+
+def test_a24_capability_gate_coexists_with_step_dual_action():
+    """v2.2 核心：能力治理门（静态能力面）与每步双动作（动态执行）共存，run_gates 同跑两者。"""
+    rc, out = _run_gate("run_gates.py", ["--state", "templates/task-state.example.json",
+                                         "--root", ".", "--tier", "T2"])
+    assert rc == 0, "run_gates 全链路必须 PASS：\n%s" % out
+    assert "capability" in out, "能力治理门未跑"
+    assert "checklist" in out, "每步双动作门未跑"
+
+
+def test_a24_capability_registry_runtime_not_bundled():
+    """能力治理清单：runtime 域必须 in_pack=false（禁止谎称打包运行时本体）。"""
+    reg = _read_json("spec/capability-registry.json")
+    for item in reg["registry"]:
+        if item["layer"] == "runtime":
+            assert item["in_pack"] is False, "runtime 域 %s 谎称打包" % item["domain"]
+            assert item["carrier"] is None, "runtime 域 %s carrier 必须为 null" % item["domain"]
+            assert isinstance(item.get("fallback"), str) and item["fallback"].strip(), \
+                "runtime 域 %s 缺 fallback" % item["domain"]

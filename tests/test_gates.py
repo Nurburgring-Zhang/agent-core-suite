@@ -4,6 +4,7 @@
     python -X utf8 -m pytest c:/qoder/agent-core-suite/tests/test_gates.py -q
 """
 
+import ast
 import copy
 import io
 import json
@@ -99,8 +100,18 @@ def test_positive_run_gates_all():
     ("gate_checklist.py", "checklist"),
 ])
 def test_positive_t3_all_gates(state, tmp_path, script, sub):
-    """v1.1 的 T3-only 检查必须有全绿正样本，且双实现一致放行（否则 T3 就是只能拦不能过）。"""
+    """v1.1 的 T3-only 检查必须有全绿正样本，且双实现一致放行（否则 T3 就是只能拦不能过）。
+
+    v2.1.0：STEP_self_review 下沉到每一步后，T3 额外要求每步 review.rounds ≥ t3_min_rounds。
+    example 是 tier=T2 的样板（rounds=1 对 T2 合理），这里按 T3 更严口径把每步 rounds 抬到阈值，
+    阈值从单一真相源 thresholds.json 读取，不把该常量固化进测试。
+    """
     state["tier"] = "T3"
+    t3_min_rounds = _spec()["per_step_review"]["t3_min_rounds"]
+    for step in state.get("steps", []):
+        review = step.get("review")
+        if isinstance(review, dict):
+            review["rounds"] = t3_min_rounds
     path = dump(tmp_path, state)
     py_code, py_out = run_gate(script, "--state", path, "--tier", "T3")
     nd_code, nd_out = run_node_gate(sub, "--state", str(path), "--tier", "T3")
@@ -284,6 +295,27 @@ CHECKLIST_MUTATIONS = [
     (lambda s: s["gates"]["G5"]["report"].pop("next_steps"), "缺字段 next_steps"),
     # 字段写错门：机检会落空，必须拦
     (lambda s: s["gates"]["G4"].update(rsi=s["gates"]["G6"]["rsi"]), "写在 G4 下"),
+    # ---- v2.1 方向1：每步压缩交接 STEP_handoff（steps[0].handoff）
+    (lambda s: s["steps"][0].pop("handoff"), "压缩交接"),
+    (lambda s: s["steps"][0]["handoff"].update(goal_anchor="xx"), "目标锚点过短"),
+    (lambda s: s["steps"][0]["handoff"].update(goal_anchor="符合要求"), "目标锚点是空话"),
+    (lambda s: s["steps"][0]["handoff"].update(done=[]), "已完成项为空"),
+    (lambda s: s["steps"][0]["handoff"].update(next="xx"), "下一步过短"),
+    (lambda s: s["steps"][0]["handoff"].update(next="符合要求"), "下一步是空话"),
+    (lambda s: s["steps"][0]["handoff"].pop("chars"), "缺字数字段"),
+    (lambda s: s["steps"][0]["handoff"].update(chars=2000), "硬上限"),
+    (lambda s: s["steps"][0]["handoff"].update(drift_checked=False), "偏离自检"),
+    # ---- v2.1：每步双AI自对抗审核 STEP_self_review（steps[0].review）
+    (lambda s: s["steps"][0].pop("review"), "自对抗审核"),
+    (lambda s: s["steps"][0]["review"].update(reviewer=""), "审核者代号"),
+    (lambda s: s["steps"][0]["review"].update(reviewer="builder-A"), "退化成自评"),
+    (lambda s: s["steps"][0]["review"].update(verdict="maybe"), "非法"),
+    (lambda s: s["steps"][0]["review"].update(verdict="fail"), "verdict=fail"),
+    (lambda s: s["steps"][0]["review"].update(self_check="xx"), "自查自检结论过短"),
+    (lambda s: s["steps"][0]["review"].update(self_check="符合要求"), "自查结论是空话"),
+    (lambda s: s["steps"][0]["review"].pop("issues_found"), "issues_found"),
+    (lambda s: s["steps"][0]["review"].update(
+        issues_found=["解析器空输入崩溃"], issues_closed=[], verdict="pass_with_fixes"), "等量闭环"),
 ]
 
 # T3 才要求的硬化项单独列一份（T2 下不应报错，否则就是分级失灵）
@@ -707,18 +739,28 @@ _WRITE_FUNCS = (
 _WRITE_MODULES = ("os", "shutil", "path", "subprocess", "Path", "pathlib")
 
 
-# 只读约束适用于「判断类脚本」（门禁 gate_*.py + run_gates + 只读校验器/探针 acs_bootstrap/
-# acs_global_verify/acs_doctor/install_check）。渲染类脚本 acs_handoff_compress.py 例外：
-# 它的职责就是把 handoff 渲染写入 .acs/handoff.md（每轮压缩交接），写文件是其设计目的，
-# 不是「门禁偷偷写报告」。故排除它，避免把合法渲染误判为门禁越权。
-_READONLY_EXEMPT = {"acs_handoff_compress.py"}
-
-
 def _gate_sources():
-    names = [p for p in sorted(os.listdir(str(SCRIPTS)))
-             if p.endswith(".py") and p not in _READONLY_EXEMPT]
+    names = [p for p in sorted(os.listdir(str(SCRIPTS))) if p.endswith(".py")]
     assert names, "scripts/ 下没有 .py，测试前提不成立"
     return names
+
+
+# v2.1.0：scripts/ 下有三个「按设计需要写文件」的工具脚本（用户显式调用的构建/接线工具，
+# 不是「只返回退出码」的门禁）：
+#   acs_compress_handoff.py       --render 写工作区 .acs/handoff.md（无镜像则 exit 2，绝不伪造）
+#   acs_wire_hooks.py             preserve-strong 幂等合并终端 settings.json 的 hooks（原子写 + 读回校验）
+#   acs_build_skill_inventory.py  verbatim 拷贝纯文档技能到 bundled-skills/ + 写 spec/skill-inventory.json
+# 它们不受「门禁只读」不变量约束，但必须显式登记在此；门禁（gate_*.py / run_gates.py /
+# *global_verify.py）与只读探针（acs_doctor / acs_bootstrap / install_check）永不进入本豁免集，
+# 由 test_write_tools_allowlist_is_tight 守住。_gate_sources() 不排除它们——「阈值不得本地重写」
+# 这条对工具同样适用（工具也不得私藏阈值常量）。
+WRITE_TOOLS = {
+    "acs_compress_handoff.py",
+    "acs_wire_hooks.py",
+    "acs_build_skill_inventory.py",
+}
+READONLY_PROBES = {"acs_doctor.py", "acs_bootstrap.py", "install_check.py"}
+GATE_NAME_RE = __import__("re").compile(r"^(gate_.*\.py|run_gates\.py|.*global_verify\.py)$")
 
 
 def _scan_side_effects(src, name):
@@ -766,10 +808,140 @@ def test_gate_scripts_are_readonly(name):
     """DESIGN「增强层」约束的机检：门禁脚本只返回退出码，不得写文件/删文件/建目录/改环境/杀进程。
 
     若未来有人给门禁加上「自动修复」或「写报告文件」，本测试立即失败 —— 那就不再是叠加层而是接管层。
+
+    v2.1.0 例外：WRITE_TOOLS 里显式登记的三个构建/接线工具按设计需要写文件（渲染 handoff、
+    合并 settings.json hooks、拷贝纯文档技能）；它们不是门禁。豁免不是「放行不查」——对它们
+    反向断言『确实会写』（防止把本可不写的脚本塞进豁免集）且『已登记进 manifest.files』（是正经
+    出货物而非游离脚本）。门禁与探针永不进入豁免集，由 test_write_tools_allowlist_is_tight 守住。
     """
     src = io.open(str(SCRIPTS / name), "r", encoding="utf-8").read()
     bad = _scan_side_effects(src, name)
+    if name in WRITE_TOOLS:
+        assert bad, "%s 在 WRITE_TOOLS 豁免集里却没有任何写副作用：要么它不需要豁免，要么豁免集写错了" % name
+        manifest = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
+        assert ("scripts/" + name) in manifest["files"], \
+            "%s 是写文件的出货工具，却没登记进 manifest.files（打包会把它丢在外面）" % name
+        return
     assert not bad, "\n".join(bad)
+
+
+def test_write_tools_allowlist_is_tight():
+    """豁免集必须紧：只含真实存在的工具，且绝不含任何门禁或只读探针。
+
+    这是「门禁只读」不变量的守门人——如果哪天有人把 gate_checklist.py 塞进 WRITE_TOOLS 来
+    绕过只读检查，本测试立即失败。豁免集扩大 = 增强层退化成接管层的第一道裂缝。
+    """
+    all_scripts = set(_gate_sources())
+    # 1) 豁免集里的每个名字都必须真实存在于 scripts/（防拼错名字让豁免静默失效）
+    phantom = sorted(WRITE_TOOLS - all_scripts)
+    assert not phantom, "WRITE_TOOLS 含 scripts/ 下不存在的名字（拼错=豁免静默失效）：%s" % phantom
+    # 2) 门禁与只读探针永不进入豁免集
+    forbidden = sorted(n for n in WRITE_TOOLS if GATE_NAME_RE.match(n) or n in READONLY_PROBES)
+    assert not forbidden, "WRITE_TOOLS 不得含门禁或只读探针（那等于给门禁开写文件后门）：%s" % forbidden
+    # 3) 每个 scripts/*.py 必须被明确归类：要么只读，要么在豁免集——不允许有第三类静默逃逸
+    for name in sorted(all_scripts):
+        src = io.open(str(SCRIPTS / name), "r", encoding="utf-8").read()
+        writes = bool(_scan_side_effects(src, name))
+        if writes:
+            assert name in WRITE_TOOLS, \
+                "%s 有写副作用却不在 WRITE_TOOLS 豁免集：要么改成只读，要么显式登记并说明理由" % name
+
+
+def _tempfile_bound_names(tree):
+    """收集所有由 tempfile.mkstemp(...) 绑定的变量名。
+
+    acs_wire_hooks 的原子写先 mkstemp 建同目录临时文件，os.replace 覆盖目标；写失败时
+    os.remove(tmp_path) 清掉自己的临时文件再 raise —— 删的是它自己的临时文件，不是用户文件。
+    这类变量名要在删除检测里放行。
+    """
+    names = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        val = node.value
+        if not (isinstance(val, ast.Call) and isinstance(val.func, ast.Attribute)):
+            continue
+        if val.func.attr != "mkstemp":
+            continue
+        base = val.func.value
+        if not (isinstance(base, ast.Name) and base.id == "tempfile"):
+            continue
+        for tgt in node.targets:
+            if isinstance(tgt, ast.Name):
+                names.add(tgt.id)
+            elif isinstance(tgt, ast.Tuple):
+                for elt in tgt.elts:
+                    if isinstance(elt, ast.Name):
+                        names.add(elt.id)
+    return names
+
+
+def test_write_tools_do_not_delete_user_files():
+    """写工具可以创建/修改，但绝不允许删除用户/目标文件；只放行「删自己的 mkstemp 临时文件」。
+
+    与全局文件保护策略一致：acs_wire_hooks 改的是终端 settings.json（preserve-strong，只增不删），
+    acs_compress_handoff 写的是工作区 .acs/handoff.md，acs_build_skill_inventory 拷入 bundled-skills/。
+    rmtree/shred 一律视为越界；remove/unlink/rmdir 仅当参数是 tempfile.mkstemp 绑定的变量时放行，
+    其余（指向用户/目标路径）一律视为越界。
+    """
+    always_bad = {"rmtree", "shred"}
+    conditional_bad = {"remove", "unlink", "rmdir"}
+    for name in sorted(WRITE_TOOLS):
+        src = io.open(str(SCRIPTS / name), "r", encoding="utf-8").read()
+        tree = ast.parse(src, filename=name)
+        tmp_vars = _tempfile_bound_names(tree)
+        hits = []
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            fn = node.func
+            fname = fn.attr if isinstance(fn, ast.Attribute) else (fn.id if isinstance(fn, ast.Name) else "")
+            if fname in always_bad:
+                hits.append("%s:%d %s" % (name, node.lineno, fname))
+                continue
+            if fname in conditional_bad:
+                arg = node.args[0] if node.args else None
+                if isinstance(arg, ast.Name) and arg.id in tmp_vars:
+                    continue  # 删自己的临时文件，放行
+                hits.append("%s:%d %s(非临时文件)" % (name, node.lineno, fname))
+        assert not hits, "写工具含删除用户/目标文件的调用（违反文件保护策略）：\n" + "\n".join(hits)
+
+
+def test_write_tools_tempfile_cleanup_is_actually_exempted():
+    """反向自证：确认 acs_wire_hooks 的 os.remove(tmp_path) 被上面的检测放行，
+    而把同一行改成删用户文件就会被拦住 —— 否则「放行临时文件」的豁免可能是空豁免。"""
+    import tempfile as _tf
+
+    ok_src = (
+        "import os, tempfile\n"
+        "fd, tmp_path = tempfile.mkstemp(prefix='.acs_wire_', dir='.')\n"
+        "try:\n"
+        "    os.replace(tmp_path, 'settings.json')\n"
+        "except Exception:\n"
+        "    if os.path.isfile(tmp_path):\n"
+        "        os.remove(tmp_path)\n"
+        "    raise\n"
+    )
+    bad_src = ok_src.replace("os.remove(tmp_path)", "os.remove('settings.json')")
+
+    def _scan(src):
+        tree = ast.parse(src)
+        tmp_vars = _tempfile_bound_names(tree)
+        found = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call):
+                fn = node.func
+                fname = fn.attr if isinstance(fn, ast.Attribute) else (fn.id if isinstance(fn, ast.Name) else "")
+                if fname in {"remove", "unlink", "rmdir"}:
+                    arg = node.args[0] if node.args else None
+                    if isinstance(arg, ast.Name) and arg.id in tmp_vars:
+                        continue
+                    found.append(fname)
+        return found
+
+    assert _scan(ok_src) == [], "临时文件清理被误拦：豁免失效"
+    assert _scan(bad_src) == ["remove"], "删用户文件却放行：豁免过宽"
+    assert _tf  # 保持 import 语义清晰（本用例只做 AST 断言）
 
 
 @pytest.mark.parametrize("snippet,keyword", [
@@ -1730,6 +1902,100 @@ def test_multi_product_registry_contracts_all_validate():
         assert spec["spec_version"] == agv.CONTRACT_VERSION
 
 
+def _contract_parity_diffs(a, b, contract_version,
+                           a_self="spec/qoderwork-global.json",
+                           b_self="spec/qwenwork-global.json"):
+    """返回两份契约「应当平行却未平行」的违规清单（空=平行）。抽成函数以便正/负样本共用。"""
+    diffs = []
+    if not (a["spec_version"] == b["spec_version"] == contract_version):
+        diffs.append("spec_version 不对齐：%s / %s / %s" % (a["spec_version"], b["spec_version"], contract_version))
+    if sorted(a["required_skills"]) != sorted(b["required_skills"]):
+        diffs.append("required_skills 不平行")
+    a_files = set(a["required_suite_files"]) - {a_self}
+    b_files = set(b["required_suite_files"]) - {b_self}
+    if a_files != b_files:
+        diffs.append("required_suite_files 不平行：差集=%s" % sorted(a_files ^ b_files))
+    if a_self not in a["required_suite_files"]:
+        diffs.append("qoderwork 契约未自引用登记")
+    if b_self not in b["required_suite_files"]:
+        diffs.append("qwenworkcn 契约未自引用登记")
+    common_routing = {"clarification", "progress", "handoff", "parallelism",
+                      "skills", "memory", "file_delivery"}
+    for label, spec in (("qoderwork", a), ("qwenworkcn", b)):
+        miss = common_routing - set(spec["native_routing"])
+        if miss:
+            diffs.append("%s 缺公共能力路由键：%s" % (label, sorted(miss)))
+        for key in common_routing & set(spec["native_routing"]):
+            val = spec["native_routing"][key]
+            if not (isinstance(val, str) and val.strip()):
+                diffs.append("%s.%s 路由值为空" % (label, key))
+        if len([k for k in spec["native_routing"] if k.endswith("_state")]) != 1:
+            diffs.append("%s 的 *_state 路由键不唯一" % label)
+    if a["required_anchors"]["SOUL.md"] != b["required_anchors"]["SOUL.md"]:
+        diffs.append("SOUL.md 锚点不平行")
+    if sorted(a["required_anchors"]) != sorted(b["required_anchors"]) or \
+            sorted(a["required_anchors"]) != ["AGENTS.md", "SOUL.md"]:
+        diffs.append("required_anchors 键集不平行")
+    else:
+        a_ag, b_ag = a["required_anchors"]["AGENTS.md"], b["required_anchors"]["AGENTS.md"]
+        shared = set(a_ag) & set(b_ag)
+        for anchor in ("Agent Core Suite v2.1.0", "通用任务执行守则（十八条）",
+                       "Harness Engineering 质量门禁", "0=PASS"):
+            if anchor not in shared:
+                diffs.append("AGENTS.md 共享锚点缺失：%s" % anchor)
+        a_only, b_only = set(a_ag) - shared, set(b_ag) - shared
+        if not (len(a_only) == 1 and len(b_only) == 1 and
+                "融合协议" in next(iter(a_only)) and "融合协议" in next(iter(b_only))):
+            diffs.append("AGENTS.md 差异不止产品融合协议短语：%s vs %s" % (sorted(a_only), sorted(b_only)))
+    return diffs
+
+
+def test_dual_contracts_are_parallel():
+    """两份产品契约必须平行。v2.0.0 曾因 qwenworkcn 契约漂移导致假阳性，本测试把
+    「双产品平行」变成机检约束——但只约束**应当平行**的维度：
+
+    平行维度（必须一致）：spec_version、required_skills、required_suite_files（各自排除
+      自引用的本产品契约文件后必须逐字一致）、SOUL.md 锚点、AGENTS.md 共享锚点、
+      v2.1 公共能力路由键（含 handoff）。
+    产品专有维度（允许不同，且必须体现产品差异）：native_routing 里的 *_state 键名、
+      qoderwork 独有的 mcp_runtime/scheduling 原生面、AGENTS.md 里那条产品融合协议短语。
+    """
+    agv = _import_engine()
+    a = agv.load_json(agv.default_spec_path("qoderwork"))
+    b = agv.load_json(agv.default_spec_path("qwenworkcn"))
+    diffs = _contract_parity_diffs(a, b, agv.CONTRACT_VERSION)
+    assert not diffs, "双产品契约未平行：\n" + "\n".join(diffs)
+
+
+def test_contract_parity_detector_catches_drift():
+    """反向自证：把平行契约人为改坏，检测器必须逐类报错——否则上面的全绿可能只是空断言。"""
+    import copy as _copy
+
+    agv = _import_engine()
+    base_a = agv.load_json(agv.default_spec_path("qoderwork"))
+    base_b = agv.load_json(agv.default_spec_path("qwenworkcn"))
+    cv = agv.CONTRACT_VERSION
+    assert _contract_parity_diffs(base_a, base_b, cv) == [], "基线本应平行"
+
+    cases = []
+    # 版本漂移
+    m = _copy.deepcopy(base_b); m["spec_version"] = "9.9.9"
+    cases.append((base_a, m, "spec_version"))
+    # 打包面漏文件
+    m = _copy.deepcopy(base_b); m["required_suite_files"].remove("scripts/acs_compress_handoff.py")
+    cases.append((base_a, m, "required_suite_files"))
+    # 丢 handoff 路由键
+    m = _copy.deepcopy(base_b); m["native_routing"].pop("handoff")
+    cases.append((base_a, m, "handoff"))
+    # SOUL 锚点漂移
+    m = _copy.deepcopy(base_b); m["required_anchors"]["SOUL.md"].append("多出来的一条")
+    cases.append((base_a, m, "SOUL.md"))
+    for a_, b_, expect in cases:
+        diffs = _contract_parity_diffs(a_, b_, cv)
+        assert diffs, "改了 %s 却没被检出" % expect
+        assert any(expect in d for d in diffs), (expect, diffs)
+
+
 def test_engine_derives_terminals_wiring_from_contract():
     """引擎从契约派生的 terminals 接线必须与 spec/terminals.json 实际接线逐字一致——这是「引擎零产品特化」的证据。"""
     agv = _import_engine()
@@ -2061,16 +2327,27 @@ def test_adapters_spec_declares_model_agnostic_facts():
 
 
 def test_portable_core_files_all_exist():
-    """portable_core 声明的每一项都必须真实存在，否则「跨终端可用」是空话。"""
+    """portable_core 声明的每一项都必须真实存在，否则「跨终端可用」是空话。
+
+    遍历除 _note 外的全部键（rules/skills/gates/specs/tools/hooks/bundled_skills/contracts），
+    不预设固定键名清单——将来新增一类便携核心而忘了核验存在性，本测试会因未覆盖键而失败。
+    """
     adapters = _adapters()
-    missing = []
     core = adapters["portable_core"]
-    for key in ("rules", "skills", "gates", "specs", "contracts"):
-        for rel in core[key]:
-            path = SUITE / rel
-            if not path.exists():
-                missing.append(rel)
-    assert not missing, missing
+    covered = set()
+    missing = []
+    for key, val in core.items():
+        if key == "_note":
+            continue
+        assert isinstance(val, list), "portable_core[%s] 必须是路径清单，实际 %r" % (key, type(val))
+        covered.add(key)
+        for rel in val:
+            if not (SUITE / rel).exists():
+                missing.append("%s -> %s" % (key, rel))
+    expected = {"rules", "skills", "gates", "specs", "tools", "hooks", "bundled_skills", "contracts"}
+    assert covered == expected, \
+        "portable_core 键集变化：新增键须纳入存在性核验，删除键须同步本测试。差集=%s" % (covered ^ expected)
+    assert not missing, "便携核心声明的文件缺失：%s" % missing
 
 
 def test_manifest_registers_portability_and_bootstrap():
@@ -2168,15 +2445,198 @@ def test_capability_coverage_runtime_domains_all_have_fallback():
             assert len(cap["fallback"]) >= 4, cap["fallback"]
 
 
-# ------------------------------------------------- v2.0 能力治理门禁 + handoff 压缩
+# ------------------------------------------------- v2.1 方向1：压缩交接载体渲染/校验器
+#
+# acs_compress_handoff.py 只做**机械渲染 + 形状机检**，不做语义压缩（那是 agent 原生职责）。
+# 这组测试证明：渲染幂等、六段结构齐、无镜像时拒绝伪造（exit 2）、载体超硬上限必 BLOCK、
+# 模式互斥、以及它被登记进清单与便携核心（否则装完即缺失）。
 
-def _cap_registry():
+_COMPRESS = "acs_compress_handoff.py"
+_SIX_SECTIONS = ("当前目标", "已确认事实", "已完成产出", "未解决问题", "下一步入口", "状态指针")
+
+
+def test_compress_handoff_render_positive_and_idempotent(tmp_path):
+    """从 example 末步镜像渲染 → PASS；同状态重渲必须逐字节相同（幂等=可安全反复调用）。"""
+    state_path = tmp_path / "state.json"
+    shutil.copy(str(TEMPLATES / "task-state.example.json"), str(state_path))
+    out1 = tmp_path / "h1.md"
+    out2 = tmp_path / "h2.md"
+    code1, o1 = run_gate(_COMPRESS, "--render", "--state", state_path, "--out", out1, "--tier", "T2")
+    code2, o2 = run_gate(_COMPRESS, "--render", "--state", state_path, "--out", out2, "--tier", "T2")
+    assert code1 == PASS == code2, (o1, o2)
+    assert out1.is_file() and out2.is_file()
+    assert out1.read_bytes() == out2.read_bytes(), "同状态两次渲染字节不一致：非幂等，反复调用会漂移"
+
+
+def test_compress_handoff_render_writes_six_sections(tmp_path):
+    """载体必须含六段锚点结构——缺段就是有损交接。"""
+    state_path = tmp_path / "state.json"
+    shutil.copy(str(TEMPLATES / "task-state.example.json"), str(state_path))
+    out = tmp_path / "handoff.md"
+    code, o = run_gate(_COMPRESS, "--render", "--state", state_path, "--out", out)
+    assert code == PASS, o
+    text = out.read_text(encoding="utf-8")
+    for sec in _SIX_SECTIONS:
+        assert sec in text, "渲染载体缺段落锚点：%s\n%s" % (sec, text)
+
+
+def test_compress_handoff_render_refuses_to_fabricate_without_mirror(tmp_path):
+    """末步无 handoff 镜像时，渲染器必须 exit 2（绝不凭空伪造交接内容）。"""
+    state = copy.deepcopy(load("task-state.example.json"))
+    for step in state.get("steps", []):
+        step.pop("handoff", None)
+    state_path = dump(tmp_path, state)
+    out = tmp_path / "handoff.md"
+    code, o = run_gate(_COMPRESS, "--render", "--state", state_path, "--out", out)
+    assert code == USAGE, "无镜像却未 USAGE_ERROR（可能伪造了交接）：%s" % o
+
+
+def test_compress_handoff_validate_positive(tmp_path):
+    """渲染出的合法载体经 --validate 必须 PASS（可含字数>目标的 WARN，但不得 BLOCK）。"""
+    state_path = tmp_path / "state.json"
+    shutil.copy(str(TEMPLATES / "task-state.example.json"), str(state_path))
+    out = tmp_path / "handoff.md"
+    run_gate(_COMPRESS, "--render", "--state", state_path, "--out", out)
+    code, o = run_gate(_COMPRESS, "--validate", "--handoff", out, "--state", state_path, "--tier", "T2")
+    assert code == PASS, o
+
+
+def test_compress_handoff_validate_bloated_blocks(tmp_path):
+    """载体正文突破硬上限 → BLOCK：总结膨胀成第二份历史，回灌禁令失效。"""
+    big = tmp_path / "big.md"
+    body = ("## 0 当前目标\n- " + "目标锚点内容" * 3 + "\n"
+            + "## 4 下一步入口\n- " + "填充以突破硬上限字数天花板内容" * 120)
+    big.write_text(body, encoding="utf-8")
+    code, o = run_gate(_COMPRESS, "--validate", "--handoff", big)
+    assert code == BLOCK, o
+    assert "硬上限" in o, o
+
+
+def test_compress_handoff_validate_missing_file_usage_error(tmp_path):
+    code, o = run_gate(_COMPRESS, "--validate", "--handoff", tmp_path / "nope.md")
+    assert code == USAGE, o
+
+
+@pytest.mark.parametrize("args", [
+    ("--render", "--validate"),   # 两模式同给
+    (),                            # 一个模式都不给
+])
+def test_compress_handoff_mode_exclusivity(tmp_path, args):
+    """--render / --validate 互斥且必居其一，否则 USAGE_ERROR。"""
+    state_path = tmp_path / "state.json"
+    shutil.copy(str(TEMPLATES / "task-state.example.json"), str(state_path))
+    extra = ["--state", str(state_path), "--handoff", str(state_path)]
+    code, o = run_gate(_COMPRESS, *(list(args) + extra))
+    assert code == USAGE, o
+
+
+def test_compress_handoff_registered_in_manifest_and_portable_core():
+    """渲染器必须进清单与便携核心 tools——不进则安装不拷，跨终端「每步压缩」能力落空。"""
+    data = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
+    assert "scripts/%s" % _COMPRESS in data["files"], "压缩渲染器未进 manifest.files"
+    assert "scripts/%s" % _COMPRESS in _adapters()["portable_core"]["tools"], "压缩渲染器未进便携核心 tools"
+
+
+# ------------------------------------------------- v2.1：每步双AI自审 T3 轮次隔离验证
+
+
+def test_step_self_review_t3_rounds_isolated(tmp_path):
+    """T3 每步自审须 ≥t3_min_rounds 轮：从 T3 合法态出发，单独把一步轮次降到阈值下必 BLOCK，
+    且 Python 与 Node 双实现一致——隔离验证，避免被 example 的其它 T3 缺项污染。"""
+    min_rounds = _spec()["per_step_review"]["t3_min_rounds"]
+    base = copy.deepcopy(load("task-state.example.json"))
+    base["tier"] = "T3"
+    for step in base["steps"]:
+        if isinstance(step.get("review"), dict):
+            step["review"]["rounds"] = min_rounds
+    # 先确认基线 T3 合法
+    ok_path = dump(tmp_path, copy.deepcopy(base), name="ok.json")
+    code, out = run_gate("gate_checklist.py", "--state", ok_path, "--tier", "T3")
+    assert code == PASS, "T3 基线应 PASS：%s" % out
+    # 单独降一步轮次
+    bad = copy.deepcopy(base)
+    bad["steps"][0]["review"]["rounds"] = min_rounds - 1
+    bad_path = dump(tmp_path, bad, name="bad.json")
+    py_code, py_out = run_gate("gate_checklist.py", "--state", bad_path, "--tier", "T3")
+    nd_code, nd_out = run_node_gate("checklist", "--state", str(bad_path), "--tier", "T3")
+    assert py_code == BLOCK == nd_code, "py=%s node=%s\n%s\n%s" % (py_code, nd_code, py_out, nd_out)
+    assert "每步自对抗审核须" in py_out, py_out
+
+
+# ------------------------------------------------- v2.1 方向2：技能清单（打包范围的诚实边界）
+#
+# 回答「把三终端全部技能打包进来」：便携包只 verbatim 打包真·可迁移纯文档技能；env-bound /
+# 阿里内部专有技能做清单化分类 + 安装/降级指引，绝不塞二进制或运行时。这组测试把该边界机检化。
+
+
+def _inventory():
+    return json.loads(io.open(str(SUITE / "spec" / "skill-inventory.json"), "r", encoding="utf-8").read())
+
+
+def test_skill_inventory_wellformed_and_self_consistent():
+    """清单摘要必须与逐条分类真实一致，且版本对齐契约版本——摘要与明细各说各话等于没有清单。"""
+    inv = _inventory()
+    skills = inv["skills"]
+    summ = inv["summary"]
+    assert inv["spec_version"] == _import_engine().CONTRACT_VERSION, inv["spec_version"]
+    assert summ["total_skills"] == len(skills), (summ["total_skills"], len(skills))
+    tally = {}
+    for s in skills:
+        tally[s["classification"]] = tally.get(s["classification"], 0) + 1
+    for cls in ("portable_doc", "already_in_acs", "env_bound", "internal_proprietary", "junk"):
+        assert summ[cls] == tally.get(cls, 0), "%s 摘要=%s 实际=%s" % (cls, summ[cls], tally.get(cls, 0))
+    assert inv["scanned_dirs"], "必须记录扫过哪些终端技能目录（可复现性）"
+    assert (SUITE / inv["generated_by"]).exists(), "生成器脚本缺失：%s" % inv["generated_by"]
+
+
+def test_skill_inventory_portable_doc_bundles_physically_exist():
+    """标为 portable_doc 的技能必须真的 verbatim 落进 bundled-skills/ 且在清单里——否则「已打包」是空话。"""
+    inv = _inventory()
+    data = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
+    portable = [s for s in inv["skills"] if s["classification"] == "portable_doc"]
+    assert portable, "至少应打出一个可迁移纯文档技能"
+    bundled_count = 0
+    for s in portable:
+        bp = s["bundle_path"]
+        assert bp and (SUITE / bp).is_dir(), "%s 的 bundle_path 不存在：%s" % (s["name"], bp)
+        for md in s["md_files"]:
+            rel = "%s/%s" % (bp, md)
+            assert (SUITE / rel).is_file(), "打包文件缺失：%s" % rel
+            assert rel in data["files"], "打包文件未登记进 manifest.files：%s" % rel
+            bundled_count += 1
+    assert bundled_count == inv["summary"]["bundled_files"], (bundled_count, inv["summary"]["bundled_files"])
+
+
+def test_skill_inventory_env_bound_and_proprietary_pack_no_blobs():
+    """env-bound / 内部专有技能只做清单化：必须给 fallback 指引，且 bundle_path 为空（不塞二进制/运行时）。"""
+    inv = _inventory()
+    for s in inv["skills"]:
+        if s["classification"] in ("env_bound", "internal_proprietary"):
+            assert s["bundle_path"] is None, \
+                "%s(%s) 不该 verbatim 打包，却给了 bundle_path=%s" % (
+                    s["name"], s["classification"], s["bundle_path"])
+            fb = s.get("fallback")
+            assert isinstance(fb, str) and fb.strip(), \
+                "%s 缺 fallback 指引：清单化却不给降级路径=该终端能力落空" % s["name"]
+
+
+def test_skill_inventory_registered_in_manifest_and_portable_core():
+    data = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
+    assert "spec/skill-inventory.json" in data["files"], "技能清单未进 manifest.files"
+    assert "spec/skill-inventory.json" in _adapters()["portable_core"]["specs"], "技能清单未进便携核心 specs"
+    assert "scripts/acs_build_skill_inventory.py" in _adapters()["portable_core"]["tools"], \
+        "清单生成器未进便携核心 tools"
+
+
+# ------------------------------------------------- v2.2 能力治理门（与每步双动作共存）
+
+def _cap_registry_v22():
     return json.loads(io.open(str(SUITE / "spec" / "capability-registry.json"),
                               "r", encoding="utf-8").read())
 
 
-def _mutated_registry(tmp_path, mutate):
-    root = _suite_copy(tmp_path, "capreg")
+def _mutated_registry_v22(tmp_path, mutate):
+    root = _suite_copy(tmp_path, "capreg22")
     reg = json.loads(io.open(str(root / "spec" / "capability-registry.json"),
                              "r", encoding="utf-8").read())
     mutate(reg)
@@ -2185,140 +2645,102 @@ def _mutated_registry(tmp_path, mutate):
     return root
 
 
-def test_capability_registry_positive():
+def test_capability_registry_positive_v22():
     code, out = run_gate("gate_capability_registry.py", "--root", SUITE)
     assert code == PASS, out
 
 
-def test_capability_registry_registered_in_manifest():
+def test_capability_registry_registered_in_manifest_v22():
     data = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
     assert "spec/capability-registry.json" in data["files"]
     assert "scripts/gate_capability_registry.py" in data["files"]
     assert any(g.get("id") == "capability" for g in data["gates"]), [g.get("id") for g in data["gates"]]
 
 
-def test_capability_registry_spec_missing_usage_error(tmp_path):
-    root = _suite_copy(tmp_path, "capreg-missing")
+def test_capability_registry_spec_missing_usage_error_v22(tmp_path):
+    root = _suite_copy(tmp_path, "capreg22-missing")
     (root / "spec" / "capability-registry.json").unlink()
     code, out = run_gate("gate_capability_registry.py", "--root", root)
     assert code == USAGE, out
 
 
-def test_capability_registry_runtime_false_bundled_blocked(tmp_path):
+def test_capability_registry_runtime_false_bundled_blocked_v22(tmp_path):
     """runtime 域谎称已打包（in_pack=true）必须 BLOCK——核心诚实边界。"""
     def mutate(reg):
         for item in reg["registry"]:
             if item["domain"] == "mcp":
                 item["in_pack"] = True
-    root = _mutated_registry(tmp_path, mutate)
+    root = _mutated_registry_v22(tmp_path, mutate)
     code, out = run_gate("gate_capability_registry.py", "--root", root)
     assert code == BLOCK, out
     assert "禁止谎称" in out, out
 
 
-def test_capability_registry_runtime_missing_fallback_blocked(tmp_path):
+def test_capability_registry_runtime_missing_fallback_blocked_v22(tmp_path):
     def mutate(reg):
         for item in reg["registry"]:
             if item["domain"] == "toolcalling":
                 item["fallback"] = ""
-    root = _mutated_registry(tmp_path, mutate)
+    root = _mutated_registry_v22(tmp_path, mutate)
     code, out = run_gate("gate_capability_registry.py", "--root", root)
     assert code == BLOCK, out
     assert "fallback" in out, out
 
 
-def test_capability_registry_portable_not_in_pack_blocked(tmp_path):
+def test_capability_registry_portable_not_in_pack_blocked_v22(tmp_path):
     def mutate(reg):
         for item in reg["registry"]:
             if item["domain"] == "skill":
                 item["in_pack"] = False
-    root = _mutated_registry(tmp_path, mutate)
+    root = _mutated_registry_v22(tmp_path, mutate)
     code, out = run_gate("gate_capability_registry.py", "--root", root)
     assert code == BLOCK, out
     assert "未登记入包" in out, out
 
 
-def test_capability_registry_governance_blind_spot_blocked(tmp_path):
+def test_capability_registry_governance_blind_spot_blocked_v22(tmp_path):
     def mutate(reg):
         reg["registry"][0]["governed_by"] = []
-    root = _mutated_registry(tmp_path, mutate)
+    root = _mutated_registry_v22(tmp_path, mutate)
     code, out = run_gate("gate_capability_registry.py", "--root", root)
     assert code == BLOCK, out
     assert "治理盲区" in out, out
 
 
-def test_capability_registry_coverage_map_broken_blocked(tmp_path):
+def test_capability_registry_coverage_map_broken_blocked_v22(tmp_path):
     def mutate(reg):
         reg["coverage_domain_map"]["mcp"] = "不存在的域"
-    root = _mutated_registry(tmp_path, mutate)
+    root = _mutated_registry_v22(tmp_path, mutate)
     code, out = run_gate("gate_capability_registry.py", "--root", root)
     assert code == BLOCK, out
     assert "coverage" in out.lower() or "映射" in out, out
 
 
-def test_capability_registry_portable_carrier_must_exist(tmp_path):
+def test_capability_registry_portable_carrier_must_exist_v22(tmp_path):
     def mutate(reg):
         for item in reg["registry"]:
             if item["domain"] == "harness":
                 item["carrier"] = "scripts/不存在的脚本.py"
-    root = _mutated_registry(tmp_path, mutate)
+    root = _mutated_registry_v22(tmp_path, mutate)
     code, out = run_gate("gate_capability_registry.py", "--root", root)
     assert code == BLOCK, out
     assert "carrier" in out, out
 
 
-def test_run_gates_includes_capability_gate(tmp_path, state):
+def test_run_gates_includes_capability_gate_v22(tmp_path, state):
+    """v2.2 merge：编排器必须真的跑到 capability 门（与每步双动作共存）。"""
     code, out = run_gate("run_gates.py", "--state", dump(tmp_path, state),
                          "--root", SUITE, "--tier", "T2")
     assert code == PASS, out
     assert "capability" in out, out
 
 
-# ---- handoff 压缩（每轮压缩 + 保留目标防跑偏）----
-
-def test_handoff_positive_in_example():
-    """正样本 task-state 每步含合法 handoff，loop_guard 应 PASS。"""
-    code, out = run_gate("gate_loop_guard.py", "--state",
-                         SUITE / "templates" / "task-state.example.json", "--tier", "T2")
+def test_capability_and_step_dual_action_coexist_v22(tmp_path, state):
+    """v2.2 核心：能力治理门（静态能力面）与每步双动作（动态执行）共存，run_gates 同时跑两者且都 PASS。"""
+    code, out = run_gate("run_gates.py", "--state", dump(tmp_path, state),
+                         "--root", SUITE, "--tier", "T2")
     assert code == PASS, out
-
-
-def test_handoff_missing_blocked(tmp_path, state):
-    """step 缺 handoff 必须 BLOCK——每步结束必须写目标/已完成/下一步交接。"""
-    state["steps"][0].pop("handoff", None)
-    code, out = run_gate("gate_loop_guard.py", "--state", dump(tmp_path, state), "--tier", "T2")
-    assert code == BLOCK, out
-    assert "handoff" in out, out
-
-
-def test_handoff_missing_section_blocked(tmp_path, state):
-    """handoff 缺 current_goal 段必须 BLOCK——目标锚点是防跑偏关键。"""
-    state["steps"][0]["handoff"].pop("current_goal", None)
-    code, out = run_gate("gate_loop_guard.py", "--state", dump(tmp_path, state), "--tier", "T2")
-    assert code == BLOCK, out
-    assert "current_goal" in out or "handoff" in out, out
-
-
-def test_handoff_overlong_blocked(tmp_path, state):
-    """handoff 三段合计超 1000 字必须 BLOCK——压缩只压过程不压结论/证据/目标。"""
-    state["steps"][0]["handoff"] = {"current_goal": "x" * 500,
-                                    "completed": "y" * 500, "next_step": "z" * 100}
-    code, out = run_gate("gate_loop_guard.py", "--state", dump(tmp_path, state), "--tier", "T2")
-    assert code == BLOCK, out
-    assert "1000" in out, out
-
-
-def test_handoff_compress_script_renders(tmp_path):
-    """acs_handoff_compress.py 从 task-state 渲染 .acs/handoff.md，≤1000 字。"""
-    out_file = tmp_path / "handoff.md"
-    code, out = run_gate("acs_handoff_compress.py", "--state",
-                         SUITE / "templates" / "task-state.example.json", "--out", str(out_file))
-    assert code == PASS, out
-    assert out_file.is_file(), "handoff.md 未生成"
-    text = out_file.read_text(encoding="utf-8")
-    assert "当前目标" in text and "已完成" in text and "下一步" in text, text
-
-
-def test_handoff_compress_registered_in_manifest():
-    data = json.loads(io.open(str(SUITE / "manifest.json"), "r", encoding="utf-8").read())
-    assert "scripts/acs_handoff_compress.py" in data["files"]
+    # 能力治理门（静态能力面诚实性）
+    assert "capability" in out, "能力治理门未跑"
+    # 每步双动作（gate_checklist 的 STEP_handoff/STEP_self_review）
+    assert "checklist" in out, "每步双动作门未跑"

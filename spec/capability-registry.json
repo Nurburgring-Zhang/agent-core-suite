@@ -11,23 +11,200 @@
     "runtime": "运行时层：宿主产品提供的执行运行时（MCP 服务器/toolcalling 引擎/CLI 二进制/记忆索引/任务库/产品连接器/定时任务），便携包物理上无法包含，只登记映射+治理+fallback。"
   },
   "registry": [
-    {"domain": "skill", "layer": "portable", "in_pack": true, "carrier": "skills/universal-task-code/SKILL.md", "governed_by": ["gate_skill_spec"], "discipline": "SKILL.md 规范：frontmatter 白名单、name kebab-case 且与目录一致、description 触发条件+SKIP 边界、正文行数上限、本地引用不断链。", "fallback": null},
-    {"domain": "harness", "layer": "portable", "in_pack": true, "carrier": "scripts/run_gates.py", "governed_by": ["run_gates", "gate_reality_scan"], "discipline": "硬门禁退出码 0/1/2；真实性扫描拦桩代码/占位/降级伪装；能跑脚本就必须跑，「我已检查」不算证据。", "fallback": null},
-    {"domain": "loop", "layer": "portable", "in_pack": true, "carrier": "skills/loop-engineering/SKILL.md", "governed_by": ["gate_loop_guard"], "discipline": "四道成本闸门 + 有界重试 + 安全阀 + handoff 每轮压缩防跑偏，全部机检。", "fallback": null},
-    {"domain": "graph", "layer": "portable", "in_pack": true, "carrier": "skills/graph-engineering/SKILL.md", "governed_by": ["gate_state_validate"], "discipline": "任务 DAG 契约：节点 inputs/outputs/acceptance/deterministic、owner≠verifier、边门 expect_exit、barrier policy、T3 工件谱系。", "fallback": null},
-    {"domain": "self-verify", "layer": "portable", "in_pack": true, "carrier": "skills/self-verify-scaling/SKILL.md", "governed_by": ["gate_verify_rank"], "discipline": "1-20 细粒度评分、评价标准拆分、重复评估、pivot 排序、T3 自一致性重采样、双盲终审、方向偏离检测。", "fallback": null},
-    {"domain": "token-thrift", "layer": "portable", "in_pack": true, "carrier": "skills/token-thrift/SKILL.md", "governed_by": ["gate_loop_guard"], "discipline": "渐进披露、状态外置、稳定前缀、洁净续跑、≤400 字压缩总结、读取预算，由回灌禁令机检。", "fallback": null},
-    {"domain": "rule-consistency", "layer": "portable", "in_pack": true, "carrier": "scripts/gate_rule_consistency.py", "governed_by": ["gate_rule_consistency"], "discipline": "守则多副本条数与承重短语逐字一致；外部全局守则不漂移；AGENTS.md 纳入条数校验。", "fallback": null},
-    {"domain": "honesty-ledger", "layer": "portable", "in_pack": true, "carrier": "scripts/gate_honesty_ledger.py", "governed_by": ["gate_honesty_ledger"], "discipline": "证据七档 basis 禁止聚合升档、降级台账带天花板+升级路径、子代理输出契约+文件数上限、裁判自证前置、行为评测三臂。", "fallback": null},
-    {"domain": "bootstrap-injection", "layer": "portable", "in_pack": true, "carrier": "scripts/acs_bootstrap.py", "governed_by": ["gate_capability_registry"], "discipline": "按终端约定形状输出注入载荷；如实声明 full/partial/soft_only 强制力与能力缺口 fallback；只读不写文件。post-turn 自动触发依赖各终端 hook 机制，未实测事件集登记于 known_gaps，不声称全终端自动触发。", "fallback": null},
-    {"domain": "handoff-compression", "layer": "portable", "in_pack": true, "carrier": "scripts/acs_handoff_compress.py", "governed_by": ["gate_loop_guard"], "discipline": "每轮压缩+保留目标防跑偏：每步 ≤1000 字 handoff（current_goal 防跑偏锚点/completed/next_step），由 gate_loop_guard 机检；无损压缩只压过程不压结论/证据/目标。", "fallback": null},
-    {"domain": "global-rules-verify", "layer": "portable", "in_pack": true, "carrier": "scripts/acs_global_verify.py", "governed_by": ["gate_capability_registry"], "discipline": "多产品全局规则静态校验引擎（--product <id>），验全局规则锚点/核心 Skill 字节一致/必需门禁模板/终端映射；引擎与门禁零产品特化，可迁移。", "fallback": null},
-    {"domain": "mcp", "layer": "runtime", "in_pack": false, "carrier": null, "governed_by": ["capability-coverage.forbidden_claim", "adapters.capability_fallback"], "discipline": "MCP 服务器（如 builtin_computer_use/builtin_browser/ali-employee-assistant）由宿主产品提供；本包只登记其能力映射与调用纪律，不打包服务器本体。", "fallback": "宿主缺位该 MCP 时，按 adapters.json 对应 capability 的 fallback 执行，并在交付报告声明降级方式。"},
-    {"domain": "toolcalling", "layer": "runtime", "in_pack": false, "carrier": null, "governed_by": ["capability-coverage.forbidden_claim", "adapters.capability_fallback"], "discipline": "toolcalling 引擎由宿主产品提供；本包登记工具调用纪律（先查 schema 再调用、退出码取证），不打包引擎本体。", "fallback": "宿主无 toolcalling 时，按守则以正文声明所用工具与证据，不伪造调用。"},
-    {"domain": "cross-conversation-memory", "layer": "runtime", "in_pack": false, "carrier": null, "governed_by": ["capability-coverage.forbidden_claim", "honesty-ledger.rsi"], "discipline": "跨对话记忆索引由宿主产品提供；本包登记 RSI 沉淀纪律（G6 rsi 字段），不打包记忆索引本体。", "fallback": "宿主无跨对话记忆时，RSI 经验写入仓库内 docs/lessons.md 或 task-state.gates.G6.rsi。"},
-    {"domain": "long-term-memory", "layer": "runtime", "in_pack": false, "carrier": null, "governed_by": ["capability-coverage.forbidden_claim", "honesty-ledger.rsi"], "discipline": "长期记忆存储由宿主产品提供；本包登记经验沉淀纪律，不打包存储本体。", "fallback": "宿主无长期记忆时，stored_at 指向仓库内可检索文件。"},
-    {"domain": "qoderwork-connector", "layer": "runtime", "in_pack": false, "carrier": null, "governed_by": ["capability-coverage.forbidden_claim", "adapters.capability_fallback"], "discipline": "qoderwork connector 应用编排由宿主产品提供；本包登记其能力映射，不打包连接器本体。", "fallback": "宿主无该连接器时，按 adapters 对应 capability fallback 执行并声明降级。"},
-    {"domain": "scheduling", "layer": "runtime", "in_pack": false, "carrier": null, "governed_by": ["capability-coverage.forbidden_claim", "adapters.capability_fallback"], "discipline": "定时任务 scheduling/cron 运行时由宿主产品提供；本包登记定时任务纪律，不打包 cron 运行时本体。", "fallback": "宿主无定时任务运行时时，以正文声明计划与触发条件，不伪造自动触发。"}
+    {
+      "domain": "skill",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "skills/universal-task-code/SKILL.md",
+      "governed_by": [
+        "gate_skill_spec"
+      ],
+      "discipline": "SKILL.md 规范：frontmatter 白名单、name kebab-case 且与目录一致、description 触发条件+SKIP 边界、正文行数上限、本地引用不断链。",
+      "fallback": null
+    },
+    {
+      "domain": "harness",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "scripts/run_gates.py",
+      "governed_by": [
+        "run_gates",
+        "gate_reality_scan"
+      ],
+      "discipline": "硬门禁退出码 0/1/2；真实性扫描拦桩代码/占位/降级伪装；能跑脚本就必须跑，「我已检查」不算证据。",
+      "fallback": null
+    },
+    {
+      "domain": "loop",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "skills/loop-engineering/SKILL.md",
+      "governed_by": [
+        "gate_loop_guard"
+      ],
+      "discipline": "四道成本闸门 + 有界重试 + 安全阀 + handoff 每轮压缩防跑偏，全部机检。",
+      "fallback": null
+    },
+    {
+      "domain": "graph",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "skills/graph-engineering/SKILL.md",
+      "governed_by": [
+        "gate_state_validate"
+      ],
+      "discipline": "任务 DAG 契约：节点 inputs/outputs/acceptance/deterministic、owner≠verifier、边门 expect_exit、barrier policy、T3 工件谱系。",
+      "fallback": null
+    },
+    {
+      "domain": "self-verify",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "skills/self-verify-scaling/SKILL.md",
+      "governed_by": [
+        "gate_verify_rank"
+      ],
+      "discipline": "1-20 细粒度评分、评价标准拆分、重复评估、pivot 排序、T3 自一致性重采样、双盲终审、方向偏离检测。",
+      "fallback": null
+    },
+    {
+      "domain": "token-thrift",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "skills/token-thrift/SKILL.md",
+      "governed_by": [
+        "gate_loop_guard"
+      ],
+      "discipline": "渐进披露、状态外置、稳定前缀、洁净续跑、≤400 字压缩总结、读取预算，由回灌禁令机检。",
+      "fallback": null
+    },
+    {
+      "domain": "rule-consistency",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "scripts/gate_rule_consistency.py",
+      "governed_by": [
+        "gate_rule_consistency"
+      ],
+      "discipline": "守则多副本条数与承重短语逐字一致；外部全局守则不漂移；AGENTS.md 纳入条数校验。",
+      "fallback": null
+    },
+    {
+      "domain": "honesty-ledger",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "scripts/gate_honesty_ledger.py",
+      "governed_by": [
+        "gate_honesty_ledger"
+      ],
+      "discipline": "证据七档 basis 禁止聚合升档、降级台账带天花板+升级路径、子代理输出契约+文件数上限、裁判自证前置、行为评测三臂。",
+      "fallback": null
+    },
+    {
+      "domain": "bootstrap-injection",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "scripts/acs_bootstrap.py",
+      "governed_by": [
+        "gate_capability_registry"
+      ],
+      "discipline": "按终端约定形状输出注入载荷；如实声明 full/partial/soft_only 强制力与能力缺口 fallback；只读不写文件。post-turn 自动触发依赖各终端 hook 机制，未实测事件集登记于 known_gaps，不声称全终端自动触发。",
+      "fallback": null
+    },
+    {
+      "domain": "handoff-compression",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "scripts/acs_compress_handoff.py",
+      "governed_by": [
+        "gate_loop_guard"
+      ],
+      "discipline": "每轮压缩+保留目标防跑偏：每步 ≤1000 字 handoff（current_goal 防跑偏锚点/completed/next_step），由 gate_loop_guard 机检；无损压缩只压过程不压结论/证据/目标。",
+      "fallback": null
+    },
+    {
+      "domain": "global-rules-verify",
+      "layer": "portable",
+      "in_pack": true,
+      "carrier": "scripts/acs_global_verify.py",
+      "governed_by": [
+        "gate_capability_registry"
+      ],
+      "discipline": "多产品全局规则静态校验引擎（--product <id>），验全局规则锚点/核心 Skill 字节一致/必需门禁模板/终端映射；引擎与门禁零产品特化，可迁移。",
+      "fallback": null
+    },
+    {
+      "domain": "mcp",
+      "layer": "runtime",
+      "in_pack": false,
+      "carrier": null,
+      "governed_by": [
+        "capability-coverage.forbidden_claim",
+        "adapters.capability_fallback"
+      ],
+      "discipline": "MCP 服务器（如 builtin_computer_use/builtin_browser/ali-employee-assistant）由宿主产品提供；本包只登记其能力映射与调用纪律，不打包服务器本体。",
+      "fallback": "宿主缺位该 MCP 时，按 adapters.json 对应 capability 的 fallback 执行，并在交付报告声明降级方式。"
+    },
+    {
+      "domain": "toolcalling",
+      "layer": "runtime",
+      "in_pack": false,
+      "carrier": null,
+      "governed_by": [
+        "capability-coverage.forbidden_claim",
+        "adapters.capability_fallback"
+      ],
+      "discipline": "toolcalling 引擎由宿主产品提供；本包登记工具调用纪律（先查 schema 再调用、退出码取证），不打包引擎本体。",
+      "fallback": "宿主无 toolcalling 时，按守则以正文声明所用工具与证据，不伪造调用。"
+    },
+    {
+      "domain": "cross-conversation-memory",
+      "layer": "runtime",
+      "in_pack": false,
+      "carrier": null,
+      "governed_by": [
+        "capability-coverage.forbidden_claim",
+        "honesty-ledger.rsi"
+      ],
+      "discipline": "跨对话记忆索引由宿主产品提供；本包登记 RSI 沉淀纪律（G6 rsi 字段），不打包记忆索引本体。",
+      "fallback": "宿主无跨对话记忆时，RSI 经验写入仓库内 docs/lessons.md 或 task-state.gates.G6.rsi。"
+    },
+    {
+      "domain": "long-term-memory",
+      "layer": "runtime",
+      "in_pack": false,
+      "carrier": null,
+      "governed_by": [
+        "capability-coverage.forbidden_claim",
+        "honesty-ledger.rsi"
+      ],
+      "discipline": "长期记忆存储由宿主产品提供；本包登记经验沉淀纪律，不打包存储本体。",
+      "fallback": "宿主无长期记忆时，stored_at 指向仓库内可检索文件。"
+    },
+    {
+      "domain": "qoderwork-connector",
+      "layer": "runtime",
+      "in_pack": false,
+      "carrier": null,
+      "governed_by": [
+        "capability-coverage.forbidden_claim",
+        "adapters.capability_fallback"
+      ],
+      "discipline": "qoderwork connector 应用编排由宿主产品提供；本包登记其能力映射，不打包连接器本体。",
+      "fallback": "宿主无该连接器时，按 adapters 对应 capability fallback 执行并声明降级。"
+    },
+    {
+      "domain": "scheduling",
+      "layer": "runtime",
+      "in_pack": false,
+      "carrier": null,
+      "governed_by": [
+        "capability-coverage.forbidden_claim",
+        "adapters.capability_fallback"
+      ],
+      "discipline": "定时任务 scheduling/cron 运行时由宿主产品提供；本包登记定时任务纪律，不打包 cron 运行时本体。",
+      "fallback": "宿主无定时任务运行时时，以正文声明计划与触发条件，不伪造自动触发。"
+    }
   ],
   "coverage_domain_map": {
     "_why": "registry 比 capability-coverage 更细：coverage 按「该能力有无任何可移植部分」标 in_pack，registry 把运行时侧面单列为 runtime 域。故用本映射做语义核对——每个 registry runtime 域映射到 coverage 中一个 in_pack=false 的域，证明 coverage 也承认该运行时侧面不可打包。",

@@ -42,7 +42,7 @@ PRODUCTS = {
 DEFAULT_PRODUCT = "qoderwork"
 # terminals.json global_verify pointer for every globally-integrated product.
 GLOBAL_VERIFY_ENTRY = "scripts/acs_global_verify.py"
-CONTRACT_VERSION = "2.0.0"
+CONTRACT_VERSION = "2.1.0"
 
 CACHE_DIRS = {".git", "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache", "node_modules"}
 REQUIRED_SPEC_KEYS = {

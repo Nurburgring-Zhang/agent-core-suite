@@ -1,5 +1,5 @@
 ---
-description: Agent Core Suite v2.0.0 工作标准 SOP（能力增强层，叠加于终端原生能力之上而非替代它）。接到任何非闲聊任务时始终生效：先定级（T0-T3）、跑七道门（P0-P6）、守四道成本闸门与有界重试，能跑硬门禁脚本就必须跑。
+description: Agent Core Suite v2.1.0 工作标准 SOP（能力增强层，叠加于终端原生能力之上而非替代它）。接到任何非闲聊任务时始终生效：先定级（T0-T3）、跑七道门（P0-P6）、守四道成本闸门与有界重试，每步收尾写压缩交接 + 做双 AI 自审，能跑硬门禁脚本就必须跑。
 alwaysApply: true
 ---
 
@@ -51,6 +51,15 @@ alwaysApply: true
 依据（实测反面基线）：某 27B 模型在 Agent Harness 上完成 9 个任务耗 13,995,350 token、197 请求、6h17m，
 其中输入 token 13,718,510 占 98%；单题最高 11,533,959 token / 124 请求 / 18,639s；
 拆出 75 step 却仍空转，「其它运行时间」占单题总时长 59%。**拆得多不等于拆得好。**
+
+### 2.1 每步收尾双动作（v2.1 逐步机检）
+
+回灌禁令与双 AI 对抗审核原先只在门/分级级生效，跨步无强制载体、错误累积到 G3/G5 才暴露。v2.1 把它们下沉到**每一个 step 收尾**，由 `gate_checklist.py` 逐步机检（阈值单一真相源在 `spec/thresholds.json` 的 `handoff` / `per_step_review` 节）：
+
+- **STEP_handoff —— 每步压缩交接**：写 ≤1000 字（目标 400）总结到单文件 `.acs/handoff.md`，含①当前目标锚点（防跑偏）②已完成项③下一步三要素，无损且附偏离自检（`drift_checked=true`）；`steps[].handoff` 是其结构化镜像。载体用 `scripts/acs_compress_handoff.py` 机械渲染/校验——它不做语义压缩（那是 agent 原生职责），只保证形状与字数上限。
+- **STEP_self_review —— 每步双 AI 自对抗审核 + 自查自检自监督**：`builder≠verifier` 分离署名，落 `steps[].review`（reviewer / verdict∈{pass,pass_with_fixes,fail} / issues_found / issues_closed / self_check）；发现问题必须**等量闭环**并写复验记录（`recheck`）；`verdict=fail` 禁止进入下一步；T3 每步 ≥2 轮。
+
+`hooks/acs-stop.sh`（post-turn）+ `hooks/acs-prompt.sh`（UserPromptSubmit）是 best-effort 加速器，恒 exit 0、缺状态即静默放行；stdout 注入与非零阻断未实测（known_gap），**强制点始终回落到 `gate_checklist.py`，不依赖 hook**。
 
 ## 3 省 token 的战场在输入
 

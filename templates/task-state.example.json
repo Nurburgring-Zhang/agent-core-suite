@@ -2,7 +2,7 @@
   "task_id": "acs-demo-001",
   "tier": "T2",
   "tier_reason": "涉及 3 个文件与一个可执行脚本，有持久状态且需要真实运行测试，故定为 T2（拿不准时取高一级）",
-  "contract_version": "2.0.0",
+  "contract_version": "2.2.0",
   "known_gaps": [
     "目标运行环境的 CI 版本未确认，已按本机 Python 3.12 验证"
   ],
@@ -181,9 +181,21 @@
       "builder": "builder-A",
       "verifier": "verifier-B",
       "handoff": {
-        "current_goal": "产出契约 schema 文件",
-        "completed": "已写出 out/schema.json",
-        "next_step": "按 schema 实现解析器"
+        "goal_anchor": "产出契约 schema、按契约实现解析器并统计字段数（总目标）；本步只交付 out/schema.json",
+        "done": [
+          "out/schema.json 已写入，2143 字节，含 required 字段"
+        ],
+        "next": "按 out/schema.json 实现 src/parser.py 并跑 pytest",
+        "chars": 186,
+        "drift_checked": true,
+        "path": ".acs/handoff.md"
+      },
+      "review": {
+        "reviewer": "verifier-B",
+        "verdict": "pass",
+        "issues_found": [],
+        "issues_closed": [],
+        "self_check": "核对 out/schema.json 真实存在且含 required 字段，与 acceptance.actual 一致"
       }
     },
     {
@@ -211,9 +223,27 @@
       "builder": "builder-A",
       "verifier": "verifier-B",
       "handoff": {
-        "current_goal": "按契约实现解析器并通过单测",
-        "completed": "src/parser.py 实现，pytest 7 passed",
-        "next_step": "统计字段数写报告"
+        "goal_anchor": "产出契约 schema、按契约实现解析器并统计字段数（总目标）；本步交付 src/parser.py 且单测绿",
+        "done": [
+          "src/parser.py 实现完成，pytest 7 passed（含新增空输入用例）"
+        ],
+        "next": "跑 tools/count_fields.py 统计字段数并写入 out/field-count.txt",
+        "chars": 240,
+        "drift_checked": true,
+        "path": ".acs/handoff.md"
+      },
+      "review": {
+        "reviewer": "verifier-B",
+        "verdict": "pass_with_fixes",
+        "issues_found": [
+          "解析器未处理空文件输入，会抛异常"
+        ],
+        "issues_closed": [
+          "src/parser.py 增加空输入分支并补用例"
+        ],
+        "self_check": "逐条核对 acceptance：pytest 退出码 0、7 passed，实测值与期望一致",
+        "recheck": "pytest tests/test_parser.py -q 退出码 0（7 passed，含新增空输入用例）",
+        "rounds": 1
       }
     },
     {
@@ -244,9 +274,22 @@
       "builder": "builder-C",
       "verifier": "verifier-B",
       "handoff": {
-        "current_goal": "统计契约字段数并写报告",
-        "completed": "out/field-count.txt 已生成 fields=18",
-        "next_step": "进入 G4 验证门"
+        "goal_anchor": "产出契约 schema、按契约实现解析器并统计字段数（总目标）；本步为末步，交付 out/field-count.txt",
+        "done": [
+          "out/field-count.txt 已生成，fields=18，与 schema 实测一致"
+        ],
+        "next": "无后续步骤，进入 G4/G5 门验证与交付",
+        "chars": 120,
+        "drift_checked": true,
+        "path": ".acs/handoff.md"
+      },
+      "review": {
+        "reviewer": "verifier-B",
+        "verdict": "pass",
+        "issues_found": [],
+        "issues_closed": [],
+        "self_check": "核对 count_fields.py 退出码 0、fields=18 与 out/schema.json 字段数一致",
+        "rounds": 1
       }
     }
   ],

@@ -78,6 +78,32 @@ Anthropic 图工程第 6 步的降维落地：**两名互相看不见对方推�
 3. **沉默不是结论**：`findings` 字段必须存在，无发现就写空数组——缺字段 = 无法核查 = 视同未做。
 4. **分歧必须仲裁**：两名审查者 verdict 冲突时，必须写 `arbitration{resolution, reason}` 留痕。分歧不是噪音是信号——它说明验收标准有歧义，不仲裁，规则手册的歧义永远不暴露。
 
+## 5.6 每步双 AI 自对抗审核 + 自查自检自监督（v2.1，T1~T3 每步强制）
+
+**诚实交代现状**：v2.1 之前，双 AI 对抗只在**门/分级级**触发——G3 互审（发现→修复→复验）与 G5 双盲终审。逐步执行时没有强制自审，错误会一路累积到门才暴露，返工成本最高。v2.1 把它**下沉到每一个 step 收尾**：每步都必须做一次 builder/verifier 分离的自对抗审核 + 自查自检自监督，并落 `steps[].review`，由 `gate_checklist.py` 的 `STEP_self_review` 机检（阈值见 `spec/thresholds.json` 的 `per_step_review` 节）。
+
+```json
+"review": {
+  "reviewer": "verifier-B",           // 不得等于本步 builder，否则退化成自评
+  "verdict": "pass_with_fixes",       // pass / pass_with_fixes / fail；fail 禁止进入下一步
+  "issues_found": ["解析器未处理空输入"],
+  "issues_closed": ["增加空输入分支并补用例"],  // 发现问题必须等量闭环
+  "self_check": "逐条核对 acceptance：pytest 退出码 0、7 passed，实测值与期望一致",
+  "recheck": "pytest tests/test_parser.py -q → exit=0, 7 passed",  // issues 非空时必填
+  "rounds": 1                          // T3 须 ≥ per_step_review.t3_min_rounds（默认 2）
+}
+```
+
+五条硬规矩：
+
+1. **角色分离**：`reviewer != builder`。同一视角签两次名 = 自评马甲，BLOCK。
+2. **必须表态**：`verdict ∈ {pass, pass_with_fixes, fail}`；`fail` 表示该步未过自审，**禁止进入下一步**。
+3. **自查非空话**：`self_check` 写「核对了什么 + 结论」，「检查过了」「没问题」一律视同未审。
+4. **发现即闭环**：`issues_found` 非空则 `issues_closed` 必须等量覆盖，且写 `recheck`（命令 + 真实输出）——与 G3 互审闭环同规矩。
+5. **按 tier 缩放**：T1/T2 至少 1 轮自对抗；**T3 须 ≥2 轮**（`rounds` 字段），高风险任务每步都要多角度对打。
+
+与 G3/G5 的分工不重复：本节管**每步收尾的即时自审**（早暴露、早修复），G3 管**跨步过程互审闭环**，G5 双盲管**交付终审放行**。三层同向叠加，不是三选一。
+
 ## 6. 方向偏离检测（验证分数当仪表盘）
 
 来源事实：验证分数与任务实际进展正相关，可用于实时判断是否在朝正确方向推进。

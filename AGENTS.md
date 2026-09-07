@@ -1,7 +1,9 @@
-# AGENTS.md —— Agent Core Suite v2.0.0
+# AGENTS.md —— Agent Core Suite v2.1.0
 
 > 本文件是**跨终端通用入口**（AGENTS.md 约定被主流 agent 终端自动读取）。
 > 无论你是哪个终端上的 agent，进入本仓库后，以下内容为**强制工作标准**。
+>
+> **v2.1 头号变化：把交接与自审下沉到每一步。** v2.0 之前，回灌禁令与双 AI 对抗审核只在 **门/分级级**生效，跨步没有强制载体、错误一路累积到 G3/G5 才暴露。v2.1 新增两道**逐步**机检：`STEP_handoff`（每步收尾写 ≤1000 字压缩交接到单文件 `.acs/handoff.md`，三要素无损 + 目标锚点防跑偏）与 `STEP_self_review`（每步 builder≠verifier 的双 AI 自对抗审核 + 自查自检，落 `steps[].review`）。载体由 `scripts/acs_compress_handoff.py` 机械渲染/校验（不做语义压缩，那是 agent 原生职责），`hooks/acs-stop.sh`+`hooks/acs-prompt.sh` 为 best-effort 加速（恒 exit 0；stdout 注入/非零阻断未实测=known_gap），强制点回落到 `gate_checklist.py`。
 >
 > **v2.0 头号变化：多产品全局融合。** v1.2 的全局层是 qwenworkcn 单产品硬编码；v2.0 泛化为数据驱动的多产品架构——`qoderwork` 与 `qwenworkcn` 并列为一级全局融合终端，各自持有一份 `spec/<product>-global.json` 契约，共用同一台只读静态校验引擎 `scripts/acs_global_verify.py`（`--product <id>`）。新增产品只加一份契约 + `PRODUCTS` 一条登记，引擎与门禁零产品特化。
 
@@ -35,13 +37,14 @@ python -X utf8 scripts/run_gates.py --state .acs/task-state.json --root . --tier
 
 `0=PASS`｜`1=BLOCK`｜`2=USAGE_ERROR`。后两者一律视为**未验证 = 未完成**。
 
-## 不可协商的五条
+## 不可协商的六条
 
 1. **三重零容忍**：零虚假、零模拟实现、零降级。必须降级则显式标注 `[DEGRADED]` 并如实上报。
 2. **单步一产出**：一步只交一个可验证产出，预算 ≤30min，完成标准必须是命令/文件/断言，不能是「功能正常」。
 3. **禁止回灌**：跨步只传 ≤400 字总结 + `.acs/task-state.json` 指针；单步引用上文 ≤20000 字节、读文件 ≤5 个。
 4. **two-strike 停止**：连续 2 步没有新证据（文件变更 / 新通过断言 / 新外部事实）→ 立即停止并升级，禁止同法重试。重试必须登记 `retries` 并写清 `retry_reason` 与 `delta_from_last`（这次与上次差在哪），超上限即换路（v1.1 有界重试，机检）。
 5. **思考占比 ≤0.40**：超线就去写最小可执行验证，不要继续空想。
+6. **每步收尾双动作（v2.1 逐步机检）**：① 写 ≤1000 字压缩交接到单文件 `.acs/handoff.md`——当前目标锚点 / 已完成项 / 下一步三要素无损、附偏离自检，`STEP_handoff` 机检；② 做一次 builder≠verifier 的双 AI 自对抗审核 + 自查自检自监督，发现→修复→复验等量闭环并落 `steps[].review`，`STEP_self_review` 机检。载体用 `scripts/acs_compress_handoff.py` 机械渲染/校验，语义压缩仍是 agent 原生职责。
 
 ## 目录地图
 
@@ -50,10 +53,12 @@ skills/      五个技能：1 个瘦入口 + 4 个按需子技能（软约束）
 scripts/     九道门禁脚本（run_gates 编排 state/loop/checklist/reality/verify/honesty/rule/skillspec 八门）
              + acs_bootstrap 注入层 + acs_doctor 探针 + install_check
              + acs_global_verify 多产品全局静态校验引擎（qwenwork_global_verify 为其 qwenworkcn 薄壳），零第三方依赖，纯 stdlib
+             + v2.1 写工具：acs_compress_handoff（渲染/校验 .acs/handoff.md）/ acs_wire_hooks（原子接线终端 hooks，保强只增不删）/ acs_build_skill_inventory（技能清单化分类）
              （硬约束；Node 镜像覆盖 4/9，其余显式 USAGE_ERROR，不假装全门通过）
 spec/        thresholds 阈值 / terminals 终端映射 / rule-consistency 规则自洽 / skill-spec 技能规范
-             / adapters 适配层 / capability-coverage 能力覆盖
+             / adapters 适配层 / capability-coverage 能力覆盖 / skill-inventory 技能清单
              / qoderwork-global + qwenwork-global 两份产品全局融合契约（均为单一真相源，缺即 USAGE_ERROR）
+hooks/       acs-stop.sh（post-turn）+ acs-prompt.sh（UserPromptSubmit）：best-effort 加速，恒 exit 0，缺状态即静默放行
 templates/   task-state / verify-record 的 schema + 正样本 + 交接总结模板
 rules/       工作区常驻规则（Qoder 等支持 rules 的终端）
 tests/       双向验证（正样本 PASS / 负样本 BLOCK + 套件卫生机检；当前数量以 pytest 实跑为准）

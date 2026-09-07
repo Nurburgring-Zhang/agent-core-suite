@@ -1,9 +1,9 @@
 ---
 name: universal-task-code
-description: 通用任务执行主入口（Agent Core Suite 能力增强层，叠加于终端原生能力之上而非替代它）。接到任何非闲聊任务时必用：先双向钢人论证，再按 T0-T3 分级触发 P0-P6 七道门流水线与 G0-G6 质量门禁，配合四道成本闸门（窄步/禁回灌/空转/思考预算）与有界重试控制 token 与时间，按需加载 loop-engineering、graph-engineering、self-verify-scaling、token-thrift 四个子技能。适用于软件工程、研究调研、文档写作、数据分析、设计、运维等全部任务形态的启动、推进、验证与交付；三重零容忍（零虚假、零模拟实现、零降级）。SKIP 边界：纯闲聊、单句寒暄、一次性事实问答、单文件只读查看属 T0，不触发本流水线，只需遵守诚实纪律；已在本技能流程内的后续步骤不重复加载入口。
+description: 通用任务执行主入口（Agent Core Suite 能力增强层，叠加于终端原生能力之上而非替代它）。接到任何非闲聊任务时必用：先双向钢人论证，再按 T0-T3 分级触发 P0-P6 七道门流水线与 G0-G6 质量门禁，配合四道成本闸门（窄步/禁回灌/空转/思考预算）与有界重试控制 token 与时间，每步收尾写 ≤1000 字压缩交接到单文件 .acs/handoff.md 并做 builder≠verifier 的双 AI 自对抗审核（STEP_handoff / STEP_self_review 逐步机检），按需加载 loop-engineering、graph-engineering、self-verify-scaling、token-thrift 四个子技能。适用于软件工程、研究调研、文档写作、数据分析、设计、运维等全部任务形态的启动、推进、验证与交付；三重零容忍（零虚假、零模拟实现、零降级）。SKIP 边界：纯闲聊、单句寒暄、一次性事实问答、单文件只读查看属 T0，不触发本流水线，只需遵守诚实纪律；已在本技能流程内的后续步骤不重复加载入口。
 ---
 
-# 通用任务执行主入口（Agent Core Suite v2.0.0）
+# 通用任务执行主入口（Agent Core Suite v2.1.0）
 
 ## 第零步：看清定位——增强，不是替代
 
@@ -57,6 +57,15 @@ G0-G6 完整准出条件见 [reference-gates.md](reference-gates.md)。十八条
 | 有界重试（v1.1） | `retries` ≤ `spec.retry.max_retries`，且重试必须写 `retry_reason` 与 `delta_from_last`（这次与上次差在哪） | 超限即换路；说不清变化就是同法重试 |
 
 依据：某 27B 模型实测 9 个 Agent 任务烧掉 13,995,350 token / 6h17m，其中输入 token 占 98%、单题 11.5M token，根因正是单步过重、完成标准不清、上下文反复回灌与空转（详见 loop-engineering）。FinBot 实战另证：生成→报错→原样再生成是永动机，重试必须有上限、有留痕、有变化。
+
+## 第三步·补：每步收尾双动作（v2.1 逐步机检）
+
+回灌禁令与双 AI 对抗审核原先只在门/分级级判定，跨步无强制载体、错误累积到 G3/G5 才暴露、返工成本按步数放大。v2.1 把两者下沉到**每一个 step 收尾**，由 `gate_checklist.py` 逐步机检（阈值单一真相源在 `spec/thresholds.json` 的 `handoff` / `per_step_review` 节，Python 与 Node 双实现同口径）：
+
+- **STEP_handoff —— 每步压缩交接**：写 ≤1000 字（目标 400）总结到**单文件** `.acs/handoff.md`，含①当前目标锚点（防跑偏）②已完成项③下一步三要素，无损且附偏离自检（`drift_checked=true`）；`steps[].handoff` 是其结构化镜像。下一步只读这个载体 + 状态指针，不回灌历史。渲染/校验用 `scripts/acs_compress_handoff.py`（机械渲染幂等、无镜像则 exit 2 绝不伪造）；**语义压缩仍是 agent 原生职责，脚本不假装代劳**。
+- **STEP_self_review —— 每步双 AI 自对抗审核 + 自查自检自监督**：`builder≠verifier` 分离署名（自签=自评不算数），落 `steps[].review`（reviewer / verdict∈{pass,pass_with_fixes,fail} / issues_found / issues_closed / self_check）；发现问题必须**等量闭环**并写复验记录 `recheck`（命令 + 真实输出）；`verdict=fail` 禁止进入下一步；T3 每步 ≥2 轮。
+
+`hooks/acs-stop.sh`（post-turn）+ `hooks/acs-prompt.sh`（UserPromptSubmit）是 best-effort 加速器，恒 exit 0、缺状态即静默放行、保留终端既有 `_yunke_managed` 等 hook；stdout 注入与非零阻断未实测（known_gap），**强制点始终回落到 `gate_checklist.py`，不依赖 hook**。跨终端可迁移：映射见各产品 `spec/<product>-global.json` 的 `native_routing.handoff`。
 
 ## 第四步：按需加载子技能（渐进披露，禁止一次全装）
 

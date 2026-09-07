@@ -66,6 +66,21 @@ HARDENED_BY_TIER = _HD["required_by_tier"]
 _DB = spec_section("double_blind")
 DB_MIN_REVIEWERS = _DB["min_reviewers"]
 
+# 每步压缩交接（v2.1，方向1）：≤max_chars_hard 字硬上限 + 三要素无损 + 目标锚点防跑偏
+_HO = spec_section("handoff")
+HO_MAX_CHARS = _HO["max_chars_hard"]
+HO_TOL = _HO["chars_tolerance"]
+HO_MIN_GOAL = _HO["min_goal_anchor_chars"]
+HO_MIN_NEXT = _HO["min_next_chars"]
+HO_REQUIRE_DRIFT = _HO["require_drift_checked"]
+
+# 每步双 AI 自对抗审核（v2.1）：builder≠verifier + 发现→修复→复验闭环 + tier 缩放
+_PSR = spec_section("per_step_review")
+PSR_VERDICTS = tuple(_PSR["verdict_values"])
+PSR_NE_BUILDER = _PSR["require_verifier_ne_builder"]
+PSR_MIN_SELF_CHECK = _PSR["min_self_check_chars"]
+PSR_T3_MIN_ROUNDS = _PSR["t3_min_rounds"]
+
 HARDENED_LABELS = {
     "G0_steelman": "G0 双向钢人（正/反各 ≥%d 条且条条有依据 + 分歧定位）" % MIN_PRO,
     "G1_cognition": "G1 认知摘要六要素",
@@ -75,6 +90,8 @@ HARDENED_LABELS = {
     "G5_report": "G5 交付报告四要素",
     "G5_blind_reviews": "G5 双盲审查（独立审查者 ≥%d 人 + 非建造者 + 分歧仲裁）" % DB_MIN_REVIEWERS,
     "G6_rsi": "G6 RSI 闭环（问题→根因→动作→验证→沉淀位置）",
+    "STEP_handoff": "每步压缩交接（≤%d字 + 三要素无损 + 目标锚点防跑偏）" % HO_MAX_CHARS,
+    "STEP_self_review": "每步双AI自对抗审核 + 自查自检（builder≠verifier + 发现→修复→复验闭环）",
 }
 
 
@@ -352,6 +369,105 @@ def check_rsi(entry, report):
             report.error(at, "是空话 %r" % value)
 
 
+def check_step_handoff(state, tier, report):
+    """方向1：每步结束必须写 ≤max_chars_hard 字压缩交接，三要素无损 + 目标锚点防跑偏。
+
+    跨步唯一载体是 .acs/handoff.md，steps[].handoff 是其结构化镜像。机检只拦
+    『跳过 / 写空话 / 超字数 / 无目标锚点 / 未做偏离自检』——语义级压缩质量属原生能力，
+    本层不假装能评定（与其余硬化项同一诚实口径）。
+    """
+    steps = state.get("steps") or []
+    if not steps:
+        report.error("steps", "没有任何步骤记录，无法核验每步压缩交接")
+        return
+    for idx, step in enumerate(steps):
+        if not isinstance(step, dict):
+            continue
+        at = "steps[%d].handoff" % idx
+        ho = step.get("handoff")
+        if not isinstance(ho, dict):
+            report.error(at, "缺每步压缩交接（当前目标/已完成项/下一步三要素）：跨步无载体=被迫回灌历史")
+            continue
+        anchor = (ho.get("goal_anchor") or "").strip()
+        if len(anchor) < HO_MIN_GOAL:
+            report.error("%s.goal_anchor" % at,
+                         "当前目标锚点过短（%d 字 < %d）：压缩丢了目标就会跑偏" % (len(anchor), HO_MIN_GOAL))
+        elif _is_vague(anchor):
+            report.error("%s.goal_anchor" % at, "目标锚点是空话 %r，须写唯一可辨识目标" % anchor)
+        if not _nonempty_strings(ho.get("done")):
+            report.error("%s.done" % at, "已完成项为空：交接三要素缺一即有损压缩")
+        nxt = (ho.get("next") or "").strip()
+        if len(nxt) < HO_MIN_NEXT:
+            report.error("%s.next" % at, "下一步过短（%d 字 < %d）" % (len(nxt), HO_MIN_NEXT))
+        elif _is_vague(nxt):
+            report.error("%s.next" % at, "下一步是空话 %r，须写唯一可执行动作" % nxt)
+        chars = ho.get("chars")
+        if not isinstance(chars, int) or isinstance(chars, bool):
+            report.error("%s.chars" % at, "缺字数字段 chars（无法核对压缩上限，等于没计量）")
+        elif chars > HO_MAX_CHARS + HO_TOL:
+            report.error("%s.chars" % at,
+                         "交接 %d 字 > 硬上限 %d（+%d 容差）：总结膨胀成第二份历史，回灌禁令失效"
+                         % (chars, HO_MAX_CHARS, HO_TOL))
+        if HO_REQUIRE_DRIFT and ho.get("drift_checked") is not True:
+            report.error("%s.drift_checked" % at,
+                         "未做方向偏离自检（drift_checked 必须为 true）：这是压缩不跑偏的机检底座")
+
+
+def check_step_self_review(state, tier, report):
+    """每步双 AI 自对抗审核 + 自查自检自监督（builder/verifier 分离，规模按 tier）。
+
+    原先双 AI 对抗只在 gate/tier 级触发；本检查把它下沉到每一步收尾，错误不再累积到门才暴露。
+    verdict=fail 表示该步未过自审，禁止进入下一步；发现问题必须等量闭环并复验。
+    """
+    steps = state.get("steps") or []
+    if not steps:
+        report.error("steps", "没有任何步骤记录，无法核验每步自对抗审核")
+        return
+    for idx, step in enumerate(steps):
+        if not isinstance(step, dict):
+            continue
+        at = "steps[%d].review" % idx
+        rv = step.get("review")
+        if not isinstance(rv, dict):
+            report.error(at, "缺每步双AI自对抗审核记录（reviewer/verdict/issues/self_check）：错误会累积到门才暴露")
+            continue
+        reviewer = (rv.get("reviewer") or "").strip()
+        builder = (step.get("builder") or "").strip()
+        if not reviewer:
+            report.error("%s.reviewer" % at, "缺审核者代号：无署名等于无责任人")
+        elif PSR_NE_BUILDER and builder and reviewer == builder:
+            report.error("%s.reviewer" % at, "reviewer == builder == %r：自对抗退化成自评，不算双AI互审" % reviewer)
+        verdict = (rv.get("verdict") or "").strip()
+        if verdict not in PSR_VERDICTS:
+            report.error("%s.verdict" % at, "verdict=%r 非法（%s）" % (verdict, "/".join(PSR_VERDICTS)))
+        elif verdict == "fail":
+            report.error("%s.verdict" % at, "该步自审 verdict=fail：未过自对抗审核禁止进入下一步")
+        self_check = (rv.get("self_check") or "").strip()
+        if len(self_check) < PSR_MIN_SELF_CHECK:
+            report.error("%s.self_check" % at, "自查自检结论过短（%d 字 < %d）" % (len(self_check), PSR_MIN_SELF_CHECK))
+        elif _is_vague(self_check):
+            report.error("%s.self_check" % at, "自查结论是空话 %r，须写核对了什么 + 结论" % self_check)
+        if "issues_found" not in rv or "issues_closed" not in rv:
+            report.error(at, "缺 issues_found/issues_closed 字段（无问题写空数组，字段不得缺）")
+        else:
+            found = _nonempty_strings(rv.get("issues_found")) or []
+            closed = _nonempty_strings(rv.get("issues_closed")) or []
+            if found:
+                if len(closed) < len(found):
+                    report.error("%s.issues_closed" % at,
+                                 "发现 %d 项但只闭环 %d 项（发现→修复必须等量闭环）" % (len(found), len(closed)))
+                recheck = (rv.get("recheck") or "").strip()
+                if not recheck:
+                    report.error("%s.recheck" % at, "有问题被修复却无复验记录（未复验 = 未闭环）")
+                elif _is_vague(recheck):
+                    report.error("%s.recheck" % at, "复验记录是空话 %r，须写命令与真实输出" % recheck)
+        if tier == "T3":
+            rounds = rv.get("rounds")
+            if not isinstance(rounds, int) or isinstance(rounds, bool) or rounds < PSR_T3_MIN_ROUNDS:
+                report.error("%s.rounds" % at,
+                             "T3 每步自对抗审核须 ≥%d 轮，实际 %r" % (PSR_T3_MIN_ROUNDS, rounds))
+
+
 HARDENED_CHECKS = {
     "G0_steelman": ("G0", check_steelman),
     "G1_cognition": ("G1", check_cognition),
@@ -368,6 +484,12 @@ def check_hardened(state, gates, tier, report):
         label = HARDENED_LABELS.get(item, item)
         if item == "G4_acceptance_actual":
             check_acceptance_actual(state, report)
+            continue
+        if item == "STEP_handoff":
+            check_step_handoff(state, tier, report)
+            continue
+        if item == "STEP_self_review":
+            check_step_self_review(state, tier, report)
             continue
         if item == "G5_blind_reviews":
             entry5 = gates.get("G5")

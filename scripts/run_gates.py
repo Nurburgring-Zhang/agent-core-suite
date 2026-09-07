@@ -94,6 +94,9 @@ def main(argv):
         else:
             sys.stdout.write("\n=== gate_skill_spec ===\n"
                              "  note  %s 无 spec/skill-spec.json，本树不含技能定义，跳过（非通过）\n" % root)
+    # 能力治理门（v2.2 merge）：与每步双动作（gate_checklist STEP_handoff/STEP_self_review）共存，
+    # 各治其维度——本门治静态能力面诚实性（portable/runtime 分层、禁止谎称打包运行时），
+    # 每步双动作治动态每步执行纪律（handoff 压缩+双 AI 自审）。零重叠、零冲突。
     if "capability" not in skip:
         if os.path.isfile(os.path.join(root, "spec", "capability-registry.json")):
             results.append(run("capability", "gate_capability_registry.py", ["--root", root]))

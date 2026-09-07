@@ -1,5 +1,5 @@
 {
-  "spec_version": "2.0.0",
+  "spec_version": "2.1.0",
   "_readme": [
     "阈值单一真相源（single source of truth）。",
     "Python 门禁、Node 门禁、文档与 CI 一律从本文件取值，任何实现都不得自带同名常量。",
@@ -61,16 +61,54 @@
   },
   "handoff": {
     "_why": [
-      "每轮压缩 + 保留目标防跑偏：每个 step 结束写一份 ≤1000 字 handoff（含当前目标/已完成项/下一步），存入 .acs/handoff.md，下一步只读它，不重放历史对话。",
-      "与 loop.max_summary_chars(400) 分工：400 是单步 anti-refeed 压缩摘要；1000 是跨步 handoff 交接（更富，含目标锚点防跑偏）。两者不冲突。",
-      "目标锚点（current_goal）是防跑偏关键：每轮 handoff 必须复述当前目标，下一步以此校准方向，避免长程任务漂移。",
-      "由 gate_loop_guard 机检：step 缺 handoff 三段或超 1000 字即 BLOCK。无损压缩=只压过程不压结论/证据/目标。"
+      "上下文会被截断/压缩，跨步唯一可靠载体是外置交接文件 .acs/handoff.md；口口相传=回灌历史=烧 token。",
+      "压缩必须有硬上限（1000 字）：否则『总结』会膨胀成第二份历史，回灌禁令形同虚设；目标 400 字是省 token 主力。",
+      "无损 = 当前目标/已完成项/下一步三要素齐全且非空话；缺任一即视为有损压缩，下一步无从接续。",
+      "防跑偏 = 每步交接必须复述唯一『当前目标』锚点并置 drift_checked=true；锚点缺失或空话即 BLOCK，这是压缩不跑偏的机检底座。",
+      "语义级跑偏判定仍属原生能力；本层只拦『跳过/写空话/超字数/无目标锚点/未做偏离自检』，与其余硬化项同一诚实口径。"
     ],
-    "max_handoff_chars": 1000,
-    "required_sections": ["current_goal", "completed", "next_step"],
-    "min_section_chars": 4,
-    "handoff_file": ".acs/handoff.md",
-    "lossless_rule": "压缩只压过程与推理，不压结论/证据/当前目标；目标锚点每轮必须复述以防跑偏。"
+    "target_chars": 400,
+    "max_chars_hard": 1000,
+    "chars_tolerance": 50,
+    "min_goal_anchor_chars": 4,
+    "min_next_chars": 4,
+    "required_sections": [
+      "当前目标",
+      "已完成项",
+      "下一步"
+    ],
+    "require_goal_anchor": true,
+    "require_drift_checked": true,
+    "handoff_path": ".acs/handoff.md",
+    "single_file_handoff": true,
+    "apply_tiers": [
+      "T1",
+      "T2",
+      "T3"
+    ]
+  },
+  "per_step_review": {
+    "_why": [
+      "双 AI 对抗审核原先只在 gate/tier 级（G3/G5）触发；逐步执行时无人自查=错误累积到门才暴露，返工成本最高。",
+      "每步收尾必须做一次 builder/verifier 分离的自对抗审核 + 自查自检自监督，规模按 tier 缩放（T3 需 ≥2 轮）。",
+      "审核结论必须落到 steps[].review；verdict=fail 表示该步未过自审，禁止进入下一步。",
+      "发现问题必须闭环：issues_found 非空则 issues_closed 必须等量覆盖且写 recheck，与 G3 互审闭环同规矩。",
+      "reviewer 不得等于该步 builder，否则自对抗退化成自评（与双盲审查同一角色分离纪律）。"
+    ],
+    "apply_tiers": [
+      "T1",
+      "T2",
+      "T3"
+    ],
+    "verdict_values": [
+      "pass",
+      "pass_with_fixes",
+      "fail"
+    ],
+    "require_verifier_ne_builder": true,
+    "min_self_check_chars": 4,
+    "min_issue_chars": 4,
+    "t3_min_rounds": 2
   },
   "checklist": {
     "min_adversarial_reviews": 2,
@@ -155,7 +193,9 @@
       "required_by_tier": {
         "T0": [],
         "T1": [
-          "G4_acceptance_actual"
+          "G4_acceptance_actual",
+          "STEP_handoff",
+          "STEP_self_review"
         ],
         "T2": [
           "G0_steelman",
@@ -163,7 +203,9 @@
           "G2_plan",
           "G3_review_closure",
           "G4_acceptance_actual",
-          "G5_report"
+          "G5_report",
+          "STEP_handoff",
+          "STEP_self_review"
         ],
         "T3": [
           "G0_steelman",
@@ -173,7 +215,9 @@
           "G4_acceptance_actual",
           "G5_report",
           "G5_blind_reviews",
-          "G6_rsi"
+          "G6_rsi",
+          "STEP_handoff",
+          "STEP_self_review"
         ]
       }
     }
@@ -327,7 +371,7 @@
       "状态文件自带版本，校验器才能识别『来自更新套件的文件』并提示升级，而不是报一堆莫名字段错误。",
       "旧版本文件照常通过（向后兼容）：只有格式非法才拦，版本高于已知只告警不拦。"
     ],
-    "known_version": "2.0.0",
+    "known_version": "2.2.0",
     "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
   },
   "model_tier": {

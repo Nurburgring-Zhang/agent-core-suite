@@ -1,5 +1,5 @@
 {
-  "$comment": "Agent Core Suite v2.0.0 — task-state.json 契约（JSON Schema 子集，由 gate_state_validate.py 真实校验）；v1.1 新增字段均为可选属性=出现即校验，分级必填由门禁按 spec 判定",
+  "$comment": "Agent Core Suite v2.1.0 — task-state.json 契约（JSON Schema 子集，由 gate_state_validate.py 真实校验）；v1.1 新增字段均为可选属性=出现即校验，分级必填由门禁按 spec 判定",
   "type": "object",
   "required": [
     "task_id",
@@ -502,26 +502,101 @@
             "type": "string"
           },
           "handoff": {
-            "$comment": "v2.0 每轮压缩+保留目标防跑偏：每步 ≤1000 字交接（current_goal 防跑偏锚点/completed/next_step），由 gate_loop_guard 机检",
+            "$comment": "每步压缩交接（.acs/handoff.md 的结构化镜像）：跨步唯一载体，≤spec.handoff.max_chars_hard 字硬上限，三要素无损（当前目标/已完成项/下一步）+ goal_anchor 防跑偏；T1+ 每步必填，由 gate_checklist.py 的 STEP_handoff 判定",
             "type": "object",
             "required": [
-              "current_goal",
-              "completed",
-              "next_step"
+              "goal_anchor",
+              "done",
+              "next",
+              "chars",
+              "drift_checked"
             ],
             "additionalProperties": false,
             "properties": {
-              "current_goal": {
+              "goal_anchor": {
+                "$comment": "当前唯一目标锚点：每步复述以防压缩跑偏；空话或过短即 BLOCK",
                 "type": "string",
                 "minLength": 4
               },
-              "completed": {
+              "done": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 2
+                }
+              },
+              "next": {
                 "type": "string",
                 "minLength": 4
               },
-              "next_step": {
+              "chars": {
+                "$comment": "交接正文字数（不含代码块命令）：门禁核对 ≤ max_chars_hard + tolerance",
+                "type": "integer",
+                "minimum": 0
+              },
+              "drift_checked": {
+                "$comment": "是否已做方向偏离自检（goal_anchor 与总目标比对）：spec.handoff.require_drift_checked=true 时必须为 true",
+                "type": "boolean"
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "review": {
+            "$comment": "每步双 AI 自对抗审核 + 自查自检自监督（builder/verifier 分离，规模按 tier）：T1+ 每步必填，由 gate_checklist.py 的 STEP_self_review 判定；verdict=fail 禁止进入下一步；issues_found 非空须 issues_closed 等量覆盖 + recheck 闭环",
+            "type": "object",
+            "required": [
+              "reviewer",
+              "verdict",
+              "issues_found",
+              "issues_closed",
+              "self_check"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "reviewer": {
+                "$comment": "审核者代号：不得等于该步 builder，否则自对抗退化成自评",
+                "type": "string",
+                "minLength": 1
+              },
+              "verdict": {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "pass_with_fixes",
+                  "fail"
+                ]
+              },
+              "issues_found": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 4
+                }
+              },
+              "issues_closed": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 4
+                }
+              },
+              "self_check": {
+                "$comment": "自查自检自监督结论：空话（『检查过了』『没问题』）视同未审",
                 "type": "string",
                 "minLength": 4
+              },
+              "recheck": {
+                "$comment": "发现问题修复后的复验记录（命令 + 真实输出）：issues_found 非空时必填",
+                "type": "string"
+              },
+              "rounds": {
+                "$comment": "自对抗审核轮次：T3 须 ≥ spec.per_step_review.t3_min_rounds",
+                "type": "integer",
+                "minimum": 1
               }
             }
           }

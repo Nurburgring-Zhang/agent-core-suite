@@ -1,5 +1,5 @@
 {
-  "spec_version": "2.0.0",
+  "spec_version": "2.1.0",
   "_why": [
     "规则同时存在于 SOUL/AGENTS/rules/skills 多处，靠人眼保持一致必然漂移，且漂移后两边都自活、没人报错。",
     "实测教训：reference-creed.md 长期写「十二条」而全局守则写「十五条」，388 项测试全绿也拦不住 —— 因为没有一条断言检查规则体系自身。",
@@ -73,6 +73,16 @@
         "id": "cost-gates",
         "_note": "四道闸门的承重语义：单步一产出、禁止回灌、空转 two-strike、思考占比上限。精简副本可用「单步一产出」代替「窄步闸」，故断言取跨副本共有的语义锚点。",
         "phrases": ["回灌", "two-strike", "0.40"],
+        "files": [
+          "skills/universal-task-code/SKILL.md",
+          "rules/agent-core-suite.md",
+          "AGENTS.md"
+        ]
+      },
+      {
+        "id": "per-step-handoff",
+        "_note": "v2.1 把交接与自审下沉到每一步：三份规则层副本都必须承载『单文件 .acs/handoff.md 载体 + STEP_handoff + STEP_self_review』这三个承重锚点。缺任一即视为副本漂移——执行者读到旧副本就会漏掉逐步机检，错误重新累积到门才暴露。",
+        "phrases": [".acs/handoff.md", "STEP_handoff", "STEP_self_review"],
         "files": [
           "skills/universal-task-code/SKILL.md",
           "rules/agent-core-suite.md",

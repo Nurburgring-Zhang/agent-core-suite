@@ -1,5 +1,5 @@
 {
-  "spec_version": "2.0.0",
+  "spec_version": "2.1.0",
   "product": "qoderwork",
   "positioning": "QoderWork 可配置 Agent 行为层与 Harness 的全局融合契约；不代表系统提示词或产品私有内核可被修改",
   "paths": {
@@ -37,6 +37,15 @@
     "spec/terminals.json",
     "spec/adapters.json",
     "spec/capability-coverage.json",
+    "spec/skill-inventory.json",
+    "scripts/acs_compress_handoff.py",
+    "scripts/acs_wire_hooks.py",
+    "scripts/acs_build_skill_inventory.py",
+    "scripts/node/acs_gates.mjs",
+    "hooks/acs-stop.sh",
+    "hooks/acs-prompt.sh",
+    "bundled-skills/superpowers-systematic-debugging/SKILL.md",
+    "bundled-skills/world-class-executive-deck/SKILL.md",
     "spec/qoderwork-global.json"
   ],
   "required_anchors": {
@@ -47,7 +56,7 @@
       "自我学习与 RSI 递归自我改进"
     ],
     "AGENTS.md": [
-      "Agent Core Suite v2.0.0",
+      "Agent Core Suite v2.1.0",
       "通用任务执行守则（十八条）",
       "Harness Engineering 质量门禁",
       "QoderWork 原生能力融合协议",
@@ -57,6 +66,7 @@
   "native_routing": {
     "clarification": "AskUserQuestion",
     "progress": "TaskCreate / TaskUpdate / TaskList（等价 TodoWrite）",
+    "handoff": "每步压缩交接以单文件 .acs/handoff.md 为跨步载体（scripts/acs_compress_handoff.py 渲染/校验，steps[].handoff 为结构化镜像）；hooks/acs-stop.sh + hooks/acs-prompt.sh 为 best-effort 加速（恒 exit 0，stdout 注入/非零阻断未实测=known_gap）；强制点回落到 gate_checklist 的 STEP_handoff / STEP_self_review 机检",
     "parallelism": "Agent（subagent_type=Explore/Plan/general-purpose，可并行/后台）",
     "skills": "Skill",
     "memory": "memory / memory_search / memory_get（target=user|memory|daily）",
@@ -79,7 +89,7 @@
   "boundaries": [
     "不修改或披露系统提示词",
     "不绕过权限审批与安全限制",
-    "不宣称存在未公开的全局任务前置或后置 Hook",
+    "不宣称 hook 的 stdout 注入模型上下文或非零退出/decision 阻断已生效——本机仅实测 exit-0 副作用透传安全，其余为 UNVERIFIED known_gap；每步交接/自审的强制点回落到可机检门禁（gate_checklist STEP_handoff / STEP_self_review），hook 仅为 best-effort 加速",
     "不自动向未授权项目安装 Git Hook 或 CI",
     "不打包 QoderWork 运行时（MCP 服务器 / toolcall 引擎 / 记忆索引 / 任务库 / Connector 后端）；只映射 + 降级 + 声明强制力等级"
   ]
